@@ -1,4 +1,4 @@
-package com.itssagnikmukherjee.blueteaadmin.ui.theme
+package com.itssagnikmukherjee.blueteaadmin.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

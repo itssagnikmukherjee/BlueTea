@@ -5,6 +5,8 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("dagger.hilt.android.plugin")
+    kotlin("plugin.serialization") version "2.1.10"
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -43,10 +45,12 @@ android {
 }
 
 dependencies {
-
+    //serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
     //dagger hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
+    implementation(libs.firebase.firestore)
     kapt("com.google.dagger:hilt-compiler:2.51.1")
 
     //coil
