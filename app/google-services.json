@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "700975821333",
+    "project_id": "blue-tea-290f7",
+    "storage_bucket": "blue-tea-290f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700975821333:android:0c22f56eca36040d0e541c",
+        "android_client_info": {
+          "package_name": "com.itssagnikmukherjee.blueteaadmin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8AKS6_WCEy4wYO1Qhf67XEdvsgQZx4ew"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

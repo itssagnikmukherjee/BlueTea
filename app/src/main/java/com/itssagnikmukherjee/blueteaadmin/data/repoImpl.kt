@@ -14,14 +14,15 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
 
     override fun addCategory(category: Category): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        FirebaseFirestore.collection(Constants.CATEGORY).add(category).addOnSuccessListener {
-            trySend(ResultState.Success("Category added successfully"))
-        }.addOnFailureListener {
-            trySend(ResultState.Error(it.message.toString()))
-        }
-        awaitClose {
-            close()
-        }
-    }
 
+        FirebaseFirestore.collection(Constants.CATEGORY).add(category)
+            .addOnSuccessListener {
+                trySend(ResultState.Success("Category added successfully"))
+            }
+            .addOnFailureListener {
+                trySend(ResultState.Error(it.message.toString()))
+            }
+
+        awaitClose { close() }
+    }
 }

@@ -62,7 +62,11 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.play.services.maps)
 
-
+    //supabase
+    implementation("io.github.jan-tennert.supabase:storage-kt:3.0.3")
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.ktor:ktor-client-android:3.0.3")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
