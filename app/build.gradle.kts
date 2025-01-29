@@ -46,16 +46,23 @@ android {
 
 dependencies {
     //serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation(libs.kotlinx.serialization.json)
 
     //dagger hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
+    kapt(libs.hilt.compiler)
+
+    //firebase
     implementation(libs.firebase.firestore)
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
+
 
     //coil
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.play.services.maps)
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

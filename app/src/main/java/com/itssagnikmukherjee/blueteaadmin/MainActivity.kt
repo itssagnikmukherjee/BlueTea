@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import com.itssagnikmukherjee.blueteaadmin.presentation.screens.AddCategoryScreen
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.BlueTeaAdminTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             BlueTeaAdminTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
+                    AddCategoryScreen()
                 }
             }
         }

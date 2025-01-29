@@ -1,3 +1,6 @@
 package com.itssagnikmukherjee.blueteaadmin.common.constants
 
-const val CATEGORY = "CATEGORY"
+object Constants{
+    const val CATEGORY = "CATEGORY"
+
+}
