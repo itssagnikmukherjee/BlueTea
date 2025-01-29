@@ -1,3 +1,7 @@
+import com.android.build.api.variant.BuildConfigField
+import org.jetbrains.kotlin.fir.declarations.builder.buildConstructor
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,6 +13,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
+
 android {
     namespace = "com.itssagnikmukherjee.blueteaadmin"
     compileSdk = 35
@@ -19,8 +24,13 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        buildConfigField("String","SUPABASE_KEY",properties.getProperty("SUPABASE_KEY"))
+        buildConfigField("String","SUPABASE_URL",properties.getProperty("SUPABASE_URL"))
+
     }
 
     buildTypes {
@@ -41,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
