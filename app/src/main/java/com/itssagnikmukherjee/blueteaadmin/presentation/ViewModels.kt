@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itssagnikmukherjee.blueteaadmin.common.ResultState
+import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,13 @@ class ViewModels @Inject constructor(
     private val _addCategory = MutableStateFlow(AddCategoryState())
     val addCategoryState = _addCategory.asStateFlow()
 
-    private suspend fun uploadImageToSupabase(context: Context, imageUri: Uri, categoryName: String): String? {
+//  Categories
+
+    private suspend fun uploadImageToSupabase(
+        context: Context,
+        imageUri: Uri,
+        categoryName: String
+    ): String? {
         return try {
             // Open the input stream and read the image bytes
             val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
@@ -72,21 +79,94 @@ class ViewModels @Inject constructor(
                         is ResultState.Loading -> {
                             _addCategory.value = AddCategoryState(isLoading = true)
                         }
+
                         is ResultState.Success -> {
-                            _addCategory.value = AddCategoryState(data = result.data, isLoading = false)
+                            _addCategory.value =
+                                AddCategoryState(data = result.data, isLoading = false)
                         }
+
                         is ResultState.Error -> {
-                            _addCategory.value = AddCategoryState(error = result.error, isLoading = false)
+                            _addCategory.value =
+                                AddCategoryState(error = result.error, isLoading = false)
                         }
                     }
                 }
             } else {
-                _addCategory.value = AddCategoryState(error = "Image upload failed", isLoading = false)
+                _addCategory.value =
+                    AddCategoryState(error = "Image upload failed", isLoading = false)
             }
         }
     }
 
+
+//  Banner
+
+    private val _addBanner = MutableStateFlow(AddBannerState())
+    val addBannerState = _addBanner.asStateFlow()
+
+    private suspend fun uploadBannerImagesToSupabase(
+        context: Context,
+        bannerImages: List<Uri>,
+        bannerName: String
+    ): List<String>?{
+        return try{
+            val imageUrls = mutableListOf<String>()
+            for ((index, uri) in bannerImages.withIndex()) {
+                val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+                val imageBytes = inputStream?.readBytes()
+
+                val folderPath = "banners/$bannerName"
+                val fileName = "image_$index.jpg"
+
+                supabaseClient.storage.from("banners").upload(
+                    path = "$folderPath/$fileName",
+                    data = imageBytes!!
+                )
+
+                val imageUrl = supabaseClient.storage.from("banners").publicUrl("$folderPath/$fileName")
+                imageUrls.add(imageUrl)
+            }
+            imageUrls
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun addBanner(bannerName: String, imageUris: List<Uri>, context: Context) {
+        viewModelScope.launch {
+            _addBanner.value = AddBannerState(isLoading = true)
+
+            val imageUrls = uploadBannerImagesToSupabase(context, imageUris, bannerName)
+
+            if (imageUrls != null) {
+                val banner = Banner(bannerName, imageUrls)
+                repo.addBanner(banner).collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _addBanner.value = AddBannerState(isLoading = true)
+                        }
+                        is ResultState.Success -> {
+                            _addBanner.value = AddBannerState(data = result.data, isLoading = false)
+                        }
+                        is ResultState.Error -> {
+                            _addBanner.value = AddBannerState(error = result.error, isLoading = false)
+                        }
+                    }
+                }
+            } else {
+                _addBanner.value = AddBannerState(error = "Image upload failed", isLoading = false)
+            }
+        }
+    }
 }
+
+
+data class AddBannerState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: String = ""
+)
 
 data class AddCategoryState(
     val isLoading: Boolean = false,
