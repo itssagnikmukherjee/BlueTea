@@ -1,7 +1,3 @@
-import com.android.build.api.variant.BuildConfigField
-import org.jetbrains.kotlin.fir.declarations.builder.buildConstructor
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,24 +9,18 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
-
 android {
-    namespace = "com.itssagnikmukherjee.blueteaadmin"
+    namespace = "com.itssagnikmukherjee.blueteauser"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.itssagnikmukherjee.blueteaadmin"
+        applicationId = "com.itssagnikmukherjee.blueteauser"
         minSdk = 25
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        val properties = Properties()
-        properties.load(project.rootProject.file("local.properties").inputStream())
-        buildConfigField("String","SUPABASE_KEY",properties.getProperty("SUPABASE_KEY"))
-        buildConfigField("String","SUPABASE_URL",properties.getProperty("SUPABASE_URL"))
-
     }
 
     buildTypes {
@@ -51,27 +41,25 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 }
 
 dependencies {
+
     //serialization
-    implementation(libs.kotlinx.serialization.json)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
     //dagger hilt
-    implementation(libs.hilt.android)
-    implementation(libs.androidx.hilt.navigation.compose)
-    kapt(libs.hilt.compiler)
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+    implementation("androidx.hilt:hilt-navigation:1.1.0-alpha02")
 
-    //firebase
+    //firebase firestore
     implementation(libs.firebase.firestore)
 
-
     //coil
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-    implementation(libs.play.services.maps)
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
     //supabase
     implementation("io.github.jan-tennert.supabase:storage-kt:3.0.3")

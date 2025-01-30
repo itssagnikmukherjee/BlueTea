@@ -7,9 +7,4 @@ plugins {
     alias(libs.plugins.google.gms.google.services) apply false
 }
 
-buildscript{
-    dependencies{
-        classpath(libs.google.services)
-    }
-}
 
