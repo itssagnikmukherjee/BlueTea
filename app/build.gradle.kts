@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,6 +23,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        buildConfigField("String","SUPABASE_KEY",properties.getProperty("SUPABASE_KEY"))
+        buildConfigField("String","SUPABASE_URL",properties.getProperty("SUPABASE_URL"))
+
     }
 
     buildTypes {
@@ -41,6 +49,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -52,7 +61,7 @@ dependencies {
     //dagger hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
-    implementation("androidx.hilt:hilt-navigation:1.1.0-alpha02")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
 
     //firebase firestore
     implementation(libs.firebase.firestore)
