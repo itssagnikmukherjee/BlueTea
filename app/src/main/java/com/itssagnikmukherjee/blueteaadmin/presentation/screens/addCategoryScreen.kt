@@ -66,7 +66,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> categoryImageUri = uri }
 
-    // Show toast when category added successfully
+    // Show toast when category added
     LaunchedEffect(categoryState.data) {
         if (categoryState.data.isNotEmpty()) {
             Toast.makeText(context, "Category $categoryName added successfully!", Toast.LENGTH_SHORT).show()
