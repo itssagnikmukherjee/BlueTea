@@ -17,9 +17,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,28 +50,29 @@ import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
 @Composable
 fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
     val context = LocalContext.current
-    var bannerName by remember { mutableStateOf("") }
-    var bannerImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var bannerImages by remember { mutableStateOf<List<BannerImageData>>(List(3) { BannerImageData() }) }
 
     val bannerState by viewModel.addBannerState.collectAsState()
     val isLoading = bannerState.isLoading
 
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris: List<Uri> ->
-        if (uris.size in 3..5) {
-            bannerImages = uris
-        } else {
-            Toast.makeText(context, "Please select 3 to 5 images", Toast.LENGTH_SHORT).show()
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { selectedUri ->
+            val updatedBannerImages = bannerImages.toMutableList()
+            val emptyBannerIndex = updatedBannerImages.indexOfFirst { it.imageUri == null }
+            if (emptyBannerIndex != -1) {
+                updatedBannerImages[emptyBannerIndex] = updatedBannerImages[emptyBannerIndex].copy(imageUri = selectedUri)
+                bannerImages = updatedBannerImages
+            }
         }
     }
 
     // Show toast when banner is added
     LaunchedEffect(bannerState.data) {
         if (bannerState.data.isNotEmpty()) {
-            Toast.makeText(context, "Banner $bannerName added successfully!", Toast.LENGTH_SHORT).show()
-            bannerName = ""
-            bannerImages = emptyList()
+            Toast.makeText(context, "Banner added successfully!", Toast.LENGTH_SHORT).show()
+            bannerImages = List(3) { BannerImageData() } // Reset to default state
         }
     }
 
@@ -76,41 +83,48 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Banner Name Input
-        OutlinedTextField(
-            value = bannerName,
-            onValueChange = { bannerName = it },
-            placeholder = { Text("Banner Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Image Picker Box with Preview
-        LazyRow(
+        // Banner Image Boxes
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(bannerImages.size) { uri ->
-                Image(
-                    painter = rememberAsyncImagePainter(uri),
-                    contentDescription = "Selected Image",
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
+            items(bannerImages.size) { index ->
+                BannerImageBox(
+                    bannerData = bannerImages[index],
+                    onImageClick = { launcher.launch("image/*") },
+                    onNameChange = { newName ->
+                        val updatedBannerImages = bannerImages.toMutableList()
+                        updatedBannerImages[index] = updatedBannerImages[index].copy(bannerName = newName)
+                        bannerImages = updatedBannerImages
+                    },
+                    onDelete = {
+                        val updatedBannerImages = bannerImages.toMutableList()
+                        updatedBannerImages.removeAt(index)
+                        bannerImages = updatedBannerImages
+                    }
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Button to launch image picker
-        Button(
-            onClick = { launcher.launch("image/*") },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Select Images (3-5)")
+            // Add Button (if less than 5 images)
+            if (bannerImages.size < 5) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .background(Color.LightGray, RoundedCornerShape(8.dp))
+                            .clickable {
+                                val updatedBannerImages = bannerImages.toMutableList()
+                                updatedBannerImages.add(BannerImageData())
+                                bannerImages = updatedBannerImages
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Image", tint = Color.White)
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -118,13 +132,13 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
         // Add Banner Button
         Button(
             onClick = {
-                if (bannerImages.size in 3..5) {
-                    viewModel.addBanner(bannerName, bannerImages, context)
+                if (bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() }) {
+                    viewModel.addBanner(bannerImages, context)
                 } else {
-                    Toast.makeText(context, "Please select 3 to 5 images", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Please fill all fields and select images", Toast.LENGTH_SHORT).show()
                 }
             },
-            enabled = bannerImages.size in 3..5 && !isLoading,
+            enabled = bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() } && !isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
             if (isLoading) {
@@ -144,3 +158,67 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
         }
     }
 }
+
+@Composable
+fun BannerImageBox(
+    bannerData: BannerImageData,
+    onImageClick: () -> Unit,
+    onNameChange: (String) -> Unit,
+    onDelete: () -> Unit // Add a callback for deleting the image box
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Image Box with Delete Button
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .background(Color.LightGray, RoundedCornerShape(8.dp))
+                    .clickable { onImageClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                if (bannerData.imageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(bannerData.imageUri),
+                        contentDescription = "Selected Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text("Select Image", color = Color.Gray)
+                }
+
+                // Delete Button (Cross Icon)
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Delete Image",
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(24.dp)
+                        .clickable { onDelete() },
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Banner Name Text Field
+            OutlinedTextField(
+                value = bannerData.bannerName,
+                onValueChange = onNameChange,
+                placeholder = { Text("Banner Name") }, // Indicate that the field is optional
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+data class BannerImageData(
+    val imageUri: Uri? = null,
+    val bannerName: String = ""
+)

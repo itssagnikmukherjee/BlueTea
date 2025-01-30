@@ -8,6 +8,7 @@ import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
+import com.itssagnikmukherjee.blueteaadmin.presentation.screens.BannerImageData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
@@ -24,10 +25,9 @@ class ViewModels @Inject constructor(
     private val supabaseClient: SupabaseClient
 ) : ViewModel() {
 
+    // Categories
     private val _addCategory = MutableStateFlow(AddCategoryState())
     val addCategoryState = _addCategory.asStateFlow()
-
-//  Categories
 
     private suspend fun uploadImageToSupabase(
         context: Context,
@@ -98,33 +98,36 @@ class ViewModels @Inject constructor(
         }
     }
 
-
-//  Banner
-
+    // Banner
     private val _addBanner = MutableStateFlow(AddBannerState())
     val addBannerState = _addBanner.asStateFlow()
 
     private suspend fun uploadBannerImagesToSupabase(
         context: Context,
-        bannerImages: List<Uri>,
-        bannerName: String
-    ): List<String>?{
-        return try{
+        bannerImages: List<BannerImageData>
+    ): List<String>? {
+        return try {
             val imageUrls = mutableListOf<String>()
-            for ((index, uri) in bannerImages.withIndex()) {
-                val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-                val imageBytes = inputStream?.readBytes()
+            for ((index, bannerImage) in bannerImages.withIndex()) {
+                val imageUri = bannerImage.imageUri
+                val bannerName = bannerImage.bannerName
 
-                val folderPath = "banners/$bannerName"
-                val fileName = "image_$index.jpg"
+                if (imageUri != null) {
+                    val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
+                    val imageBytes = inputStream?.readBytes()
 
-                supabaseClient.storage.from("banners").upload(
-                    path = "$folderPath/$fileName",
-                    data = imageBytes!!
-                )
+                    // Use the bannerName if provided, otherwise use "imageIndex.jpg"
+                    val folderPath = "banners/${bannerName.takeIf { it.isNotEmpty() } ?: "image$index"}"
+                    val fileName = "image.jpg" // You can customize the file name if needed
 
-                val imageUrl = supabaseClient.storage.from("banners").publicUrl("$folderPath/$fileName")
-                imageUrls.add(imageUrl)
+                    supabaseClient.storage.from("banners").upload(
+                        path = "$folderPath/$fileName",
+                        data = imageBytes!!
+                    )
+
+                    val imageUrl = supabaseClient.storage.from("banners").publicUrl("$folderPath/$fileName")
+                    imageUrls.add(imageUrl)
+                }
             }
             imageUrls
         } catch (e: Exception) {
@@ -133,14 +136,15 @@ class ViewModels @Inject constructor(
         }
     }
 
-    fun addBanner(bannerName: String, imageUris: List<Uri>, context: Context) {
+    fun addBanner(bannerImages: List<BannerImageData>, context: Context) {
         viewModelScope.launch {
             _addBanner.value = AddBannerState(isLoading = true)
 
-            val imageUrls = uploadBannerImagesToSupabase(context, imageUris, bannerName)
+            val imageUrls = uploadBannerImagesToSupabase(context, bannerImages)
 
             if (imageUrls != null) {
-                val banner = Banner(bannerName, imageUrls)
+                val bannerNames = bannerImages.joinToString(", ") { it.bannerName }
+                val banner = Banner(bannerNames, imageUrls)
                 repo.addBanner(banner).collectLatest { result ->
                     when (result) {
                         is ResultState.Loading -> {
@@ -161,7 +165,7 @@ class ViewModels @Inject constructor(
     }
 }
 
-
+// Data Classes
 data class AddBannerState(
     val isLoading: Boolean = false,
     val error: String = "",
