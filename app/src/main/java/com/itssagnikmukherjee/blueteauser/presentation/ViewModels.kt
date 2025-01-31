@@ -5,8 +5,10 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itssagnikmukherjee.blueteauser.common.ResultState
+import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
+import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
@@ -21,7 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ViewModels @Inject constructor(
     private val getAllCategories: getCategoriesFromFirebaseUsecase,
-    private val supabaseClient: SupabaseClient
+    private val getAllBanners: getBannersFromFirebaseUsecase,
+//    private val supabaseClient: SupabaseClient
 ) : ViewModel() {
 
     private val _getCategoryState = MutableStateFlow(GetCategoryState())
@@ -47,10 +50,40 @@ class ViewModels @Inject constructor(
         }
     }
 
+    private val _getBannerState = MutableStateFlow(GetBannerState())
+    val getBannerState = _getBannerState.asStateFlow()
+
+    fun getBanners() {
+        viewModelScope.launch {
+            getAllBanners.GetBannersFromFirebaseUsecase().collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
+                        _getBannerState.value = GetBannerState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        val bannerList : List<Banner> = (result.data as List<Banner>).map{it->
+                            Banner(it.bannerImageUrls, it.bannerName)
+                        }
+                        _getBannerState.value = GetBannerState(data= bannerList)
+                    }
+                    is ResultState.Error -> {
+                        _getBannerState.value = GetBannerState(error = result.error)
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 data class GetCategoryState(
     val isLoading: Boolean = false,
     val error: String = "",
     val data: List<Category?> = emptyList()
+)
+
+data class GetBannerState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: List<Banner> = emptyList()
 )
