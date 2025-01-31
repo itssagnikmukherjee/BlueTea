@@ -11,8 +11,6 @@ import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -24,7 +22,6 @@ import javax.inject.Inject
 class ViewModels @Inject constructor(
     private val getAllCategories: getCategoriesFromFirebaseUsecase,
     private val getAllBanners: getBannersFromFirebaseUsecase,
-//    private val supabaseClient: SupabaseClient
 ) : ViewModel() {
 
     private val _getCategoryState = MutableStateFlow(GetCategoryState())
