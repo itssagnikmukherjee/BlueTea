@@ -1,5 +1,7 @@
 package com.itssagnikmukherjee.blueteauser.data
 
+import android.util.Log
+import androidx.compose.runtime.internal.StabilityInferred
 import com.google.firebase.firestore.FirebaseFirestore
 import com.itssagnikmukherjee.blueteauser.common.ResultState
 import com.itssagnikmukherjee.blueteauser.common.constants.Constants
@@ -29,24 +31,27 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
         }
     }
 
-    // getting banners from firebase
     override fun getBanners(): Flow<ResultState<List<Banner>>> = callbackFlow {
         trySend(ResultState.Loading)
-        FirebaseFirestore.collection(Constants.BANNER).get().addOnSuccessListener { querySnapshot ->
-            val banners = querySnapshot.documents.mapNotNull { document ->
-                // Extract bannerImageUrls and bannerName from the Firestore document
-                val bannerImageUrls = document.get("bannerImageUrls") as? List<String>
-                val bannerName = document.getString("bannerName")
-                if (bannerImageUrls != null && bannerName != null) {
-                    Banner(bannerImageUrls, bannerName) // Create a Banner object
-                } else {
-                    null // Skip documents with missing or invalid fields
+        FirebaseFirestore.collection(Constants.BANNER).get()
+            .addOnSuccessListener { querySnapshot ->
+                Log.d("FirestoreData", "Document: ${querySnapshot.documents}")
+                val banners = querySnapshot.documents.mapNotNull { document ->
+                    val bannerImageUrls = document.get("bannerImageUrls") as? List<*>
+                    val bannerName = document.getString("bannerName")
+
+                    if (bannerImageUrls != null && bannerName != null) {
+                        val imageUrls = bannerImageUrls.filterIsInstance<String>()
+                        Banner(imageUrls, bannerName)
+                    } else {
+                        null
+                    }
                 }
+                trySend(ResultState.Success(banners))
             }
-            trySend(ResultState.Success(banners)) // Emit the list of Banner objects
-        }.addOnFailureListener { exception ->
-            trySend(ResultState.Error(exception.message.toString())) // Emit an error if the query fails
-        }
+            .addOnFailureListener { exception ->
+                trySend(ResultState.Error(exception.message.toString()))
+            }
         awaitClose { close() }
     }
 
