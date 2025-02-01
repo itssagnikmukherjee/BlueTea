@@ -64,7 +64,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     kapt(libs.hilt.compiler)
 
-    //firebase
+    //firebase firestore
     implementation(libs.firebase.firestore)
 
 

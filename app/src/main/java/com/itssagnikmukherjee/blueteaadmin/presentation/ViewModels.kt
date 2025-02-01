@@ -8,7 +8,9 @@ import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
-import com.itssagnikmukherjee.blueteaadmin.presentation.screens.BannerImageData
+import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerImageData
+import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
+import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
@@ -21,6 +23,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ViewModels @Inject constructor(
+    private val getAllCategories: getCategoriesFromFirebaseUsecase,
+    private val getAllBanners: getBannersFromFirebaseUsecase,
     private val repo: Repo,
     private val supabaseClient: SupabaseClient
 ) : ViewModel() {
@@ -97,6 +101,48 @@ class ViewModels @Inject constructor(
             }
         }
     }
+    private val _getCategoryState = MutableStateFlow(GetCategoryState())
+    val getCategoryState = _getCategoryState.asStateFlow()
+
+    fun getCategories() {
+        viewModelScope.launch {
+            getAllCategories.GetCategoriesFromFirebaseUsecase().collectLatest {
+                when (it) {
+                    is ResultState.Success -> {
+                        _getCategoryState.value = GetCategoryState(data = it.data)
+                    }
+
+                    is ResultState.Error -> {
+                        _getCategoryState.value = GetCategoryState(error = it.error)
+                    }
+
+                    is ResultState.Loading -> {
+                        _getCategoryState.value = GetCategoryState(isLoading = true)
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteCategory(categoryName: String) {
+        viewModelScope.launch {
+            _addCategory.value = AddCategoryState(isLoading = true)
+            repo.deleteCategory(categoryName).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
+                        _addCategory.value = AddCategoryState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        _addCategory.value = AddCategoryState(data = "Category deleted successfully", isLoading = false)
+                        getCategories() // Refresh the list after deletion
+                    }
+                    is ResultState.Error -> {
+                        _addCategory.value = AddCategoryState(error = result.error, isLoading = false)
+                    }
+                }
+            }
+        }
+    }
 
     // Banner
     private val _addBanner = MutableStateFlow(AddBannerState())
@@ -163,6 +209,54 @@ class ViewModels @Inject constructor(
             }
         }
     }
+
+    private val _getBannerState = MutableStateFlow(GetBannerState())
+    val getBannerState = _getBannerState.asStateFlow()
+
+    fun getBanners() {
+        viewModelScope.launch {
+            getAllBanners.GetBannersFromFirebaseUsecase().collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
+                        _getBannerState.value = GetBannerState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        val bannerList : List<Banner> = (result.data as List<Banner>).map{it->
+                            Banner(bannerImageUrls = it.bannerImageUrls, bannerName =  it.bannerName)
+                        }
+                        _getBannerState.value = GetBannerState(data= bannerList)
+                    }
+                    is ResultState.Error -> {
+                        _getBannerState.value = GetBannerState(error = result.error)
+                    }
+                }
+            }
+        }
+    }
+
+    private val _deleteBannerState = MutableStateFlow(AddBannerState())
+    val deleteBannerState = _deleteBannerState.asStateFlow()
+
+    fun deleteBanner(bannerName: String) {
+        viewModelScope.launch {
+            _deleteBannerState.value = AddBannerState(isLoading = true)
+            repo.deleteBanner(bannerName).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
+                        _deleteBannerState.value = AddBannerState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        _deleteBannerState.value = AddBannerState(data = "Banner deleted successfully", isLoading = false)
+                        getBanners()
+                    }
+                    is ResultState.Error -> {
+                        _deleteBannerState.value = AddBannerState(error = result.error, isLoading = false)
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 // Data Classes
@@ -176,4 +270,16 @@ data class AddCategoryState(
     val isLoading: Boolean = false,
     val error: String = "",
     val data: String = ""
+)
+
+data class GetCategoryState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: List<Category?> = emptyList()
+)
+
+data class GetBannerState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: List<Banner> = emptyList()
 )

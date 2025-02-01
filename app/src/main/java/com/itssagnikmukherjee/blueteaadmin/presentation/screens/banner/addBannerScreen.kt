@@ -1,4 +1,4 @@
-package com.itssagnikmukherjee.blueteaadmin.presentation.screens
+package com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner
 
 import android.net.Uri
 import android.widget.Toast
@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,15 +36,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.rememberAsyncImagePainter
-import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
+import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import kotlin.text.indexOf
+
 
 @Composable
 fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
@@ -53,6 +54,7 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
     var bannerImages by remember { mutableStateOf<List<BannerImageData>>(List(3) { BannerImageData() }) }
 
     val bannerState by viewModel.addBannerState.collectAsState()
+    val getBannerState by viewModel.getBannerState.collectAsState()
     val isLoading = bannerState.isLoading
 
     val launcher = rememberLauncherForActivityResult(
@@ -75,87 +77,106 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
             bannerImages = List(3) { BannerImageData() } // Reset to default state
         }
     }
+    LaunchedEffect(Unit) { viewModel.getBanners() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Banner Image Boxes
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(bannerImages.size) { index ->
-                BannerImageBox(
-                    bannerData = bannerImages[index],
-                    onImageClick = { launcher.launch("image/*") },
-                    onNameChange = { newName ->
-                        val updatedBannerImages = bannerImages.toMutableList()
-                        updatedBannerImages[index] = updatedBannerImages[index].copy(bannerName = newName)
-                        bannerImages = updatedBannerImages
-                    },
-                    onDelete = {
-                        val updatedBannerImages = bannerImages.toMutableList()
-                        updatedBannerImages.removeAt(index)
-                        bannerImages = updatedBannerImages
+    Column(modifier = Modifier.fillMaxSize().padding(20.dp)){
+        Text("Current Preview")
+        Spacer(modifier = Modifier.height(20.dp))
+        AnimatedBannerSection(banners = getBannerState.data)
+        Spacer(modifier = Modifier.height(20.dp))
+        Text("Edit Banners")
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Box{
+
+            Button(
+                onClick = {
+                    if (bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() }) {
+                        viewModel.addBanner(bannerImages, context)
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Please fill all fields and select images",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                )
+                },
+                enabled = bannerImages.all { it.imageUri != null } && !isLoading,
+                modifier = Modifier.fillMaxWidth().zIndex(2f).align(Alignment.BottomEnd).padding(20.dp,10.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White)
+                } else {
+                    Text("Add Banner")
+                }
             }
 
-            // Add Button (if less than 5 images)
-            if (bannerImages.size < 5) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .background(Color.LightGray, RoundedCornerShape(8.dp))
-                            .clickable {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp).zIndex(1f).padding(bottom = 60.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Banner Image Boxes
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(bannerImages.size) { index ->
+                        BannerImageBox(
+                            bannerData = bannerImages[index],
+                            onImageClick = { launcher.launch("image/*") },
+                            onNameChange = { newName ->
                                 val updatedBannerImages = bannerImages.toMutableList()
-                                updatedBannerImages.add(BannerImageData())
+                                updatedBannerImages[index] =
+                                    updatedBannerImages[index].copy(bannerName = newName)
                                 bannerImages = updatedBannerImages
                             },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Image", tint = Color.White)
+                            onDelete = {
+                                val updatedBannerImages = bannerImages.toMutableList()
+                                updatedBannerImages.removeAt(index)
+                                bannerImages = updatedBannerImages
+                            }
+                        )
+                    }
+
+                    if (bannerImages.size < 5) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth().height(40.dp)
+                                    .background(Color.LightGray, RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val updatedBannerImages = bannerImages.toMutableList()
+                                        updatedBannerImages.add(BannerImageData())
+                                        bannerImages = updatedBannerImages
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Add Image",
+                                    tint = Color.White
+                                )
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Add Banner Button
-        Button(
-            onClick = {
-                if (bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() }) {
-                    viewModel.addBanner(bannerImages, context)
-                } else {
-                    Toast.makeText(context, "Please fill all fields and select images", Toast.LENGTH_SHORT).show()
+                Spacer(modifier = Modifier.height(16.dp))
+                if (bannerState.error.isNotEmpty()) {
+                    Text(
+                        text = "Error: ${bannerState.error}",
+                        color = Color.Red,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
-            },
-            enabled = bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() } && !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White)
-            } else {
-                Text("Add Banner")
             }
         }
 
-        // Display error message if any
-        if (bannerState.error.isNotEmpty()) {
-            Text(
-                text = "Error: ${bannerState.error}",
-                color = Color.Red,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
     }
 }
 
@@ -171,16 +192,19 @@ fun BannerImageBox(
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
         ) {
             // Image Box with Delete Button
+            var i = 1
             Box(
                 modifier = Modifier
-                    .size(150.dp)
+                    .fillMaxWidth()
+                    .height(200.dp)
                     .background(Color.LightGray, RoundedCornerShape(8.dp))
                     .clickable { onImageClick() },
                 contentAlignment = Alignment.Center
             ) {
+
                 if (bannerData.imageUri != null) {
                     Image(
                         painter = rememberAsyncImagePainter(bannerData.imageUri),
