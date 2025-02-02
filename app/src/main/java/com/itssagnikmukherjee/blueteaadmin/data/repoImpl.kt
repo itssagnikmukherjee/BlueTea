@@ -64,38 +64,52 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
     //getting banner from
     override fun getBanners(): Flow<ResultState<List<Banner>>> = callbackFlow {
         trySend(ResultState.Loading)
-        FirebaseFirestore.collection(Constants.BANNER).get()
-            .addOnSuccessListener { querySnapshot ->
-                val banners = querySnapshot.documents.mapNotNull { document ->
+
+        val documentId = "UzGlAlbnvIxVzzeiEonP" // Fixed document ID
+
+        FirebaseFirestore.collection(Constants.BANNER)
+            .document(documentId) // Fetch the single document
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
                     val bannerImageUrls = document.get("bannerImageUrls") as? List<*>
                     val bannerName = document.getString("bannerName")
 
                     if (bannerImageUrls != null && bannerName != null) {
                         val imageUrls = bannerImageUrls.filterIsInstance<String>()
-                        Banner(bannerName = bannerName, bannerImageUrls = imageUrls)
+                        val banner = Banner(bannerName = bannerName, bannerImageUrls = imageUrls)
+                        trySend(ResultState.Success(listOf(banner)))
                     } else {
-                        null
+                        trySend(ResultState.Error("Invalid banner data"))
                     }
+                } else {
+                    trySend(ResultState.Error("Banner document does not exist"))
                 }
-                trySend(ResultState.Success(banners))
             }
             .addOnFailureListener { exception ->
                 trySend(ResultState.Error(exception.message.toString()))
             }
+
         awaitClose { close() }
     }
 
     //adding banner to firebase
-    override fun addBanner(banner: Banner): Flow<ResultState<String>> =callbackFlow{
+    override fun addBanner(banner: Banner): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        FirebaseFirestore.collection(Constants.BANNER).add(banner)
+
+        val documentId = "UzGlAlbnvIxVzzeiEonP"
+
+        FirebaseFirestore.collection(Constants.BANNER)
+            .document(documentId)
+            .set(banner)
             .addOnSuccessListener {
-                trySend(ResultState.Success("Banner added successfully"))
+                trySend(ResultState.Success("Banner updated successfully"))
             }
-            .addOnFailureListener {
-                trySend(ResultState.Error(it.message.toString()))
+            .addOnFailureListener { exception ->
+                trySend(ResultState.Error(exception.message.toString()))
             }
-        awaitClose{close()}
+
+        awaitClose { close() }
     }
 
     //delete banner from firebase

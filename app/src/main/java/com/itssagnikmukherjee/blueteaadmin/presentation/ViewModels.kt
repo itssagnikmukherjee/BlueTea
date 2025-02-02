@@ -191,6 +191,8 @@ class ViewModels @Inject constructor(
             if (imageUrls != null) {
                 val bannerNames = bannerImages.joinToString(", ") { it.bannerName }
                 val banner = Banner(bannerNames, imageUrls)
+
+                // Update the existing banner document
                 repo.addBanner(banner).collectLatest { result ->
                     when (result) {
                         is ResultState.Loading -> {
