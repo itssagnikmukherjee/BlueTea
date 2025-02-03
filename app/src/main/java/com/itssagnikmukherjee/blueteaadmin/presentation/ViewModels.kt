@@ -2,9 +2,13 @@ package com.itssagnikmukherjee.blueteaadmin.presentation
 
 import android.content.Context
 import android.net.Uri
+import android.widget.Toast
+import androidx.compose.material3.AlertDialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
 import com.itssagnikmukherjee.blueteaadmin.common.ResultState
+import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
@@ -36,7 +40,7 @@ class ViewModels @Inject constructor(
     private suspend fun uploadImageToSupabase(
         context: Context,
         imageUri: Uri,
-        categoryName: String
+        categoryId: String
     ): String? {
         return try {
             // Open the input stream and read the image bytes
@@ -44,22 +48,17 @@ class ViewModels @Inject constructor(
             val imageBytes = inputStream?.readBytes()
 
             // Define the folder structure and file name
-            val folderPath = "categories/$categoryName"  // Folder with category name
-            val fileName = "$categoryName.jpg"  // File name same as the category name
+            val folderPath = "categories/$categoryId"  // Folder with category ID
+            val fileName = "$categoryId.jpg"  // File name same as the category ID
 
             // Upload the image to Supabase Storage under the specific folder
-            val uploadResponse = supabaseClient.storage.from("categories").upload(
+            supabaseClient.storage.from("categories").upload(
                 path = "$folderPath/$fileName",  // Path includes folder and file name
                 data = imageBytes!!
             )
 
-            // Check if the upload was successful
-            if (true) {
-                // Get the public URL of the uploaded image
-                return supabaseClient.storage.from("categories").publicUrl("$folderPath/$fileName")
-            } else {
-                throw Exception("Image upload failed: $uploadResponse")
-            }
+            // Get the public URL of the uploaded image
+            supabaseClient.storage.from("categories").publicUrl("$folderPath/$fileName")
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -109,7 +108,8 @@ class ViewModels @Inject constructor(
             getAllCategories.GetCategoriesFromFirebaseUsecase().collectLatest {
                 when (it) {
                     is ResultState.Success -> {
-                        _getCategoryState.value = GetCategoryState(data = it.data)
+                        val sortedCategories = it.data.sortedBy { category -> category.date }.reversed()
+                        _getCategoryState.value = GetCategoryState(data = sortedCategories)
                     }
 
                     is ResultState.Error -> {
@@ -124,25 +124,28 @@ class ViewModels @Inject constructor(
         }
     }
 
+    private val _deleteCategory = MutableStateFlow(AddCategoryState())
+    val deleteCategoryState = _deleteCategory.asStateFlow()
     fun deleteCategory(categoryName: String) {
         viewModelScope.launch {
-            _addCategory.value = AddCategoryState(isLoading = true)
+            _deleteCategory.value = AddCategoryState(isLoading = true) // Show loading state
             repo.deleteCategory(categoryName).collectLatest { result ->
                 when (result) {
                     is ResultState.Loading -> {
-                        _addCategory.value = AddCategoryState(isLoading = true)
+                        _deleteCategory.value = AddCategoryState(isLoading = true)
                     }
                     is ResultState.Success -> {
-                        _addCategory.value = AddCategoryState(data = "Category deleted successfully", isLoading = false)
+                        _deleteCategory.value = AddCategoryState(data = "Category deleted successfully", isLoading = false)
                         getCategories() // Refresh the list after deletion
                     }
                     is ResultState.Error -> {
-                        _addCategory.value = AddCategoryState(error = result.error, isLoading = false)
+                        _deleteCategory.value = AddCategoryState(error = result.error, isLoading = false)
                     }
                 }
             }
         }
     }
+
 
     // Banner
     private val _addBanner = MutableStateFlow(AddBannerState())
@@ -235,30 +238,6 @@ class ViewModels @Inject constructor(
             }
         }
     }
-
-    private val _deleteBannerState = MutableStateFlow(AddBannerState())
-    val deleteBannerState = _deleteBannerState.asStateFlow()
-
-    fun deleteBanner(bannerName: String) {
-        viewModelScope.launch {
-            _deleteBannerState.value = AddBannerState(isLoading = true)
-            repo.deleteBanner(bannerName).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> {
-                        _deleteBannerState.value = AddBannerState(isLoading = true)
-                    }
-                    is ResultState.Success -> {
-                        _deleteBannerState.value = AddBannerState(data = "Banner deleted successfully", isLoading = false)
-                        getBanners()
-                    }
-                    is ResultState.Error -> {
-                        _deleteBannerState.value = AddBannerState(error = result.error, isLoading = false)
-                    }
-                }
-            }
-        }
-    }
-
 }
 
 // Data Classes
@@ -276,7 +255,7 @@ data class AddCategoryState(
 
 data class GetCategoryState(
     val isLoading: Boolean = false,
-    val error: String = "",
+    val error: String? = null,
     val data: List<Category?> = emptyList()
 )
 

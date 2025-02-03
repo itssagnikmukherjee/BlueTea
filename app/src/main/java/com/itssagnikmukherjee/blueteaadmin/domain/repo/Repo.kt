@@ -10,9 +10,7 @@ interface Repo {
     fun addCategory(category: Category):Flow<ResultState<String>>
     fun getCategories(): Flow<ResultState<List<Category>>>
     fun deleteCategory(categoryId: String): Flow<ResultState<String>>
-
     fun addBanner(banner: Banner):Flow<ResultState<String>>
     fun getBanners(): Flow<ResultState<List<Banner>>>
-    fun deleteBanner(bannerId: String): Flow<ResultState<String>>
 
 }

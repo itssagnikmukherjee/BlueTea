@@ -45,21 +45,41 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
     }
 
     //delete category from firebase
-    override fun deleteCategory(categoryId: String): Flow<ResultState<String>> = callbackFlow {
-        trySend(ResultState.Loading)
+    override fun deleteCategory(categoryName: String): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading) // Send loading state
 
-        FirebaseFirestore.collection(Constants.CATEGORY)
-            .document(categoryId)
-            .delete()
-            .addOnSuccessListener {
-                trySend(ResultState.Success("Category deleted successfully"))
-            }
-            .addOnFailureListener { exception ->
-                trySend(ResultState.Error(exception.message.toString()))
-            }
+        try {
+            // Query Firestore to find the document with the matching categoryName
+            FirebaseFirestore.collection(Constants.CATEGORY)
+                .whereEqualTo("categoryName", categoryName) // Query by categoryName
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (querySnapshot.isEmpty) {
+                        // No document found with the given categoryName
+                        trySend(ResultState.Error("Category not found"))
+                    } else {
+                        // Delete the first document (assuming category names are unique)
+                        val document = querySnapshot.documents[0]
+                        document.reference.delete()
+                            .addOnSuccessListener {
+                                trySend(ResultState.Success("Category deleted successfully"))
+                            }
+                            .addOnFailureListener { e ->
+                                trySend(ResultState.Error("Failed to delete category: ${e.message}"))
+                            }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    trySend(ResultState.Error("Failed to query category: ${e.message}"))
+                }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            trySend(ResultState.Error("Error: ${e.message}"))
+        }
 
         awaitClose { close() }
     }
+
 
     //getting banner from
     override fun getBanners(): Flow<ResultState<List<Banner>>> = callbackFlow {
@@ -104,23 +124,6 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
             .set(banner)
             .addOnSuccessListener {
                 trySend(ResultState.Success("Banner updated successfully"))
-            }
-            .addOnFailureListener { exception ->
-                trySend(ResultState.Error(exception.message.toString()))
-            }
-
-        awaitClose { close() }
-    }
-
-    //delete banner from firebase
-    override fun deleteBanner(bannerName: String): Flow<ResultState<String>> = callbackFlow {
-        trySend(ResultState.Loading)
-
-        FirebaseFirestore.collection(Constants.BANNER)
-            .document(bannerName) // Use bannerName as the document ID
-            .delete()
-            .addOnSuccessListener {
-                trySend(ResultState.Success("Banner deleted successfully"))
             }
             .addOnFailureListener { exception ->
                 trySend(ResultState.Error(exception.message.toString()))
