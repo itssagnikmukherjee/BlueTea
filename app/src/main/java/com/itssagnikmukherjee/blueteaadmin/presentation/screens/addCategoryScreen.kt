@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -151,7 +152,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
             Button(
                 onClick = {
                     if (categoryImageUri != null) {
-                        val category = Category(categoryName, System.currentTimeMillis())
+                        val category = Category(categoryName = categoryName, date = System.currentTimeMillis())
                         viewModel.addCategory(category, categoryImageUri!!, context)
                     }
                 },
@@ -201,18 +202,26 @@ fun CategoryItem(category: Category) {
 
 @Composable
 fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, context: Context) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { selectedUri ->
-            // Handle image update (to be implemented later)
-        }
-    }
-
     LazyRow {
         items(categories.size) { index ->
             val category = categories[index]
             if (category != null) {
+                // State variables for each category item
+                var categoryName by remember { mutableStateOf(category.categoryName) }
+                var isEditing by remember { mutableStateOf(false) }
+                var hasChanges by remember { mutableStateOf(false) }
+                var updatedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+                // Launcher for image selection
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.GetContent()
+                ) { uri: Uri? ->
+                    uri?.let { selectedUri ->
+                        updatedImageUri = selectedUri // Update the image URI for this specific item
+                        hasChanges = true // Track changes
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .padding(8.dp)
@@ -224,27 +233,49 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                             .padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Edit Icon (Top-Left Corner)
+                        if (!isEditing) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Category",
+                                modifier = Modifier
+                                    .clickable {
+                                        isEditing = true // Enable editing mode
+                                    }
+                                    .padding(4.dp)
+                                    .size(24.dp),
+                                tint = Color.Blue
+                            )
+                        }
+
+                        // Category Image
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.LightGray)
-                                .clickable { launcher.launch("image/*") },
+                                .clickable {
+                                    if (isEditing) {
+                                        launcher.launch("image/*") // Launch the image picker for this item
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
+                            // Display the new image if selected, otherwise display the existing image
                             AsyncImage(
-                                model = category.imageUrl,
+                                model = updatedImageUri ?: category.imageUrl,
                                 contentDescription = "Category Image",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
+                            // Delete Icon (Top-Right Corner)
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Delete Category",
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .clickable {
-                                        // Delete the category by name
+                                        // Delete the category
                                         viewModel.deleteCategory(category.categoryName)
                                     }
                                     .padding(4.dp)
@@ -252,11 +283,41 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                 tint = Color.Red
                             )
                         }
-                        Text(
-                            text = category.categoryName,
-                            modifier = Modifier.padding(top = 4.dp),
-                            textAlign = TextAlign.Center
-                        )
+
+                        // Category Name
+                        if (isEditing) {
+                            OutlinedTextField(
+                                value = categoryName,
+                                onValueChange = {
+                                    categoryName = it
+                                    hasChanges = true // Track changes
+                                },
+                                placeholder = { Text("Category Name") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            Text(
+                                text = categoryName,
+                                modifier = Modifier.padding(top = 4.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        // Update Category Button (Visible only when changes are made)
+                        if (hasChanges) {
+                            Button(
+                                onClick = {
+                                    // Update the category with the new name and image
+                                    val updatedCategory = category.copy(categoryName = categoryName)
+                                    viewModel.updateCategory(updatedCategory, updatedImageUri, context)
+                                    hasChanges = false // Reset changes
+                                    isEditing = false // Exit editing mode
+                                },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Update Category")
+                            }
+                        }
                     }
                 }
             }

@@ -7,6 +7,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
@@ -147,6 +148,40 @@ class ViewModels @Inject constructor(
         }
     }
 
+    fun updateCategory(category: Category, newImageUri: Uri?, context: Context) {
+        viewModelScope.launch {
+            _addCategory.value = AddCategoryState(isLoading = true) // Show loading state
+
+            try {
+                // Step 1: Upload the new image to Supabase Storage (if a new image is provided)
+                val imageUrl = if (newImageUri != null) {
+                    uploadImageToSupabase(context, newImageUri, category.categoryName)
+                } else {
+                    category.imageUrl // Use the existing image URL if no new image is provided
+                }
+
+                if (imageUrl != null) {
+                    // Step 2: Update the category in Firestore
+                    val updatedCategory = category.copy(imageUrl = imageUrl)
+                    FirebaseFirestore.getInstance()
+                        .collection(Constants.CATEGORY)
+                        .document(category.id) // Use the existing document ID
+                        .set(updatedCategory, SetOptions.merge()) // Merge changes with existing document
+                        .addOnSuccessListener {
+                            _addCategory.value = AddCategoryState(data = "Category updated successfully", isLoading = false)
+                            getCategories() // Refresh the list after update
+                        }
+                        .addOnFailureListener { e ->
+                            _addCategory.value = AddCategoryState(error = "Failed to update category: ${e.message}", isLoading = false)
+                        }
+                } else {
+                    _addCategory.value = AddCategoryState(error = "Failed to upload image", isLoading = false)
+                }
+            } catch (e: Exception) {
+                _addCategory.value = AddCategoryState(error = "Error: ${e.message}", isLoading = false)
+            }
+        }
+    }
 
     // Banner
     private val _addBanner = MutableStateFlow(AddBannerState())

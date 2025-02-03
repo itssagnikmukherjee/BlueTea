@@ -20,7 +20,7 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
         trySend(ResultState.Loading)
         FirebaseFirestore.collection(Constants.CATEGORY).get().addOnSuccessListener {
             val categories = it.documents.mapNotNull { document ->
-                document.toObject(Category::class.java)
+                document.toObject(Category::class.java)?.copy(id = document.id) // Set the Firestore document ID
             }
             trySend(ResultState.Success(categories))
         }.addOnFailureListener {
