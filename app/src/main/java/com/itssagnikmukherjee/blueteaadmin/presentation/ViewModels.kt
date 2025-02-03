@@ -86,6 +86,7 @@ class ViewModels @Inject constructor(
                         is ResultState.Success -> {
                             _addCategory.value =
                                 AddCategoryState(data = result.data, isLoading = false)
+                            getCategories()
                         }
 
                         is ResultState.Error -> {
@@ -135,7 +136,7 @@ class ViewModels @Inject constructor(
                         _deleteCategory.value = AddCategoryState(isLoading = true)
                     }
                     is ResultState.Success -> {
-                        _deleteCategory.value = AddCategoryState(data = "Category deleted successfully", isLoading = false)
+                        _deleteCategory.value = AddCategoryState(data = "Category ${categoryName} deleted successfully", isLoading = false)
                         getCategories() // Refresh the list after deletion
                     }
                     is ResultState.Error -> {
