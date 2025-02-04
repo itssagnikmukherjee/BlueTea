@@ -19,17 +19,25 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -45,9 +53,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
@@ -58,6 +68,7 @@ import kotlin.text.indexOf
 fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
     val context = LocalContext.current
     var bannerImages by remember { mutableStateOf<List<BannerImageData>>(List(3) { BannerImageData() }) }
+    val initialBannerImages by remember { mutableStateOf(bannerImages) }
 
     val bannerState by viewModel.addBannerState.collectAsState()
     val getBannerState by viewModel.getBannerState.collectAsState()
@@ -76,25 +87,78 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
         }
     }
 
-    // Show toast when banner is added
     LaunchedEffect(bannerState.data) {
         if (bannerState.data.isNotEmpty()) {
-            Toast.makeText(context, "Banner added successfully!", Toast.LENGTH_SHORT).show()
-            bannerImages = List(3) { BannerImageData() } // Reset to default state
+            Toast.makeText(context, "Banner updated successfully!", Toast.LENGTH_SHORT).show()
+            bannerImages = List(3) { BannerImageData() }
         }
     }
     LaunchedEffect(Unit) { viewModel.getBanners() }
 
-    Column(modifier = Modifier.fillMaxSize().padding(20.dp)){
+    val hasChanges = bannerImages != initialBannerImages
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
         Text("Current Preview")
         Spacer(modifier = Modifier.height(20.dp))
-        AnimatedBannerSection(banners = getBannerState.data)
+        AnimatedBannerSection(banners = getBannerState.data, viewModels = viewModel)
         Spacer(modifier = Modifier.height(20.dp))
         Text("Edit Banners")
         Spacer(modifier = Modifier.height(20.dp))
 
-        Box{
+        Column {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(bannerImages.size) { index ->
+                    BannerImageBox(
+                        bannerData = bannerImages[index],
+                        onImageClick = { launcher.launch("image/*") },
+                        onNameChange = { newName ->
+                            val updatedBannerImages = bannerImages.toMutableList()
+                            updatedBannerImages[index] =
+                                updatedBannerImages[index].copy(bannerName = newName)
+                            bannerImages = updatedBannerImages
+                        },
+                        onDelete = {
+                            val updatedBannerImages = bannerImages.toMutableList()
+                            updatedBannerImages.removeAt(index)
+                            bannerImages = updatedBannerImages
+                        },
+                        bannerIdx = index + 1
+                    )
+                }
 
+                if (bannerImages.size < 5) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .width(300.dp)
+                                .height(200.dp)
+                                .background(Color.LightGray, RoundedCornerShape(8.dp))
+                                .clickable {
+                                    val updatedBannerImages = bannerImages.toMutableList()
+                                    updatedBannerImages.add(BannerImageData())
+                                    bannerImages = updatedBannerImages
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add Image",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
                     if (bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() }) {
@@ -107,81 +171,89 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
                         ).show()
                     }
                 },
-                enabled = bannerImages.all { it.imageUri != null } && !isLoading,
-                modifier = Modifier.fillMaxWidth().zIndex(2f).align(Alignment.BottomEnd).padding(20.dp,10.dp)
+                enabled = bannerImages.all { it.imageUri != null } && !isLoading && hasChanges,
+                modifier = Modifier.fillMaxWidth().padding(20.dp)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(color = Color.White)
                 } else {
-                    Text("Add Banner")
+                    Text(if (hasChanges) "Update Banners" else "Add Banner")
                 }
             }
+        }
+        AdminBannerSettingsScreen(viewModel)
+    }
+}
 
-            Column (
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp).zIndex(1f).padding(bottom = 60.dp),
-            ) {
-                // Banner Image Boxes
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.weight(1f).fillMaxWidth()
-                ){
-                    items(bannerImages.size) { index ->
-                        BannerImageBox(
-                            bannerData = bannerImages[index],
-                            onImageClick = { launcher.launch("image/*") },
-                            onNameChange = { newName ->
-                                val updatedBannerImages = bannerImages.toMutableList()
-                                updatedBannerImages[index] =
-                                    updatedBannerImages[index].copy(bannerName = newName)
-                                bannerImages = updatedBannerImages
-                            },
-                            onDelete = {
-                                val updatedBannerImages = bannerImages.toMutableList()
-                                updatedBannerImages.removeAt(index)
-                                bannerImages = updatedBannerImages
-                            },
-                            bannerIdx = index + 1
+
+
+
+@Composable
+fun AdminBannerSettingsScreen(viewModel: ViewModels) {
+    var selectedAnimation by remember { mutableStateOf("Fade") }
+    var duration by remember { mutableStateOf(1000) } //
+    var isLooping by remember { mutableStateOf(false) }
+    var expandedAnimation by remember { mutableStateOf(false) }
+    var expandedDuration by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Row {
+        Text("Select Animation")
+            Box {
+                Button(onClick = { expandedAnimation = true }) {
+                    Text(selectedAnimation)
+                }
+                DropdownMenu(expanded = expandedAnimation, onDismissRequest = { expandedAnimation = false }) {
+                    listOf("Fade", "Slide", "Zoom").forEach { animation ->
+                        DropdownMenuItem(
+                            text = { Text(animation) },
+                            onClick = {
+                                selectedAnimation = animation
+                                expandedAnimation = false
+                            }
                         )
                     }
-
-                    if (bannerImages.size < 5) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth().height(200.dp).width(300.dp)
-                                    .background(Color.LightGray, RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        val updatedBannerImages = bannerImages.toMutableList()
-                                        updatedBannerImages.add(BannerImageData())
-                                        bannerImages = updatedBannerImages
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "Add Image",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                if (bannerState.error.isNotEmpty()) {
-                    Text(
-                        text = "Error: ${bannerState.error}",
-                        color = Color.Red,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
                 }
             }
         }
 
+        Row{
+        Text("Duration: ")
+            Box {
+                Button(onClick = { expandedDuration = true }) {
+                    Text("${duration} s")
+                }
+                DropdownMenu(expanded = expandedDuration, onDismissRequest = { expandedDuration = false }) {
+                    listOf(1, 2, 3, 4, 5).forEach { time ->
+                        DropdownMenuItem(
+                            text = { Text("${time} s") },
+                            onClick = {
+                                duration = time
+                                expandedDuration = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Enable Looping")
+            Switch(checked = isLooping, onCheckedChange = { isLooping = it })
+        }
+
+        Button(
+            onClick = {
+                viewModel.saveBannerSettings(BannerAnimationSettings(selectedAnimation, duration * 1000, isLooping))
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Save Settings")
+        }
     }
 }
+
+
 
 @Composable
 fun BannerImageBox(
@@ -247,7 +319,14 @@ fun BannerImageBox(
     }
 }
 
+
 data class BannerImageData(
     val imageUri: Uri? = null,
     val bannerName: String = ""
+)
+
+data class BannerAnimationSettings(
+    val animationType: String = "Fade",
+    val duration: Int = 1000,
+    val isLooping: Boolean = false
 )

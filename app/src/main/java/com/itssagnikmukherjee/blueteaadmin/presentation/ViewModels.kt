@@ -2,8 +2,11 @@ package com.itssagnikmukherjee.blueteaadmin.presentation
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -13,6 +16,7 @@ import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
+import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerAnimationSettings
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerImageData
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
@@ -275,6 +279,34 @@ class ViewModels @Inject constructor(
             }
         }
     }
+
+    fun saveBannerSettings(settings: BannerAnimationSettings) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("BANNER_SETTINGS").document("settings")
+            .set(settings)
+            .addOnSuccessListener {
+                Log.d("Admin", "Settings updated successfully")
+                getBanners()
+            }
+            .addOnFailureListener { e -> Log.e("Admin", "Error updating settings", e) }
+    }
+
+    private val _bannerSettingsState = mutableStateOf<BannerAnimationSettings?>(null)
+    val bannerSettingsState = _bannerSettingsState
+
+    fun fetchBannerSettings(onSettingsLoaded: (BannerAnimationSettings) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("BANNER_SETTINGS").document("settings")
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val settings = document.toObject(BannerAnimationSettings::class.java)
+                    settings?.let { onSettingsLoaded(it) }
+                }
+            }
+            .addOnFailureListener { e -> Log.e("User", "Error fetching settings", e) }
+    }
+
 }
 
 // Data Classes
