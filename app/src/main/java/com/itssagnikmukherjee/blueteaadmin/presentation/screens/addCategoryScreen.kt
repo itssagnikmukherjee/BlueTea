@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -206,19 +207,18 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
         items(categories.size) { index ->
             val category = categories[index]
             if (category != null) {
-                // State variables for each category item
                 var categoryName by remember { mutableStateOf(category.categoryName) }
                 var isEditing by remember { mutableStateOf(false) }
                 var hasChanges by remember { mutableStateOf(false) }
                 var updatedImageUri by remember { mutableStateOf<Uri?>(null) }
+                var showDeleteDialog by remember { mutableStateOf(false) } // State for delete dialog
 
-                // Launcher for image selection
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.GetContent()
                 ) { uri: Uri? ->
                     uri?.let { selectedUri ->
-                        updatedImageUri = selectedUri // Update the image URI for this specific item
-                        hasChanges = true // Track changes
+                        updatedImageUri = selectedUri
+                        hasChanges = true
                     }
                 }
 
@@ -233,22 +233,18 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                             .padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Edit Icon (Top-Left Corner)
                         if (!isEditing) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit Category",
                                 modifier = Modifier
-                                    .clickable {
-                                        isEditing = true // Enable editing mode
-                                    }
+                                    .clickable { isEditing = true }
                                     .padding(4.dp)
                                     .size(24.dp),
                                 tint = Color.Blue
                             )
                         }
 
-                        // Category Image
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
@@ -256,41 +252,36 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                 .background(Color.LightGray)
                                 .clickable {
                                     if (isEditing) {
-                                        launcher.launch("image/*") // Launch the image picker for this item
+                                        launcher.launch("image/*")
                                     }
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            // Display the new image if selected, otherwise display the existing image
                             AsyncImage(
                                 model = updatedImageUri ?: category.imageUrl,
                                 contentDescription = "Category Image",
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
-                            // Delete Icon (Top-Right Corner)
+
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Delete Category",
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .clickable {
-                                        // Delete the category
-                                        viewModel.deleteCategory(category.categoryName)
-                                    }
+                                    .clickable { showDeleteDialog = true } // Show dialog on click
                                     .padding(4.dp)
                                     .size(24.dp),
                                 tint = Color.Red
                             )
                         }
 
-                        // Category Name
                         if (isEditing) {
                             OutlinedTextField(
                                 value = categoryName,
                                 onValueChange = {
                                     categoryName = it
-                                    hasChanges = true // Track changes
+                                    hasChanges = true
                                 },
                                 placeholder = { Text("Category Name") },
                                 modifier = Modifier.fillMaxWidth()
@@ -303,15 +294,13 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                             )
                         }
 
-                        // Update Category Button (Visible only when changes are made)
                         if (hasChanges) {
                             Button(
                                 onClick = {
-                                    // Update the category with the new name and image
                                     val updatedCategory = category.copy(categoryName = categoryName)
                                     viewModel.updateCategory(updatedCategory, updatedImageUri, context)
-                                    hasChanges = false // Reset changes
-                                    isEditing = false // Exit editing mode
+                                    hasChanges = false
+                                    isEditing = false
                                 },
                                 modifier = Modifier.padding(top = 8.dp)
                             ) {
@@ -319,6 +308,31 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                             }
                         }
                     }
+                }
+
+                // Delete Confirmation Dialog
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        icon = {Icons.Default.Delete},
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Delete Category") },
+                        text = { Text("Are you sure you want to delete this category?") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    viewModel.deleteCategory(category.categoryName)
+                                    showDeleteDialog = false
+                                }
+                            ) {
+                                Text("Delete ${category.categoryName}")
+                            }
+                        },
+                        dismissButton = {
+                            Button(onClick = { showDeleteDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
                 }
             }
         }

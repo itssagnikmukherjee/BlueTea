@@ -138,7 +138,7 @@ class ViewModels @Inject constructor(
                     }
                     is ResultState.Success -> {
                         _deleteCategory.value = AddCategoryState(data = "Category ${categoryName} deleted successfully", isLoading = false)
-                        getCategories() // Refresh the list after deletion
+                        getCategories()
                     }
                     is ResultState.Error -> {
                         _deleteCategory.value = AddCategoryState(error = result.error, isLoading = false)
@@ -239,6 +239,7 @@ class ViewModels @Inject constructor(
                         }
                         is ResultState.Success -> {
                             _addBanner.value = AddBannerState(data = result.data, isLoading = false)
+                            getBanners()
                         }
                         is ResultState.Error -> {
                             _addBanner.value = AddBannerState(error = result.error, isLoading = false)

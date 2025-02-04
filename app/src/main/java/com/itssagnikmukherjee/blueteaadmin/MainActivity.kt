@@ -20,8 +20,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             BlueTeaAdminTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AddCategoryScreen()
-//                    AddBannerScreen()
+//                    AddCategoryScreen()
+                    AddBannerScreen()
                 }
             }
         }
