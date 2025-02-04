@@ -2,6 +2,7 @@ package com.itssagnikmukherjee.blueteaadmin.presentation.screens
 
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -18,8 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -37,6 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,11 +57,12 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
     var prePrice by remember { mutableIntStateOf(0) }
     var finalPrice by remember { mutableIntStateOf(0) }
     var productCategory by remember { mutableStateOf("") }
-    var productImageUri by remember { mutableStateOf<Uri?>(null) }
+    var productImageUris by remember { mutableStateOf<List<Uri?>>(emptyList()) }
     var availableUnits by remember { mutableIntStateOf(0) }
     val productState by viewModel.addProductState.collectAsState()
     val isLoading = productState.isLoading
     val getCategoryState by viewModel.getCategoryState.collectAsState()
+    val context = LocalContext.current
 
     var isDropdownExpanded by remember { mutableStateOf(false) } // State for dropdown visibility
 
@@ -68,40 +75,60 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        productImageUri = uri
+        uri?.let{selectedUri->
+            if(productImageUris.size<5){
+                productImageUris += selectedUri
+            }else{
+                Log.d("Admin", "Maximum 5 images allowed")
+            }
+        }
     }
 
     Column(modifier = modifier.padding(16.dp)) {
         Text("Add Product")
 
-        // Display categories in a LazyRow for reference
-        LazyRow {
-            items(getCategoryState.data.size) { index ->
-                Text(
-                    text = getCategoryState.data[index]?.categoryName ?: "",
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-            }
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         // Product Image Picker
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .background(Color.Gray, RoundedCornerShape(10.dp))
-                .clickable { launcher.launch("image/*") },
-            contentAlignment = Alignment.Center
-        ) {
-            if (productImageUri != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(productImageUri),
-                    contentDescription = null,
-                    modifier = Modifier.size(200.dp)
-                )
-            } else {
-                Text(text = "Select Image")
+        LazyRow {
+            items(productImageUris.size) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .background(Color.Gray, RoundedCornerShape(10.dp))
+                        .clickable { launcher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(productImageUris[index]),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Delete Image",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .clickable {
+                                productImageUris = productImageUris.toMutableList().apply{removeAt(index)}
+                            }
+                    )
+                }
+            }
+            if(productImageUris.size<5){
+                item{
+                    Box(
+                        modifier = Modifier
+                            .size(200.dp)
+                            .background(Color.Gray, RoundedCornerShape(10.dp))
+                            .clickable { launcher.launch("image/*") }
+                    ){
+                        Icon(imageVector = Icons.Default.Add,"")
+                    }
+                }
             }
         }
 
@@ -192,18 +219,33 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             onClick = {
                 val product = Product(
                     productName = productName,
-                    productCategory = productCategory,
                     productDescription = productDescription,
-                    productImage = productImageUri.toString(),
                     productPrePrice = prePrice,
                     productFinalPrice = finalPrice,
+                    productCategory = productCategory,
+                    productImages = emptyList(), // Initially empty, will be updated after upload
                     availableUnits = availableUnits
                 )
-                viewModel.addProduct(product)
+                viewModel.addProduct(product,context, productImageUris.filterNotNull())
+                // Clear the fields after adding the product
+                productName = ""
+                productDescription = ""
+                prePrice = 0
+                finalPrice = 0
+                productCategory = ""
+                productImageUris = emptyList()
+                availableUnits = 0
+                Toast.makeText(context,"Product ${product.productName} added successfully",Toast.LENGTH_LONG).show()
+                Log.d("Admin", "Product added successfully")
             },
             modifier = Modifier.fillMaxWidth()
         ) {
+            if(isLoading){
+                CircularProgressIndicator()
+            }
+            else{
             Text("Add Product")
+            }
         }
     }
 }

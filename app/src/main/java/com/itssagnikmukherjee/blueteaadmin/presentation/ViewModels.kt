@@ -312,24 +312,70 @@ class ViewModels @Inject constructor(
     //Product
     private val _addProduct = MutableStateFlow(AddProductState())
     val addProductState = _addProduct.asStateFlow()
-    fun addProduct(product: Product) {
-        viewModelScope.launch{
-            repo.addProduct(product).collectLatest { result ->
-                when(result){
-                    is ResultState.Loading -> {
-                        _addProduct.value = AddProductState(isLoading = true)
-                    }
-                    is ResultState.Success -> {
-                        _addProduct.value = AddProductState(data = result.data, isLoading = false)
-                    }
-                    is ResultState.Error -> {
-                        _addProduct.value = AddProductState(error = result.error, isLoading = false)
+    fun addProduct(product: Product, context: Context, imageUris: List<Uri>) {
+        viewModelScope.launch {
+            try {
+                // Step 1: Upload images to Supabase and get their URLs
+                val imageUrls = uploadProductImagesToSupabase(context, imageUris, product.productName)
+
+                // Step 2: Create the product with the image URLs
+                val updatedProduct = product.copy(productImages = imageUrls)
+
+                // Step 3: Add the product to the database
+                repo.addProduct(updatedProduct).collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _addProduct.value = AddProductState(isLoading = true)
+                        }
+                        is ResultState.Success -> {
+                            _addProduct.value = AddProductState(data = result.data, isLoading = false)
+                        }
+                        is ResultState.Error -> {
+                            _addProduct.value = AddProductState(error = result.error, isLoading = false)
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                // Handle image upload errors
+                _addProduct.value = AddProductState(error = e.message ?: "Failed to upload images", isLoading = false)
             }
         }
     }
 
+    private suspend fun uploadProductImagesToSupabase(
+        context: Context,
+        imageUris: List<Uri>,
+        productId: String
+    ): List<String> {
+        val imageUrls = mutableListOf<String>()
+
+        try {
+            for ((index, uri) in imageUris.withIndex()) {
+                // Open the input stream and read the image bytes
+                val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+                val imageBytes = inputStream?.readBytes()
+
+                // Define the folder structure and file name
+                val folderPath = "products/$productId"
+                val fileName = "image_${index + 1}.jpg" // Unique file name for each image
+
+                // Upload the image to Supabase Storage under the specific folder
+                supabaseClient.storage.from("products").upload(
+                    path = "$folderPath/$fileName",  // Path includes folder and file name
+                    data = imageBytes!!
+                )
+
+                // Get the public URL of the uploaded image
+                val imageUrl = supabaseClient.storage.from("products").publicUrl("$folderPath/$fileName")
+                imageUrls.add(imageUrl)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e // Rethrow the exception to handle it in the calling function
+        }
+
+        return imageUrls
+    }
 
 }
 
