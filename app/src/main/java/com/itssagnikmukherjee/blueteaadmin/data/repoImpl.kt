@@ -6,6 +6,7 @@ import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
+import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -130,5 +131,18 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
             }
 
         awaitClose { close() }
+    }
+
+    //adding product to firebase
+    override fun addProduct(product: Product): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.PRODUCT).add(product)
+            .addOnSuccessListener {
+                trySend(ResultState.Success("Product added successfully"))
+            }
+            .addOnFailureListener { e ->
+                trySend(ResultState.Error(e.message.toString()))
+            }
+        awaitClose{close()}
     }
 }

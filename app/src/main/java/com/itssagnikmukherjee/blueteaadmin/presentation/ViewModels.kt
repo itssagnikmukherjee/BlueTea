@@ -15,6 +15,7 @@ import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
+import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerAnimationSettings
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerImageData
@@ -307,9 +308,38 @@ class ViewModels @Inject constructor(
             .addOnFailureListener { e -> Log.e("User", "Error fetching settings", e) }
     }
 
+
+    //Product
+    private val _addProduct = MutableStateFlow(AddProductState())
+    val addProductState = _addProduct.asStateFlow()
+    fun addProduct(product: Product) {
+        viewModelScope.launch{
+            repo.addProduct(product).collectLatest { result ->
+                when(result){
+                    is ResultState.Loading -> {
+                        _addProduct.value = AddProductState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        _addProduct.value = AddProductState(data = result.data, isLoading = false)
+                    }
+                    is ResultState.Error -> {
+                        _addProduct.value = AddProductState(error = result.error, isLoading = false)
+                    }
+                }
+            }
+        }
+    }
+
+
 }
 
 // Data Classes
+data class AddProductState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: String = ""
+)
+
 data class AddBannerState(
     val isLoading: Boolean = false,
     val error: String = "",
