@@ -7,6 +7,7 @@ import com.itssagnikmukherjee.blueteauser.common.ResultState
 import com.itssagnikmukherjee.blueteauser.common.constants.Constants
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
+import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -55,4 +56,18 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
         awaitClose { close() }
     }
 
+    override fun getProducts(): Flow<ResultState<List<Product>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.PRODUCT).get().addOnSuccessListener {
+            val products = it.documents.mapNotNull {
+                it.toObject(Product::class.java)
+            }
+            trySend(ResultState.Success(products))
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose {
+            close()
+        }
+        }
 }

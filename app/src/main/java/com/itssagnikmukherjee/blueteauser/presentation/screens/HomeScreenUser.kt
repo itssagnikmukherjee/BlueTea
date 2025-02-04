@@ -1,5 +1,6 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -34,24 +35,31 @@ import coil3.compose.AsyncImage
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
+import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel()) {
     val categoryState by viewmodel.getCategoryState.collectAsState()
     val bannerState by viewmodel.getBannerState.collectAsState()
+    val productState by viewmodel.getProductState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewmodel.getCategories()
         viewmodel.getBanners()
+        viewmodel.getProducts()
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         // Banner Carousel
-        AnimatedBannerSection(banners = bannerState.data)
-
+        AnimatedBannerSection(banners = bannerState.data, viewModels = viewmodel)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -61,6 +69,11 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                 CategoryItem(category = categoryState.data[index]!!)
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Products List
+        Products(products = productState.data)
     }
 }
 
@@ -88,42 +101,77 @@ fun CategoryItem(category: Category) {
 @Composable
 fun AnimatedBannerSection(
     modifier: Modifier = Modifier,
-    banners: List<Banner>
+    banners: List<Banner>,
+    viewModels: ViewModels
 ) {
     if (banners.isEmpty()) {
         CircularProgressIndicator()
         return
     }
 
-
+    var settings by remember { mutableStateOf(BannerAnimationSettings()) }
     val allImages = banners.flatMap { it.bannerImageUrls }
 
     val pagerState = rememberPagerState(pageCount = { allImages.size })
     val pagerIsDragged by pagerState.interactionSource.collectIsDraggedAsState()
 
-    val autoAdvance = !pagerIsDragged
+    val autoAdvance = !pagerIsDragged || settings.isLooping
     val scale = remember { Animatable(1f) }
+    val alpha = remember { Animatable(1f) } // 🔹 Added for Fade effect
     var scaleCount = 2
 
+    // 🔹 Fetch banner settings when Composable loads
+    LaunchedEffect(Unit) {
+        viewModels.fetchBannerSettings{
+            settings = it
+        }
+    }
+
+    // 🔄 Observe settings changes dynamically
+    LaunchedEffect(viewModels) {
+        snapshotFlow { viewModels.bannerSettingsState.value }
+            .collectLatest { newSettings ->
+                newSettings?.let { settings = it }
+            }
+    }
+
     if (autoAdvance) {
-        LaunchedEffect(pagerState) {
+        LaunchedEffect(pagerState, settings) {
             while (true) {
-                delay(4000)
+                delay(settings.duration.toLong()) // ⏳ Apply dynamic duration
                 val nextPage = (pagerState.currentPage + 1) % allImages.size
                 pagerState.animateScrollToPage(nextPage)
             }
         }
-        LaunchedEffect(scale) {
-            while(scaleCount!=0){
+
+        // 🔹 Zoom Animation
+        LaunchedEffect(scale, settings) {
+            while (scaleCount != 0 && settings.animationType == "Zoom") {
                 scale.animateTo(
                     targetValue = 1.1f,
-                    animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+                    animationSpec = tween(durationMillis = settings.duration / 2, easing = FastOutSlowInEasing)
                 )
                 scale.animateTo(
                     targetValue = 1f,
-                    animationSpec = tween(1000, easing = FastOutSlowInEasing)
+                    animationSpec = tween(settings.duration / 2, easing = FastOutSlowInEasing)
                 )
                 scaleCount--
+            }
+        }
+
+        // 🔹 Fade Animation
+        LaunchedEffect(alpha, settings) {
+            if (settings.animationType == "Fade") {
+                while (true) {
+                    alpha.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = settings.duration / 10, easing = FastOutSlowInEasing)
+                    )
+                    alpha.animateTo(
+                        targetValue = 0.8f,
+                        animationSpec = tween(settings.duration, easing = FastOutSlowInEasing)
+                    )
+                }
             }
         }
     }
@@ -145,9 +193,14 @@ fun AnimatedBannerSection(
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = "Banner Image",
-                    modifier = Modifier.height(200.dp)
+                    modifier = Modifier
+                        .height(200.dp)
                         .clip(RoundedCornerShape(30.dp))
-                        .graphicsLayer(scaleX = scale.value, scaleY = scale.value),
+                        .graphicsLayer(
+                            scaleX = scale.value,
+                            scaleY = scale.value,
+                            alpha = alpha.value
+                        ),
                     contentScale = ContentScale.Crop
                 )
             }
@@ -155,6 +208,12 @@ fun AnimatedBannerSection(
         }
     }
 }
+
+data class BannerAnimationSettings(
+    val animationType: String = "Fade",
+    val duration: Int = 1000,
+    val isLooping: Boolean = false
+)
 
 @Composable
 fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = Modifier) {
@@ -179,4 +238,48 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
     }
 }
 
+@Composable
+fun Products(products: List<Product>) {
+    if (products.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "No products available", color = Color.Gray)
+        }
+    } else {
+        LazyRow {
+            items(products.size) { index ->
+                ProductItem(product = products[index])
+            }
+        }
+    }
+}
 
+@Composable
+fun ProductItem(product: Product) {
+    Card {
+        Column {
+            if (product.productImages.isNotEmpty()) {
+                AsyncImage(
+                    model = product.productImages[0],
+                    contentDescription = "Product Image",
+                    modifier = Modifier.size(100.dp)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "No Image")
+                }
+            }
+            Text(text = product.productName)
+            Text(text = product.productDescription)
+            Text(text = "Original Price: $${product.productPrePrice}")
+            Text(text = "Discounted Price: $${product.productFinalPrice}")
+        }
+    }
+}

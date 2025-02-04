@@ -67,14 +67,8 @@ dependencies {
     implementation(libs.firebase.firestore)
 
     //coil
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation(libs.coil.compose)
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
-
-    //supabase
-//    implementation("io.github.jan-tennert.supabase:storage-kt:3.0.3")
-//    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
-//    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-//    implementation("io.ktor:ktor-client-android:3.0.3")
 
     //horizontal pager
     implementation("com.google.accompanist:accompanist-pager:0.32.0")
