@@ -141,7 +141,8 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
                                 val updatedBannerImages = bannerImages.toMutableList()
                                 updatedBannerImages.removeAt(index)
                                 bannerImages = updatedBannerImages
-                            }
+                            },
+                            bannerIdx = index + 1
                         )
                     }
 
@@ -184,6 +185,7 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
 
 @Composable
 fun BannerImageBox(
+    bannerIdx: Int,
     bannerData: BannerImageData,
     onImageClick: () -> Unit,
     onNameChange: (String) -> Unit,
@@ -214,7 +216,7 @@ fun BannerImageBox(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Text("Select Image", color = Color.Gray)
+                    Text("Select Image $bannerIdx", color = Color.Gray)
                 }
 
                 // Delete Button (Cross Icon)
