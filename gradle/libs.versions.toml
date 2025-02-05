@@ -15,11 +15,13 @@ activityCompose = "1.10.0"
 composeBom = "2024.09.00"
 googleGmsGoogleServices = "4.4.2"
 firebaseFirestore = "25.1.1"
+navigationCompose = "2.8.6"
 playServicesMaps = "19.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
 google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
