@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
@@ -42,7 +43,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel()) {
+fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
     val categoryState by viewmodel.getCategoryState.collectAsState()
     val bannerState by viewmodel.getBannerState.collectAsState()
     val productState by viewmodel.getProductState.collectAsState()

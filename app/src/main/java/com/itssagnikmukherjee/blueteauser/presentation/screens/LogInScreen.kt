@@ -19,10 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 
 @Composable
-fun LoginScreen(viewModel: ViewModels = hiltViewModel()) {
+fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavController) {
     val loginState = viewModel.loginUserState.collectAsState()
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }

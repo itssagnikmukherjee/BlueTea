@@ -35,13 +35,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteauser.domain.models.UserData
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 
 
 @Composable
-fun SignUpScreen(viewModel: ViewModels = hiltViewModel()) {
+fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavController) {
     val registrationState = viewModel.registerUserState.collectAsState()
     val context = LocalContext.current
 
