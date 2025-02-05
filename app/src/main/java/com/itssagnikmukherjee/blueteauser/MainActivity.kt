@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
-import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
+import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
 import com.itssagnikmukherjee.blueteauser.presentation.theme.BlueTeaAdminTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             BlueTeaAdminTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 //                    HomeScreenUser()
-                    SignUpScreen()
+                    LoginScreen()
                 }
             }
         }

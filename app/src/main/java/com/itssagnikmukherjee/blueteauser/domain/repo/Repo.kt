@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface Repo {
     fun registerUserWithEmailAndPass(userData: UserData): Flow<ResultState<String>>
+    fun loginUserWithEmailAndPass(email: String, password: String): Flow<ResultState<String>>
     fun getCategories(): Flow<ResultState<List<Category>>>
     fun getBanners(): Flow<ResultState<List<Banner>>>
     fun getProducts(): Flow<ResultState<List<Product>>>

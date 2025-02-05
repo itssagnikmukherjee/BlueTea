@@ -27,16 +27,30 @@ class repoImpl @Inject constructor(
     ) : Repo {
 
     override fun registerUserWithEmailAndPass(userData: UserData): Flow<ResultState<String>> = callbackFlow{
+        trySend(ResultState.Loading)
         firebaseAuth.createUserWithEmailAndPassword(userData.email,userData.password).addOnSuccessListener {
             FirebaseFirestore.collection(Constants.USERS).document(it.user!!.uid).set(userData).addOnSuccessListener {
                 trySend(ResultState.Success("User Registered Successfully"))
             }.addOnFailureListener {
                 trySend(ResultState.Error(it.message.toString()))
-            }.addOnFailureListener {
-            trySend(ResultState.Error(it.message.toString()))
             }
         }
         awaitClose{close()}
+    }
+
+    override fun loginUserWithEmailAndPass(
+        email: String,
+        password: String
+    ): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        firebaseAuth.signInWithEmailAndPassword(email,password).addOnSuccessListener {
+            trySend(ResultState.Success("User Logged In Successfully"))
+        }.addOnFailureListener{
+            trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose{
+            close()
+        }
     }
 
     // getting categories from firebase

@@ -16,6 +16,7 @@ import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getProductsFromFirebaseUsecase
+import com.itssagnikmukherjee.blueteauser.domain.usecases.loginUserWithEmailAndPassUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.registerUserWithEmailUsecase
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BannerAnimationSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,6 +33,7 @@ class ViewModels @Inject constructor(
     private val getAllBanners: getBannersFromFirebaseUsecase,
     private val getAllProducts: getProductsFromFirebaseUsecase,
     private val registerUserWithEmail: registerUserWithEmailUsecase,
+    private val loginUserWithEmail : loginUserWithEmailAndPassUsecase
 ) : ViewModel() {
 
     private val _getCategoryState = MutableStateFlow(GetCategoryState())
@@ -145,7 +147,35 @@ class ViewModels @Inject constructor(
         }
     }
 
+//  login user
+    private val _loginUserState = MutableStateFlow(LoginUserState())
+    val loginUserState = _loginUserState.asStateFlow()
+
+    fun loginWithEmailPass(email: String, pass: String) {
+        viewModelScope.launch {
+            loginUserWithEmail.LoginUserWithEmailAndPassUsecase(email, pass)
+                .collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _loginUserState.value = LoginUserState(isLoading = true)
+                        }
+                        is ResultState.Success -> {
+                            _loginUserState.value = LoginUserState(data = result.data)
+                        }
+                        is ResultState.Error -> {
+                            _loginUserState.value = LoginUserState(error = result.error)
+                        }
+                    }
+                }
+        }
+    }
 }
+
+data class LoginUserState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: String? = null
+)
 
 data class RegisterUserState(
     val isLoading: Boolean = false,
