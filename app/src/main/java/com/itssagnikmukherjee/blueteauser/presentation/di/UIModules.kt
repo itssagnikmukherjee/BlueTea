@@ -1,5 +1,6 @@
 package com.itssagnikmukherjee.blueteauser.presentation.di
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.itssagnikmukherjee.blueteauser.data.repoImpl
 import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
@@ -13,7 +14,8 @@ import dagger.hilt.components.SingletonComponent
 object UIModules {
 
     @Provides
-    fun provideRepo(FirebaseFirestore: FirebaseFirestore): Repo {
-        return repoImpl(FirebaseFirestore)
+    fun provideRepo(FirebaseFirestore: FirebaseFirestore, firebaseAuth: FirebaseAuth): Repo {
+        return repoImpl(FirebaseFirestore,firebaseAuth)
     }
+
 }

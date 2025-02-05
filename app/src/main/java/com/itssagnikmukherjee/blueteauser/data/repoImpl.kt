@@ -1,20 +1,43 @@
 package com.itssagnikmukherjee.blueteauser.data
 
+import android.app.Activity
 import android.util.Log
 import androidx.compose.runtime.internal.StabilityInferred
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.itssagnikmukherjee.blueteauser.common.ResultState
 import com.itssagnikmukherjee.blueteauser.common.constants.Constants
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
+import com.itssagnikmukherjee.blueteauser.domain.models.UserData
 import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirestore) : Repo {
+class repoImpl @Inject constructor(
+    private val FirebaseFirestore: FirebaseFirestore,
+    private val firebaseAuth: FirebaseAuth,
+//    TODO : private val phoneAuthProvider: PhoneAuthProvider
+    ) : Repo {
+
+    override fun registerUserWithEmailAndPass(userData: UserData): Flow<ResultState<String>> = callbackFlow{
+        firebaseAuth.createUserWithEmailAndPassword(userData.email,userData.password).addOnSuccessListener {
+            FirebaseFirestore.collection(Constants.USERS).document(it.user!!.uid).set(userData).addOnSuccessListener {
+                trySend(ResultState.Success("User Registered Successfully"))
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.message.toString()))
+            }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+            }
+        }
+        awaitClose{close()}
+    }
 
     // getting categories from firebase
     override fun getCategories(): Flow<ResultState<List<Category>>> =callbackFlow{

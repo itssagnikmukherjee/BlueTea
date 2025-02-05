@@ -11,10 +11,12 @@ import com.itssagnikmukherjee.blueteauser.common.ResultState
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
+import com.itssagnikmukherjee.blueteauser.domain.models.UserData
 import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getProductsFromFirebaseUsecase
+import com.itssagnikmukherjee.blueteauser.domain.usecases.registerUserWithEmailUsecase
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BannerAnimationSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +31,7 @@ class ViewModels @Inject constructor(
     private val getAllCategories: getCategoriesFromFirebaseUsecase,
     private val getAllBanners: getBannersFromFirebaseUsecase,
     private val getAllProducts: getProductsFromFirebaseUsecase,
+    private val registerUserWithEmail: registerUserWithEmailUsecase,
 ) : ViewModel() {
 
     private val _getCategoryState = MutableStateFlow(GetCategoryState())
@@ -119,7 +122,36 @@ class ViewModels @Inject constructor(
             }
         }
     }
+
+//  Register user
+    private val _registerUserState = MutableStateFlow(RegisterUserState())
+    val registerUserState = _registerUserState.asStateFlow()
+
+    fun registerUserWithEmail(userData: UserData) {
+        viewModelScope.launch{
+            registerUserWithEmail.RegisterUserWithEmailAndPass(userData).collectLatest{result->
+                when(result){
+                    is ResultState.Loading ->{
+                        _registerUserState.value = RegisterUserState(isLoading = true)
+                    }
+                    is ResultState.Success ->{
+                        _registerUserState.value = RegisterUserState(data = result.data)
+                    }
+                    is ResultState.Error ->{
+                        _registerUserState.value = RegisterUserState(error = result.error)
+                    }
+                }
+            }
+        }
+    }
+
 }
+
+data class RegisterUserState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: String? = null
+)
 
 data class GetProductState(
     val data: List<Product> = emptyList(),

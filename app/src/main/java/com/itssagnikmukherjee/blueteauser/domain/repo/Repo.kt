@@ -4,9 +4,11 @@ import com.itssagnikmukherjee.blueteauser.common.ResultState
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
+import com.itssagnikmukherjee.blueteauser.domain.models.UserData
 import kotlinx.coroutines.flow.Flow
 
 interface Repo {
+    fun registerUserWithEmailAndPass(userData: UserData): Flow<ResultState<String>>
     fun getCategories(): Flow<ResultState<List<Category>>>
     fun getBanners(): Flow<ResultState<List<Banner>>>
     fun getProducts(): Flow<ResultState<List<Product>>>
