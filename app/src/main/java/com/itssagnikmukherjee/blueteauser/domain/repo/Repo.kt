@@ -13,4 +13,5 @@ interface Repo {
     fun getCategories(): Flow<ResultState<List<Category>>>
     fun getBanners(): Flow<ResultState<List<Banner>>>
     fun getProducts(): Flow<ResultState<List<Product>>>
+    fun getProductDetailsById(productId: String): Flow<ResultState<Product>>
 }

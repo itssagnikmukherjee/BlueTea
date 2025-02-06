@@ -1,11 +1,7 @@
-package com.itssagnikmukherjee.blueteauser.data
+package com.itssagnikmukherjee.blueteauser.data.repoImpl
 
-import android.app.Activity
 import android.util.Log
-import androidx.compose.runtime.internal.StabilityInferred
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.itssagnikmukherjee.blueteauser.common.ResultState
 import com.itssagnikmukherjee.blueteauser.common.constants.Constants
@@ -17,7 +13,6 @@ import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class repoImpl @Inject constructor(
@@ -26,35 +21,38 @@ class repoImpl @Inject constructor(
 //    TODO : private val phoneAuthProvider: PhoneAuthProvider
     ) : Repo {
 
-    override fun registerUserWithEmailAndPass(userData: UserData): Flow<ResultState<String>> = callbackFlow{
-        trySend(ResultState.Loading)
-        firebaseAuth.createUserWithEmailAndPassword(userData.email,userData.password).addOnSuccessListener {
-            FirebaseFirestore.collection(Constants.USERS).document(it.user!!.uid).set(userData).addOnSuccessListener {
-                trySend(ResultState.Success("User Registered Successfully"))
-            }.addOnFailureListener {
-                trySend(ResultState.Error(it.message.toString()))
-            }
+    override fun registerUserWithEmailAndPass(userData: UserData): Flow<ResultState<String>> =
+        callbackFlow {
+            trySend(ResultState.Loading)
+            firebaseAuth.createUserWithEmailAndPassword(userData.email, userData.password)
+                .addOnSuccessListener {
+                    FirebaseFirestore.collection(Constants.USERS).document(it.user!!.uid)
+                        .set(userData).addOnSuccessListener {
+                        trySend(ResultState.Success("User Registered Successfully"))
+                    }.addOnFailureListener {
+                        trySend(ResultState.Error(it.message.toString()))
+                    }
+                }
+            awaitClose { close() }
         }
-        awaitClose{close()}
-    }
 
     override fun loginUserWithEmailAndPass(
         email: String,
         password: String
     ): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        firebaseAuth.signInWithEmailAndPassword(email,password).addOnSuccessListener {
+        firebaseAuth.signInWithEmailAndPassword(email, password).addOnSuccessListener {
             trySend(ResultState.Success("User Logged In Successfully"))
-        }.addOnFailureListener{
+        }.addOnFailureListener {
             trySend(ResultState.Error(it.message.toString()))
         }
-        awaitClose{
+        awaitClose {
             close()
         }
     }
 
     // getting categories from firebase
-    override fun getCategories(): Flow<ResultState<List<Category>>> =callbackFlow{
+    override fun getCategories(): Flow<ResultState<List<Category>>> = callbackFlow {
         trySend(ResultState.Loading)
         FirebaseFirestore.collection(Constants.CATEGORY).get().addOnSuccessListener {
             val categories = it.documents.mapNotNull {
@@ -100,6 +98,19 @@ class repoImpl @Inject constructor(
                 it.toObject(Product::class.java)
             }
             trySend(ResultState.Success(products))
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose {
+            close()
+        }
+    }
+
+    override fun getProductDetailsById(productId: String): Flow<ResultState<Product>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.PRODUCT).document(productId).get().addOnSuccessListener{
+            val product = it.toObject(Product::class.java)
+            trySend(ResultState.Success(product!!))
         }.addOnFailureListener {
             trySend(ResultState.Error(it.message.toString()))
         }

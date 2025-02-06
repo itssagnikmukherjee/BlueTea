@@ -108,9 +108,10 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                 phoneNo = userPhoneNo,
                 email = userEmail,
                 password = userPassword,
-                address = userAddress
+                address = userAddress,
+                userImage = userImage.toString()
             )
-            viewModel.registerUserWithEmail(userData)
+            viewModel.registerUserWithEmail(context = context, userData = userData, imageUri = userImage)
         }) {
             Text("Register")
         }

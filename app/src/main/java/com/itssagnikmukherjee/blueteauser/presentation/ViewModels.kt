@@ -12,14 +12,16 @@ import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.domain.models.UserData
-import com.itssagnikmukherjee.blueteauser.domain.repo.Repo
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
+import com.itssagnikmukherjee.blueteauser.domain.usecases.getProductDetailsUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getProductsFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.loginUserWithEmailAndPassUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.registerUserWithEmailUsecase
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BannerAnimationSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -33,8 +35,30 @@ class ViewModels @Inject constructor(
     private val getAllBanners: getBannersFromFirebaseUsecase,
     private val getAllProducts: getProductsFromFirebaseUsecase,
     private val registerUserWithEmail: registerUserWithEmailUsecase,
-    private val loginUserWithEmail : loginUserWithEmailAndPassUsecase
+    private val loginUserWithEmail : loginUserWithEmailAndPassUsecase,
+    private val getProductDetails: getProductDetailsUsecase,
+    private val supabaseClient: SupabaseClient
 ) : ViewModel() {
+
+    private val _getProductDetailsState = MutableStateFlow(GetProductDetailsState())
+    val getProductDetailsState = _getProductDetailsState.asStateFlow()
+    fun getProductDetails(productId: String) {
+        viewModelScope.launch{
+                getProductDetails.GetProductDetailsUsecase(productId).collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _getProductDetailsState.value = GetProductDetailsState(isLoading = true)
+                        }
+                        is ResultState.Success -> {
+                            _getProductDetailsState.value = GetProductDetailsState(data = listOf(result.data))
+                        }
+                        is ResultState.Error -> {
+                            _getProductDetailsState.value = GetProductDetailsState(error = result.error)
+                        }
+                    }
+                }
+        }
+    }
 
     private val _getCategoryState = MutableStateFlow(GetCategoryState())
     val getCategoryState = _getCategoryState.asStateFlow()
@@ -125,21 +149,55 @@ class ViewModels @Inject constructor(
         }
     }
 
-//  Register user
+    // Upload profile picture to Supabase
+    private suspend fun uploadProfileImageToSupabase(
+        context: Context,
+        imageUri: Uri?,
+        userId: String
+    ): String? {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri!!)
+            val imageBytes = inputStream?.readBytes()
+
+            val folderPath = "user-profile-pic/$userId"
+            val fileName = "profile_pic_$userId.jpg"
+
+            supabaseClient.storage.from("user-profile-pic").upload(
+                path = "$folderPath/$fileName",
+                data = imageBytes!!
+            )
+            supabaseClient.storage.from("user-profile-pic").publicUrl("$folderPath/$fileName")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    // Register user
     private val _registerUserState = MutableStateFlow(RegisterUserState())
     val registerUserState = _registerUserState.asStateFlow()
 
-    fun registerUserWithEmail(userData: UserData) {
-        viewModelScope.launch{
-            registerUserWithEmail.RegisterUserWithEmailAndPass(userData).collectLatest{result->
-                when(result){
-                    is ResultState.Loading ->{
+    fun registerUserWithEmail(userData: UserData, context: Context, imageUri: Uri?) {
+        viewModelScope.launch {
+            _registerUserState.value = RegisterUserState(isLoading = true)
+
+            val imageUrl = if (imageUri != null) {
+                uploadProfileImageToSupabase(context, imageUri, userData.firstName)
+            } else {
+                null
+            }
+
+            val updatedUser = userData.copy(userImage = imageUrl ?: "")
+
+            registerUserWithEmail.RegisterUserWithEmailAndPass(updatedUser).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
                         _registerUserState.value = RegisterUserState(isLoading = true)
                     }
-                    is ResultState.Success ->{
+                    is ResultState.Success -> {
                         _registerUserState.value = RegisterUserState(data = result.data)
                     }
-                    is ResultState.Error ->{
+                    is ResultState.Error -> {
                         _registerUserState.value = RegisterUserState(error = result.error)
                     }
                 }
@@ -170,6 +228,12 @@ class ViewModels @Inject constructor(
         }
     }
 }
+
+data class GetProductDetailsState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: List<Product?> = emptyList()
+)
 
 data class LoginUserState(
     val isLoading: Boolean = false,
