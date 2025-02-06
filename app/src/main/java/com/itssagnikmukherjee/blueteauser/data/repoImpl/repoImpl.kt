@@ -95,7 +95,7 @@ class repoImpl @Inject constructor(
         trySend(ResultState.Loading)
         FirebaseFirestore.collection(Constants.PRODUCT).get().addOnSuccessListener {
             val products = it.documents.mapNotNull {
-                it.toObject(Product::class.java)
+                it.toObject(Product::class.java)?.copy(productId = it.id)
             }
             trySend(ResultState.Success(products))
         }.addOnFailureListener {
@@ -107,15 +107,30 @@ class repoImpl @Inject constructor(
     }
 
     override fun getProductDetailsById(productId: String): Flow<ResultState<Product>> = callbackFlow {
-        trySend(ResultState.Loading)
-        FirebaseFirestore.collection(Constants.PRODUCT).document(productId).get().addOnSuccessListener{
-            val product = it.toObject(Product::class.java)
-            trySend(ResultState.Success(product!!))
-        }.addOnFailureListener {
-            trySend(ResultState.Error(it.message.toString()))
-        }
-        awaitClose {
+        if (productId.isEmpty()) {
+            trySend(ResultState.Error("Product ID is empty"))
             close()
+            return@callbackFlow
         }
-        }
+
+        trySend(ResultState.Loading)
+
+        FirebaseFirestore.collection(Constants.PRODUCT).document(productId).get()
+            .addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.exists()) {
+                    val product = documentSnapshot.toObject(Product::class.java)
+                    if (product != null) {
+                        trySend(ResultState.Success(product))
+                    } else {
+                        trySend(ResultState.Error("Product not found"))
+                    }
+                } else {
+                    trySend(ResultState.Error("Document does not exist"))
+                }
+            }
+            .addOnFailureListener { exception ->
+                trySend(ResultState.Error(exception.message ?: "Unknown error"))
+            }
+        awaitClose{close()}
+    }
 }

@@ -1,10 +1,14 @@
 package com.itssagnikmukherjee.blueteauser.presentation.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
 import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
@@ -14,20 +18,21 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth) {
-
-//    val startDestination = if(firebaseAuth.currentUser == null)  Routes.LoginScreen else Routes.HomeScreen
-
-    val startDestination = Routes.SignUpScreen
+    val startDestination = if (firebaseAuth.currentUser == null) Routes.LoginScreen else Routes.HomeScreen
 
     val navController = rememberNavController()
+
     NavHost(
         navController = navController,
         startDestination = startDestination
-    ){
-        composable<Routes.LoginScreen>{ LoginScreen(navController = navController) }
-        composable<Routes.SignUpScreen>{ SignUpScreen(navController = navController) }
-        composable<Routes.HomeScreen>{ HomeScreenUser(navController = navController) }
-        composable<Routes.ProfileScreen>{ ProfileScreen(navController = navController) }
-        composable<Routes.ProductDetailsScreen>{ProductDetailsScreen(navController = navController, productId = "")}
+    ) {
+        composable<Routes.LoginScreen> { LoginScreen(navController = navController) }
+        composable<Routes.SignUpScreen> { SignUpScreen(navController = navController) }
+        composable<Routes.HomeScreen> { HomeScreenUser(navController = navController) }
+        composable<Routes.ProfileScreen> { ProfileScreen(navController = navController) }
+        composable<Routes.ProductDetailsScreen> {
+            val data = it.toRoute<Routes.ProductDetailsScreen>()
+            ProductDetailsScreen(navController = navController, productId = data.productId)
+        }
     }
 }

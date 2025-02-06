@@ -42,23 +42,25 @@ class ViewModels @Inject constructor(
 
     private val _getProductDetailsState = MutableStateFlow(GetProductDetailsState())
     val getProductDetailsState = _getProductDetailsState.asStateFlow()
+
     fun getProductDetails(productId: String) {
-        viewModelScope.launch{
-                getProductDetails.GetProductDetailsUsecase(productId).collectLatest { result ->
-                    when (result) {
-                        is ResultState.Loading -> {
-                            _getProductDetailsState.value = GetProductDetailsState(isLoading = true)
-                        }
-                        is ResultState.Success -> {
-                            _getProductDetailsState.value = GetProductDetailsState(data = listOf(result.data))
-                        }
-                        is ResultState.Error -> {
-                            _getProductDetailsState.value = GetProductDetailsState(error = result.error)
-                        }
+        viewModelScope.launch {
+            getProductDetails.GetProductDetailsUsecase(productId).collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
+                        _getProductDetailsState.value = GetProductDetailsState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        _getProductDetailsState.value = GetProductDetailsState(data = result.data)
+                    }
+                    is ResultState.Error -> {
+                        _getProductDetailsState.value = GetProductDetailsState(error = result.error)
                     }
                 }
+            }
         }
     }
+
 
     private val _getCategoryState = MutableStateFlow(GetCategoryState())
     val getCategoryState = _getCategoryState.asStateFlow()
@@ -231,8 +233,8 @@ class ViewModels @Inject constructor(
 
 data class GetProductDetailsState(
     val isLoading: Boolean = false,
-    val error: String = "",
-    val data: List<Product?> = emptyList()
+    val data: Product? = null,
+    val error: String? = null
 )
 
 data class LoginUserState(

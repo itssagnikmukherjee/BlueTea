@@ -38,6 +38,7 @@ import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -74,7 +75,25 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
         Spacer(modifier = Modifier.height(16.dp))
 
         // Products List
-        Products(products = productState.data)
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(productState.data.size) { product ->
+                ProductItem(
+                    product = productState.data[product],
+                    onclick = {
+                        val productId = productState.data[product].productId
+                        if (productId.isNotEmpty()) {
+                            navController.navigate(Routes.ProductDetailsScreen(productId))
+                        } else {
+                            Log.e("HomeScreenUser", "Invalid productId: $productId")
+                        }
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -118,17 +137,15 @@ fun AnimatedBannerSection(
 
     val autoAdvance = !pagerIsDragged || settings.isLooping
     val scale = remember { Animatable(1f) }
-    val alpha = remember { Animatable(1f) } // 🔹 Added for Fade effect
+    val alpha = remember { Animatable(1f) }
     var scaleCount = 2
 
-    // 🔹 Fetch banner settings when Composable loads
     LaunchedEffect(Unit) {
         viewModels.fetchBannerSettings{
             settings = it
         }
     }
 
-    // 🔄 Observe settings changes dynamically
     LaunchedEffect(viewModels) {
         snapshotFlow { viewModels.bannerSettingsState.value }
             .collectLatest { newSettings ->
@@ -145,7 +162,6 @@ fun AnimatedBannerSection(
             }
         }
 
-        // 🔹 Zoom Animation
         LaunchedEffect(scale, settings) {
             while (scaleCount != 0 && settings.animationType == "Zoom") {
                 scale.animateTo(
@@ -160,7 +176,6 @@ fun AnimatedBannerSection(
             }
         }
 
-        // 🔹 Fade Animation
         LaunchedEffect(alpha, settings) {
             if (settings.animationType == "Fade") {
                 while (true) {
@@ -240,27 +255,13 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
 }
 
 @Composable
-fun Products(products: List<Product>) {
-    if (products.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "No products available", color = Color.Gray)
-        }
-    } else {
-        LazyRow {
-            items(products.size) { index ->
-                ProductItem(product = products[index])
-            }
-        }
-    }
-}
-
-@Composable
-fun ProductItem(product: Product) {
+fun ProductItem(product: Product, onclick: () -> Unit) {
     Card {
-        Column {
+        Column(
+            modifier = Modifier.clickable {
+                onclick()
+            }
+        ) {
             if (product.productImages.isNotEmpty()) {
                 AsyncImage(
                     model = product.productImages[0],

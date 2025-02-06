@@ -112,6 +112,7 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                 userImage = userImage.toString()
             )
             viewModel.registerUserWithEmail(context = context, userData = userData, imageUri = userImage)
+            Toast.makeText(context,"Registration Successful",Toast.LENGTH_SHORT).show()
         }) {
             Text("Register")
         }

@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 
 @Composable
 fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavController) {
@@ -36,6 +37,7 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
             }
             loginState.value.data != null -> {
                 Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+                navController.navigate(Routes.HomeScreen)
             }
         }
     }
