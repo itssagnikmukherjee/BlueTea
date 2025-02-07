@@ -133,4 +133,20 @@ class repoImpl @Inject constructor(
             }
         awaitClose{close()}
     }
+
+    override fun getUserDetails(userId: String): Flow<ResultState<UserData>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.USERS).get().addOnSuccessListener {
+            val users = it.documents.mapNotNull { it.toObject(UserData::class.java)?.copy(userId = it.id) }
+            val user = users.find { it.userId == userId }
+            if (user != null) {
+                trySend(ResultState.Success(user))
+            } else {
+                trySend(ResultState.Error("User not found"))
+            }
+        }.addOnFailureListener {
+         trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose{close()}
+    }
 }

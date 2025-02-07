@@ -1,6 +1,8 @@
 package com.itssagnikmukherjee.blueteauser.presentation.navigation
 
 import android.util.Log
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -24,7 +26,11 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth) {
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) },
+        exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }) },
+        popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }) },
+        popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }) }
     ) {
         composable<Routes.LoginScreen> { LoginScreen(navController = navController) }
         composable<Routes.SignUpScreen> { SignUpScreen(navController = navController) }

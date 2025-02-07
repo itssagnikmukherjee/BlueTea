@@ -44,13 +44,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavbarComposable()
+            NavbarComposable(navController = navController)
         }
     ){ innerPadding->
 

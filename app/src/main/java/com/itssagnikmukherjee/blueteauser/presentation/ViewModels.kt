@@ -16,6 +16,7 @@ import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFirebaseUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getProductDetailsUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getProductsFromFirebaseUsecase
+import com.itssagnikmukherjee.blueteauser.domain.usecases.getUserDetailsUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.loginUserWithEmailAndPassUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.registerUserWithEmailUsecase
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BannerAnimationSettings
@@ -37,7 +38,8 @@ class ViewModels @Inject constructor(
     private val registerUserWithEmail: registerUserWithEmailUsecase,
     private val loginUserWithEmail : loginUserWithEmailAndPassUsecase,
     private val getProductDetails: getProductDetailsUsecase,
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
+    private val getUserDetails: getUserDetailsUsecase
 ) : ViewModel() {
 
     private val _getProductDetailsState = MutableStateFlow(GetProductDetailsState())
@@ -50,9 +52,11 @@ class ViewModels @Inject constructor(
                     is ResultState.Loading -> {
                         _getProductDetailsState.value = GetProductDetailsState(isLoading = true)
                     }
+
                     is ResultState.Success -> {
                         _getProductDetailsState.value = GetProductDetailsState(data = result.data)
                     }
+
                     is ResultState.Error -> {
                         _getProductDetailsState.value = GetProductDetailsState(error = result.error)
                     }
@@ -95,12 +99,14 @@ class ViewModels @Inject constructor(
                     is ResultState.Loading -> {
                         _getBannerState.value = GetBannerState(isLoading = true)
                     }
+
                     is ResultState.Success -> {
-                        val bannerList : List<Banner> = (result.data as List<Banner>).map{it->
+                        val bannerList: List<Banner> = (result.data as List<Banner>).map { it ->
                             Banner(it.bannerImageUrls, it.bannerName)
                         }
-                        _getBannerState.value = GetBannerState(data= bannerList)
+                        _getBannerState.value = GetBannerState(data = bannerList)
                     }
+
                     is ResultState.Error -> {
                         _getBannerState.value = GetBannerState(error = result.error)
                     }
@@ -191,23 +197,26 @@ class ViewModels @Inject constructor(
 
             val updatedUser = userData.copy(userImage = imageUrl ?: "")
 
-            registerUserWithEmail.RegisterUserWithEmailAndPass(updatedUser).collectLatest { result ->
-                when (result) {
-                    is ResultState.Loading -> {
-                        _registerUserState.value = RegisterUserState(isLoading = true)
-                    }
-                    is ResultState.Success -> {
-                        _registerUserState.value = RegisterUserState(data = result.data)
-                    }
-                    is ResultState.Error -> {
-                        _registerUserState.value = RegisterUserState(error = result.error)
+            registerUserWithEmail.RegisterUserWithEmailAndPass(updatedUser)
+                .collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _registerUserState.value = RegisterUserState(isLoading = true)
+                        }
+
+                        is ResultState.Success -> {
+                            _registerUserState.value = RegisterUserState(data = result.data)
+                        }
+
+                        is ResultState.Error -> {
+                            _registerUserState.value = RegisterUserState(error = result.error)
+                        }
                     }
                 }
-            }
         }
     }
 
-//  login user
+    //  login user
     private val _loginUserState = MutableStateFlow(LoginUserState())
     val loginUserState = _loginUserState.asStateFlow()
 
@@ -219,9 +228,11 @@ class ViewModels @Inject constructor(
                         is ResultState.Loading -> {
                             _loginUserState.value = LoginUserState(isLoading = true)
                         }
+
                         is ResultState.Success -> {
                             _loginUserState.value = LoginUserState(data = result.data)
                         }
+
                         is ResultState.Error -> {
                             _loginUserState.value = LoginUserState(error = result.error)
                         }
@@ -229,7 +240,39 @@ class ViewModels @Inject constructor(
                 }
         }
     }
+
+    //   get user details
+    private val _getUserDetailsState = MutableStateFlow(GetUserDetailsState())
+    val getUserDetailsState = _getUserDetailsState.asStateFlow()
+
+    fun getUserDetails(userId: String) {
+        viewModelScope.launch {
+            getUserDetails.GetUserDetailsUsecase(UserData(userId = userId))
+                .collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _getUserDetailsState.value = GetUserDetailsState(isLoading = true)
+                        }
+
+                        is ResultState.Success -> {
+                            _getUserDetailsState.value = GetUserDetailsState(data = result.data)
+                        }
+
+                        is ResultState.Error -> {
+                            _getUserDetailsState.value = GetUserDetailsState(error = result.error)
+                        }
+                    }
+                }
+        }
+
+    }
 }
+
+data class GetUserDetailsState(
+    val isLoading: Boolean = false,
+    val data: UserData? = null,
+    val error: String? = null
+)
 
 data class GetProductDetailsState(
     val isLoading: Boolean = false,
