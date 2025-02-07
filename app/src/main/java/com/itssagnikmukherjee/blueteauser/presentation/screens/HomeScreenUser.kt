@@ -1,5 +1,6 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -43,55 +44,64 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
-    val categoryState by viewmodel.getCategoryState.collectAsState()
-    val bannerState by viewmodel.getBannerState.collectAsState()
-    val productState by viewmodel.getProductState.collectAsState()
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            NavbarComposable()
+        }
+    ){ innerPadding->
 
-    LaunchedEffect(Unit) {
-        viewmodel.getCategories()
-        viewmodel.getBanners()
-        viewmodel.getProducts()
-    }
+        val categoryState by viewmodel.getCategoryState.collectAsState()
+        val bannerState by viewmodel.getBannerState.collectAsState()
+        val productState by viewmodel.getProductState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Banner Carousel
-        AnimatedBannerSection(banners = bannerState.data, viewModels = viewmodel)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Category List
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(categoryState.data.size) { index ->
-                CategoryItem(category = categoryState.data[index]!!)
-            }
+        LaunchedEffect(Unit) {
+            viewmodel.getCategories()
+            viewmodel.getBanners()
+            viewmodel.getProducts()
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Products List
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            items(productState.data.size) { product ->
-                ProductItem(
-                    product = productState.data[product],
-                    onclick = {
-                        val productId = productState.data[product].productId
-                        if (productId.isNotEmpty()) {
-                            navController.navigate(Routes.ProductDetailsScreen(productId))
-                        } else {
-                            Log.e("HomeScreenUser", "Invalid productId: $productId")
+            // Banner Carousel
+            AnimatedBannerSection(banners = bannerState.data, viewModels = viewmodel)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Category List
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(categoryState.data.size) { index ->
+                    CategoryItem(category = categoryState.data[index]!!)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Products List
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(productState.data.size) { product ->
+                    ProductItem(
+                        product = productState.data[product],
+                        onclick = {
+                            val productId = productState.data[product].productId
+                            if (productId.isNotEmpty()) {
+                                navController.navigate(Routes.ProductDetailsScreen(productId))
+                            } else {
+                                Log.e("HomeScreenUser", "Invalid productId: $productId")
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
