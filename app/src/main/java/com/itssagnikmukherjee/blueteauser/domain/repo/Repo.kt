@@ -15,4 +15,5 @@ interface Repo {
     fun getProducts(): Flow<ResultState<List<Product>>>
     fun getUserDetails(userId: String): Flow<ResultState<UserData>>
     fun getProductDetailsById(productId: String): Flow<ResultState<Product>>
+    fun logout()
 }

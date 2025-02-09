@@ -3,11 +3,17 @@ package com.itssagnikmukherjee.blueteauser.presentation
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.auth.User
 import com.itssagnikmukherjee.blueteauser.common.ResultState
+import com.itssagnikmukherjee.blueteauser.common.constants.Constants
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
@@ -24,9 +30,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.io.InputStream
 import javax.inject.Inject
 
@@ -39,7 +47,8 @@ class ViewModels @Inject constructor(
     private val loginUserWithEmail : loginUserWithEmailAndPassUsecase,
     private val getProductDetails: getProductDetailsUsecase,
     private val supabaseClient: SupabaseClient,
-    private val getUserDetails: getUserDetailsUsecase
+    private val getUserDetails: getUserDetailsUsecase,
+    private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
     private val _getProductDetailsState = MutableStateFlow(GetProductDetailsState())
@@ -168,7 +177,8 @@ class ViewModels @Inject constructor(
             val imageBytes = inputStream?.readBytes()
 
             val folderPath = "user-profile-pic/$userId"
-            val fileName = "profile_pic_$userId.jpg"
+            val fileName = "profile_pic_${userId}_${System.currentTimeMillis()}.jpg"
+
 
             supabaseClient.storage.from("user-profile-pic").upload(
                 path = "$folderPath/$fileName",
@@ -196,7 +206,10 @@ class ViewModels @Inject constructor(
             }
 
             val updatedUser = userData.copy(userImage = imageUrl ?: "")
-
+            val userId = firebaseAuth.currentUser?.uid
+            if (userId != null) {
+                updatedUser.userId = userId
+            }
             registerUserWithEmail.RegisterUserWithEmailAndPass(updatedUser)
                 .collectLatest { result ->
                     when (result) {
@@ -266,7 +279,56 @@ class ViewModels @Inject constructor(
         }
 
     }
+
+    // update user state
+    private val _updateUserState = MutableStateFlow(GetUserDetailsState())
+    val updateUserState  = _updateUserState.asStateFlow()
+
+    fun updateUserDetails(userId: String, updatedUser: UserData, imageUri: Uri? = null, context: Context) {
+        Log.d("Update User", "Updating user details: $updatedUser")
+        viewModelScope.launch {
+            _updateUserState.value = GetUserDetailsState(isLoading = true)
+            try {
+                val imageUrl = imageUri?.let { uploadProfileImageToSupabase(context, it, userId) } ?: updatedUser.userImage
+                val updateMap = mapOf(
+                    "firstName" to updatedUser.firstName,
+                    "lastName" to updatedUser.lastName,
+                    "email" to updatedUser.email,
+                    "address" to updatedUser.address,
+                    "userImage" to imageUrl
+                )
+
+                Log.d("UpdateUserDetails", "Updating document: users/$userId")
+                Log.d("UpdateUserDetails", "Update map: $updateMap")
+
+                val documentRef = FirebaseFirestore.getInstance().collection(Constants.USERS).document(userId)
+                val documentSnapshot = documentRef.get().await()
+
+                if (documentSnapshot.exists()) {
+                    documentRef.update(updateMap).await()
+                    _updateUserState.value = GetUserDetailsState(isLoading = false, data = updatedUser.copy(userImage = imageUrl))
+                    Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                    getUserDetails(userId)
+                } else {
+                    Log.e("UpdateUserDetails", "Document does not exist: users/$userId")
+                    _updateUserState.value = GetUserDetailsState(isLoading = false, error = "Document not found")
+                    Toast.makeText(context, "Failed to update profile: Document not found", Toast.LENGTH_SHORT).show()
+                }
+
+            } catch (e: Exception) {
+                Log.e("UpdateUserDetails", "Error: ${e.message}", e)
+                _updateUserState.value = GetUserDetailsState(isLoading = false, error = e.message ?: "Error updating user details")
+                Toast.makeText(context, "Failed to update profile!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    //logout
+    fun logout() {
+        firebaseAuth.signOut()
+    }
 }
+
 
 data class GetUserDetailsState(
     val isLoading: Boolean = false,

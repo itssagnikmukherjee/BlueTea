@@ -34,4 +34,5 @@ sealed class Routes {
     data class ProductDetailsScreen(
         val productId: String
     )
+
 }
