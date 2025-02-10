@@ -39,6 +39,7 @@ import androidx.navigation.NavController
 import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteauser.domain.models.UserData
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 
 
 @Composable
@@ -112,6 +113,7 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                 userImage = userImage.toString()
             )
             viewModel.registerUserWithEmail(context = context, userData = userData, imageUri = userImage)
+            navController.navigate(Routes.HomeScreen)
             Toast.makeText(context,"Registration Successful",Toast.LENGTH_SHORT).show()
         }) {
             Text("Register")

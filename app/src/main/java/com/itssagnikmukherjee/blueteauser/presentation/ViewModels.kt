@@ -206,10 +206,8 @@ class ViewModels @Inject constructor(
             }
 
             val updatedUser = userData.copy(userImage = imageUrl ?: "")
-            val userId = firebaseAuth.currentUser?.uid
-            if (userId != null) {
-                updatedUser.userId = userId
-            }
+
+
             registerUserWithEmail.RegisterUserWithEmailAndPass(updatedUser)
                 .collectLatest { result ->
                     when (result) {

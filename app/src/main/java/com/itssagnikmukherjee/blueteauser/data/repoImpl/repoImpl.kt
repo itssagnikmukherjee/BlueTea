@@ -26,8 +26,11 @@ class repoImpl @Inject constructor(
             trySend(ResultState.Loading)
             firebaseAuth.createUserWithEmailAndPassword(userData.email, userData.password)
                 .addOnSuccessListener {
+                    val userId = it.user!!.uid
+                    val updatedUser = userData.copy(userId = userId)
+
                     FirebaseFirestore.collection(Constants.USERS).document(it.user!!.uid)
-                        .set(userData).addOnSuccessListener {
+                        .set(updatedUser).addOnSuccessListener {
                         trySend(ResultState.Success("User Registered Successfully"))
                     }.addOnFailureListener {
                         trySend(ResultState.Error(it.message.toString()))

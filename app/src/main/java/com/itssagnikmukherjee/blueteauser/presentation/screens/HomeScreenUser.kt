@@ -50,6 +50,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
 
     val firebaseAuth = FirebaseAuth.getInstance()
     val userId = firebaseAuth.currentUser?.uid ?: ""
+    Log.d("HomeScreenUser", "User ID: $userId")
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
