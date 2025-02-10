@@ -63,7 +63,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 @Composable
 fun ProfileScreen(viewModel: ViewModels = hiltViewModel(),
                   navController: NavController,
-                  userId: String = "pw8YRmjUt2ZMFeeyw3QBUS3mYcF2") {
+                  userId: String) {
 
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
@@ -71,6 +71,7 @@ fun ProfileScreen(viewModel: ViewModels = hiltViewModel(),
     var address by remember { mutableStateOf("") }
     var isEditable by remember { mutableStateOf(false) }
     var changesMade by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     var currentImgUrl by remember { mutableStateOf<String?>(null) }
     var selectedImgUrl by remember { mutableStateOf<Uri?>(null) }
@@ -154,7 +155,8 @@ fun ProfileScreen(viewModel: ViewModels = hiltViewModel(),
                 value = email,
                 onValueChange = { email = it; changesMade = true },
                 label = { Text("Email") },
-                readOnly = !isEditable
+                readOnly = true,
+                enabled = false
             )
 
             OutlinedTextField(
@@ -186,8 +188,35 @@ fun ProfileScreen(viewModel: ViewModels = hiltViewModel(),
             Button(onClick = {}) {
                 Text("Change Password")
             }
+
+            if (showLogoutDialog){
+                AlertDialog(
+                    onDismissRequest = { showLogoutDialog = false },
+                    title = { Text("Logout") },
+                    text = { Text("Are you sure you want to logout?") },
+                    confirmButton = {
+                        Button(onClick = {
+                            viewModel.logout()
+                            navController.popBackStack(Routes.LoginScreen, inclusive = false)
+                            navController.navigate(Routes.LoginScreen){
+                                popUpTo(Routes.LoginScreen){
+                                    inclusive = true
+                                }
+                            }
+                        }){
+                            Text("Confirm")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showLogoutDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+
             Button(onClick = {
-                viewModel.logout()
+                showLogoutDialog = true
             }) {
                 Text("Logout")
             }

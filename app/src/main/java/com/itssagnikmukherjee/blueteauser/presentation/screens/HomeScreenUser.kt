@@ -35,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.google.accompanist.pager.HorizontalPagerIndicator
+import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.domain.models.Banner
 import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
@@ -46,10 +47,14 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
+
+    val firebaseAuth = FirebaseAuth.getInstance()
+    val userId = firebaseAuth.currentUser?.uid ?: ""
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavbarComposable(navController = navController)
+            NavbarComposable(navController = navController, userId = userId)
         }
     ){ innerPadding->
 

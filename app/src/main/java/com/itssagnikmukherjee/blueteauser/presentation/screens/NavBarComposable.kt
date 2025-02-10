@@ -39,9 +39,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 
 @Composable
-fun NavbarComposable(modifier: Modifier = Modifier, navController: NavController) {
+fun NavbarComposable(navController: NavController, userId: String) {
 
     val navItemList = listOf(
         NavItem(icon = Icons.Default.Home, text = "Home"),
@@ -82,7 +83,11 @@ fun NavbarComposable(modifier: Modifier = Modifier, navController: NavController
                             horizontalArrangement = Arrangement.Center,
                             modifier = Modifier.padding(5.dp,0.dp)
                         ) {
-                            IconButton(onClick = { selectedNavItem = item }) {
+                            IconButton(onClick = {
+                                selectedNavItem = item;
+                                if (navItemList[item].text == "Profile") navController.navigate(
+                                    Routes.ProfileScreen(userId))
+                            }) {
                                 Icon(
                                     imageVector = navItemList[item].icon,
                                     contentDescription = navItemList[item].text,

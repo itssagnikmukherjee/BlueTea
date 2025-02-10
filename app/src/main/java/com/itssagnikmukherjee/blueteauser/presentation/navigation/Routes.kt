@@ -2,6 +2,7 @@ package com.itssagnikmukherjee.blueteauser.presentation.navigation
 
 import kotlinx.serialization.Serializable
 
+@Serializable
 sealed class Routes {
     @Serializable
     object LoginScreen
@@ -13,7 +14,9 @@ sealed class Routes {
     object HomeScreen
 
     @Serializable
-    object ProfileScreen
+    data class ProfileScreen(
+        val userId: String
+    )
 
     @Serializable
     object WishListScreen

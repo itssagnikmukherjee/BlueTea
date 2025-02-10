@@ -57,6 +57,11 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
             }) {
                 Text("Login")
             }
+            Button(onClick = {
+                navController.navigate(Routes.SignUpScreen)
+            }) {
+                Text("Sign Up")
+            }
         }
     }
 }

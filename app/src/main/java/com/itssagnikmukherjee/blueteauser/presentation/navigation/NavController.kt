@@ -21,9 +21,10 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth) {
-//    val startDestination = if (firebaseAuth.currentUser == null) Routes.LoginScreen else Routes.HomeScreen
-    val startDestination = Routes.ProfileScreen
+    val startDestination = if (firebaseAuth.currentUser == null) Routes.LoginScreen else Routes.HomeScreen
     val navController = rememberNavController()
+
+
 
     NavHost(
         navController = navController,
@@ -37,7 +38,10 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth) {
         composable<Routes.SignUpScreen> { SignUpScreen(navController = navController) }
         composable<Routes.HomeScreen> { HomeScreenUser(navController = navController) }
 //        composable<Routes.ChangePasswordScreen> { ChangePasswordScreen(navController = navController) }
-        composable<Routes.ProfileScreen> { ProfileScreen(navController = navController) }
+        composable<Routes.ProfileScreen> {
+            val data = it.toRoute<Routes.ProfileScreen>()
+            ProfileScreen(navController = navController, userId = data.userId)
+        }
         composable<Routes.ProductDetailsScreen> {
             val data = it.toRoute<Routes.ProductDetailsScreen>()
             ProductDetailsScreen(navController = navController, productId = data.productId)
