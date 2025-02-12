@@ -54,7 +54,6 @@ class repoImpl @Inject constructor(
         }
     }
 
-    // getting categories from firebase
     override fun getCategories(): Flow<ResultState<List<Category>>> = callbackFlow {
         trySend(ResultState.Loading)
         FirebaseFirestore.collection(Constants.CATEGORY).get().addOnSuccessListener {
