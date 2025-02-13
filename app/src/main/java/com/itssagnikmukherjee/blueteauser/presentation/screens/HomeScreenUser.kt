@@ -53,10 +53,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
     Log.d("HomeScreenUser", "User ID: $userId")
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            NavbarComposable(navController = navController, userId = userId)
-        }
+        modifier = Modifier.fillMaxSize()
     ){ innerPadding->
 
         val categoryState by viewmodel.getCategoryState.collectAsState()

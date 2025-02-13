@@ -84,10 +84,24 @@ fun NavbarComposable(navController: NavController, userId: String) {
                             modifier = Modifier.padding(5.dp,0.dp)
                         ) {
                             IconButton(onClick = {
-                                selectedNavItem = item;
-                                if (navItemList[item].text == "Profile") navController.navigate(
-                                    Routes.ProfileScreen(userId))
-                            }) {
+                                selectedNavItem = item
+
+                                val currentDestination = navController.currentBackStackEntry?.destination?.route
+                                val targetRoute = when (navItemList[item].text) {
+                                    "Profile" -> Routes.ProfileScreen(userId)
+                                    "Home" -> Routes.HomeScreen
+                                    else -> null
+                                }
+
+                                if (targetRoute != null && currentDestination != targetRoute) {
+                                    navController.navigate(targetRoute) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            })
+                            {
                                 Icon(
                                     imageVector = navItemList[item].icon,
                                     contentDescription = navItemList[item].text,
