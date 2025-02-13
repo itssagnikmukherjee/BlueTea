@@ -1,6 +1,11 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,21 +25,23 @@ fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, use
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = currentBackStackEntry?.destination?.route ?: ""
 
-    // Extract only the class name from the full package path
     val currentScreen = currentRoute.substringAfterLast(".")
 
-    // Routes where BottomNav should be hidden
     val hideBottomNavRoutes = setOf(
         Routes.LoginScreen::class.simpleName,
-        Routes.SignUpScreen::class.simpleName,
-        Routes.ProductDetailsScreen::class.simpleName
+        Routes.SignUpScreen::class.simpleName
     )
 
-    val showBottomNav = currentScreen !in hideBottomNavRoutes
+    val showBottomNav = currentScreen !in hideBottomNavRoutes &&
+            !currentScreen.contains("ProductDetailsScreen", ignoreCase = true)
 
     Scaffold(
         bottomBar = {
-            if (showBottomNav) {
+            AnimatedVisibility(
+                visible = showBottomNav,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
                 NavbarComposable(navController,userId)
             }
         }
