@@ -272,29 +272,37 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
 }
 
 @Composable
-fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = hiltViewModel(), userId : String) {
+fun ProductItem(
+    product: Product,
+    onclick: () -> Unit,
+    viewModel: ViewModels = hiltViewModel(),
+    userId: String
+) {
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
+
     var isFavorite by remember { mutableStateOf(false) }
-    isFavorite = getUserDetailsState.value.data?.wishlistItems?.contains(product.productId) == true
+
+    val wishlist = getUserDetailsState.value.data?.wishlistItems ?: emptyList()
+    LaunchedEffect(wishlist) {
+        isFavorite = wishlist.contains(product.productId)
+    }
+
     Card {
         Box {
-            IconButton(onClick = {
-                isFavorite = !isFavorite
-                viewModel.updateFavoriteList(
-                    userId = userId,
-                    productId = product.productId,
-                    isFavorite = isFavorite
+            IconButton(
+                onClick = {
+                    isFavorite = !isFavorite // Optimistic UI update
+                    viewModel.updateFavoriteList(userId, product.productId, isFavorite)
+                },
+                modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = null
                 )
-            },modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)) {
-                Icon(imageVector = if (!isFavorite) Icons.Default.FavoriteBorder else Icons.Default.Favorite,
-                    contentDescription = "")
             }
 
-            Column(
-                modifier = Modifier.clickable {
-                    onclick()
-                }
-            ) {
+            Column(modifier = Modifier.clickable { onclick() }) {
                 if (product.productImages.isNotEmpty()) {
                     AsyncImage(
                         model = product.productImages[0],
@@ -303,9 +311,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                     )
                 } else {
                     Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .background(Color.LightGray),
+                        modifier = Modifier.size(100.dp).background(Color.LightGray),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(text = "No Image")
