@@ -18,6 +18,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
@@ -31,6 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -101,7 +105,8 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                             } else {
                                 Log.e("HomeScreenUser", "Invalid productId: $productId")
                             }
-                        }
+                        },
+                        userId = userId
                     )
                 }
             }
@@ -267,33 +272,50 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
 }
 
 @Composable
-fun ProductItem(product: Product, onclick: () -> Unit) {
+fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = hiltViewModel(), userId : String) {
+    val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
+    var isFavorite by remember { mutableStateOf(false) }
+    isFavorite = getUserDetailsState.value.data?.wishlistItems?.contains(product.productId) == true
     Card {
-        Column(
-            modifier = Modifier.clickable {
-                onclick()
-            }
-        ) {
-            if (product.productImages.isNotEmpty()) {
-                AsyncImage(
-                    model = product.productImages[0],
-                    contentDescription = "Product Image",
-                    modifier = Modifier.size(100.dp)
+        Box {
+            IconButton(onClick = {
+                isFavorite = !isFavorite
+                viewModel.updateFavoriteList(
+                    userId = userId,
+                    productId = product.productId,
+                    isFavorite = isFavorite
                 )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "No Image")
-                }
+            },modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)) {
+                Icon(imageVector = if (!isFavorite) Icons.Default.FavoriteBorder else Icons.Default.Favorite,
+                    contentDescription = "")
             }
-            Text(text = product.productName)
-            Text(text = product.productDescription)
-            Text(text = "Original Price: $${product.productPrePrice}")
-            Text(text = "Discounted Price: $${product.productFinalPrice}")
+
+            Column(
+                modifier = Modifier.clickable {
+                    onclick()
+                }
+            ) {
+                if (product.productImages.isNotEmpty()) {
+                    AsyncImage(
+                        model = product.productImages[0],
+                        contentDescription = "Product Image",
+                        modifier = Modifier.size(100.dp)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "No Image")
+                    }
+                }
+                Text(text = product.productName)
+                Text(text = product.productDescription)
+                Text(text = "Original Price: $${product.productPrePrice}")
+                Text(text = "Discounted Price: $${product.productFinalPrice}")
+            }
         }
     }
 }
