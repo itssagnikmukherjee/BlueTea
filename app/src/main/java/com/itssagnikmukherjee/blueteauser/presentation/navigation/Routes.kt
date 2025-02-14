@@ -19,7 +19,9 @@ sealed class Routes {
     )
 
     @Serializable
-    object WishListScreen
+    data class WishListScreen(
+        val userId: String
+    )
 
     @Serializable
     object CartScreen

@@ -90,6 +90,7 @@ fun NavbarComposable(navController: NavController, userId: String) {
                                 val targetRoute = when (navItemList[item].text) {
                                     "Profile" -> Routes.ProfileScreen(userId)
                                     "Home" -> Routes.HomeScreen
+                                    "Favorite" -> Routes.WishListScreen(userId)
                                     else -> null
                                 }
 

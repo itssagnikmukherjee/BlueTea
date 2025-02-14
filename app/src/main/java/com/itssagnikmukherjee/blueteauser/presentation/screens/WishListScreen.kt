@@ -1,0 +1,88 @@
+package com.itssagnikmukherjee.blueteauser.presentation.screens
+
+import android.util.Log
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.itssagnikmukherjee.blueteauser.domain.models.Product
+import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+
+@Composable
+fun WishListScreen(navController: NavController, viewModel: ViewModels = hiltViewModel(), userId: String) {
+    val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
+    val getProductsState = viewModel.getProductState.collectAsState()
+
+    val productID = getUserDetailsState.value.data?.wishlistItems ?: emptyList()
+    val products = getProductsState.value.data ?: emptyList()
+
+    val wishlistProducts = products.filter { product -> product.productId in productID }
+
+    LaunchedEffect(Unit) {
+        viewModel.getUserDetails(userId)
+        viewModel.getProducts()
+    }
+
+    Log.d("WishListScreen", "Firestore Wishlist: $productID")
+    Log.d("WishListScreen", "Filtered Wishlist Products: $wishlistProducts")
+
+    LazyColumn {
+        items(wishlistProducts.size) { product ->
+            WishListItem(product = wishlistProducts[product],userId = userId)
+        }
+    }
+}
+
+@Composable
+fun WishListItem(product: Product, viewModel: ViewModels = hiltViewModel(), userId: String) {
+    Box {
+        IconButton(onClick = {
+            viewModel.updateFavoriteList(userId = userId, productId = product.productId, isFavorite = false)
+        }
+            , modifier = Modifier.align(Alignment.TopEnd)) {
+            Icon(imageVector = Icons.Default.Close,"")
+        }
+        Row {
+            AsyncImage(
+                model = product.productImages[0], "",
+                modifier = Modifier.size(200.dp)
+            )
+            Column {
+                Text(text = product.productName)
+                Text(text = product.productDescription)
+                Text(text = product.productPrePrice.toString())
+                Text(text = product.productFinalPrice.toString())
+                Button({}) {
+                    Text("Buy Now")
+                }
+                Button({}) {
+                    Text("Add to cart")
+                }
+            }
+        }
+    }
+}
