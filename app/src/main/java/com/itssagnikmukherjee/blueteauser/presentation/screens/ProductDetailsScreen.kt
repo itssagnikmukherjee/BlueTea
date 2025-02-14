@@ -42,10 +42,19 @@ import coil3.compose.AsyncImage
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.input.pointer.pointerInput
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -90,7 +99,9 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
 
                     IconButton(
                         onClick = {},
-                        modifier = Modifier.zIndex(9999f).align(Alignment.TopEnd)
+                        modifier = Modifier
+                            .zIndex(9999f)
+                            .align(Alignment.TopEnd)
                     ) {
                         Icon(imageVector = Icons.Default.FavoriteBorder, contentDescription = "")
                     }
@@ -117,9 +128,12 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                                         (pagerState.currentPage - 1).coerceAtLeast(0)
                                                     )
                                                 }
+
                                                 dragAmount < -50 -> coroutineScope.launch {
                                                     pagerState.animateScrollToPage(
-                                                        (pagerState.currentPage + 1).coerceAtMost(productImages.size - 1)
+                                                        (pagerState.currentPage + 1).coerceAtMost(
+                                                            productImages.size - 1
+                                                        )
                                                     )
                                                 }
                                             }
@@ -154,7 +168,11 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         .clickable {
-                                            coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(
+                                                    index
+                                                )
+                                            }
                                         }
                                 )
                             }
@@ -172,12 +190,34 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                         )
                     }
 
+                    var cartClicked by remember { mutableStateOf(false) }
+
                     Column(
                         modifier = Modifier.align(Alignment.BottomCenter),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Button(onClick = {}) {
-                            Text("Add to Cart")
+                        var cartItemCount by remember { mutableIntStateOf(0) }
+                        Button(onClick = {
+                            cartClicked=true
+                            cartItemCount++
+                        }) {
+                            if (cartClicked && cartItemCount>0){
+                                    Row {
+                                        IconButton({ cartItemCount++ }) {
+                                            Icon(imageVector = Icons.Default.Add, "")
+                                        }
+                                        Text("$cartItemCount")
+                                        IconButton({ cartItemCount-- }) {
+                                            Icon(imageVector = Icons.Default.ArrowDropDown, "")
+                                        }
+                                        IconButton({}) {
+                                            Icon(imageVector = Icons.Default.Check, "")
+                                        }
+                                    }
+                            }
+                            else{
+                                Text("Add to Cart")
+                            }
                         }
                         Button(onClick = {}) {
                             Text("Buy Now")
