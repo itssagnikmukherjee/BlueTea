@@ -325,6 +325,31 @@ class ViewModels @Inject constructor(
     fun logout() {
         firebaseAuth.signOut()
     }
+
+    //update favorite list
+    fun updateFavoriteList(userId: String, productId : String, isFavorite : Boolean) {
+        viewModelScope.launch {
+            val db = FirebaseFirestore.getInstance()
+            val documentRef = db.collection(Constants.USERS).document(userId)
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(documentRef)
+                val currentWishListItems = snapshot.get("wishlistItems") as? List<String> ?: emptyList()
+
+                val updatedWishList = if (isFavorite) {
+                    currentWishListItems + productId
+                } else {
+                    currentWishListItems - productId
+                }
+                transaction.update(documentRef, "wishlistItems", updatedWishList)
+            }.addOnSuccessListener {
+                Log.d("UpdateFavoriteList", "Favorite list updated successfully!")
+                getUserDetails(userId)
+            }.addOnFailureListener { e ->
+                Log.e("UpdateFavoriteList", "Error updating favorite list", e)
+            }
+        }
+    }
+
 }
 
 

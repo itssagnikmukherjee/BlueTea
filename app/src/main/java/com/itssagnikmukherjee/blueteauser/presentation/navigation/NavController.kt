@@ -41,7 +41,7 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
         }
         composable<Routes.ProductDetailsScreen> {
             val data = it.toRoute<Routes.ProductDetailsScreen>()
-            ProductDetailsScreen(navController = navController, productId = data.productId)
+            ProductDetailsScreen(navController = navController, productId = data.productId, userId = data.userId)
         }
     }
 }

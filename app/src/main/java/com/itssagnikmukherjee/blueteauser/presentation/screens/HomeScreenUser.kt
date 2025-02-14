@@ -97,7 +97,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                         onclick = {
                             val productId = productState.data[product].productId
                             if (productId.isNotEmpty()) {
-                                navController.navigate(Routes.ProductDetailsScreen(productId))
+                                navController.navigate(Routes.ProductDetailsScreen(productId, userId))
                             } else {
                                 Log.e("HomeScreenUser", "Invalid productId: $productId")
                             }

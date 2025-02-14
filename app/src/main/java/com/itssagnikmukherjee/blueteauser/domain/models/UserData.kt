@@ -9,4 +9,6 @@ data class UserData (
     val password: String="",
     val phoneNo: String="",
     var userId : String ="",
+    val cartItems : List<String> = emptyList(),
+    val wishlistItems : List<String> = emptyList()
 )

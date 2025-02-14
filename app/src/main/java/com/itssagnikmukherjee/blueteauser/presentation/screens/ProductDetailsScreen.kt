@@ -53,6 +53,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,18 +64,28 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController: NavController, productId: String) {
+fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController: NavController, productId: String, userId: String) {
     val context = LocalContext.current
     val getProductDetailsState = viewModel.getProductDetailsState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
 
     LaunchedEffect(Unit) {
-        if (productId.isNotEmpty()) {
+        if (productId.isNotEmpty() && userId.isNotEmpty()) {
             viewModel.getProductDetails(productId)
+            viewModel.getUserDetails(userId)
         } else {
             Toast.makeText(context, "Invalid Product ID", Toast.LENGTH_SHORT).show()
         }
     }
+
+    var isFavorite by remember { mutableStateOf(false) }
+    isFavorite = getUserDetailsState.value.data?.wishlistItems?.contains(productId) == true
+
+
+    Log.d("ProductDetailsScreen", "Firestore Wishlist: ${getUserDetailsState.value.data?.wishlistItems}")
+    Log.d("ProductDetailsScreen", "isFavorite: $isFavorite")
+
 
     when {
         getProductDetailsState.value.isLoading -> {
@@ -98,12 +109,22 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                     }
 
                     IconButton(
-                        onClick = {},
+                        onClick = {
+                            isFavorite = !isFavorite
+                            viewModel.updateFavoriteList(
+                                userId = userId,
+                                productId = productId,
+                                isFavorite = isFavorite
+                            )
+                        },
                         modifier = Modifier
                             .zIndex(9999f)
                             .align(Alignment.TopEnd)
                     ) {
-                        Icon(imageVector = Icons.Default.FavoriteBorder, contentDescription = "")
+                        Icon(
+                            imageVector = if (!isFavorite) Icons.Default.FavoriteBorder else Icons.Default.Favorite,
+                            contentDescription = ""
+                        )
                     }
 
                     Column(
@@ -191,7 +212,6 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                     }
 
                     var cartClicked by remember { mutableStateOf(false) }
-
                     Column(
                         modifier = Modifier.align(Alignment.BottomCenter),
                         horizontalAlignment = Alignment.CenterHorizontally
