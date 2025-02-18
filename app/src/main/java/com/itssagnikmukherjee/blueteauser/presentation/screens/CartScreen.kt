@@ -5,14 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Button
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Icon
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.IconButton
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -41,39 +37,42 @@ fun CartScreen(
     viewModel: ViewModels = hiltViewModel(),
     userId: String
 ) {
-    // Collect user details and product state
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
     val getProductsState = viewModel.getProductState.collectAsState()
 
-    // Extract cart items (product IDs and quantities) from user details
     val productID = getUserDetailsState.value.data?.cartItems ?: emptyMap()
 
-    // Extract all products
     val cartProducts = getProductsState.value.data ?: emptyList()
 
-    // Filter products that are in the cart
     val cartItems = remember(cartProducts, productID) {
         cartProducts.filter { it.productId in productID.keys }
     }
 
-    // Fetch user details and products on initial composition
     LaunchedEffect(userId) {
         viewModel.getUserDetails(userId)
         viewModel.getProducts()
     }
 
-    // Display the cart items in a LazyColumn
-    LazyColumn {
-        items(cartItems.size, key = { cartItems[it].productId }) { cartProduct ->
-            CartItem(
-                product = cartProducts[cartProduct],
-                initialQuantity = productID[cartProducts[cartProduct].productId] ?: 0,
-                onQuantityUpdate = { newQuantity ->
-                    viewModel.updateCartQuantity(userId, cartProducts[cartProduct].productId, newQuantity)
-                }
-            )
+    Column {
+        LazyColumn {
+            items(cartItems.size, key = { cartItems[it].productId }) { cartProduct ->
+                CartItem(
+                    product = cartProducts[cartProduct],
+                    initialQuantity = productID[cartProducts[cartProduct].productId] ?: 0,
+                    onQuantityUpdate = { newQuantity ->
+                        viewModel.updateCartQuantity(userId, cartProducts[cartProduct].productId, newQuantity)
+                    }
+                )
+            }
+        }
+
+        Text("Total Items: ${cartItems.size}")
+        Text("Total Price: ${cartItems.sumOf { it.productFinalPrice.toDouble() }}")
+        Button(onClick = { /* Handle checkout action */ }) {
+            Text("Checkout (${cartItems.size})")
         }
     }
+
 }
 
 
