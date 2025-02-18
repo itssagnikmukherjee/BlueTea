@@ -91,6 +91,7 @@ fun NavbarComposable(navController: NavController, userId: String) {
                                     "Profile" -> Routes.ProfileScreen(userId)
                                     "Home" -> Routes.HomeScreen
                                     "Favorite" -> Routes.WishListScreen(userId)
+                                    "Cart" -> Routes.CartScreen(userId)
                                     else -> null
                                 }
 

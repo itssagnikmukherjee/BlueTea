@@ -350,6 +350,37 @@ class ViewModels @Inject constructor(
         }
     }
 
+    fun updateCartList(userId: String, productId : String, quantity : Int, isCarted : Boolean){
+        viewModelScope.launch {
+            val db = FirebaseFirestore.getInstance()
+            val documentRef = db.collection(Constants.USERS).document(userId)
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(documentRef)
+                val currentCartItems = snapshot.get("cartItems") as? Map<String, Int> ?: emptyMap()
+
+                val updatedCartItems = if(isCarted){
+                    currentCartItems + (productId to quantity)
+                }else{
+                    currentCartItems - productId
+                }
+                transaction.update(documentRef, "cartItems", updatedCartItems)
+            }.addOnSuccessListener {
+                Log.d("UpdateCartList", "Cart list updated successfully!")
+                getUserDetails(userId)
+            }.addOnFailureListener{ e ->
+                Log.e("UpdateCartList", "Error updating cart list", e)
+            }
+        }
+    }
+
+    fun updateCartQuantity(userId: String, productId: String, quantity: Int) {
+        if (quantity > 0) {
+            updateCartList(userId, productId, quantity, isCarted = true)
+        } else {
+            updateCartList(userId, productId, 0, isCarted = false)
+        }
+    }
+
 }
 
 

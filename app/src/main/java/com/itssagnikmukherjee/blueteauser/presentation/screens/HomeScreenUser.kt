@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
@@ -283,18 +285,40 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
         mutableStateOf(getUserDetailsState.value.data?.wishlistItems?.contains(product.productId) ?: false)
     }
 
+    var isCarted by remember  (getUserDetailsState.value.data){
+        mutableStateOf(getUserDetailsState.value.data?.cartItems?.contains(product.productId)?:false)
+    }
+
     Card {
         Box {
-            IconButton(onClick = {
-                isFavorite = !isFavorite
-                viewModel.updateFavoriteList(
-                    userId = userId,
-                    productId = product.productId,
-                    isFavorite = isFavorite
-                )
-            },modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)) {
-                Icon(imageVector = if (!isFavorite) Icons.Default.FavoriteBorder else Icons.Default.Favorite,
-                    contentDescription = "")
+            Column(
+                modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)
+            ) {
+
+                IconButton(onClick = {
+                    isFavorite = !isFavorite
+                    viewModel.updateFavoriteList(
+                        userId = userId,
+                        productId = product.productId,
+                        isFavorite = isFavorite
+                    )
+                }) {
+                    Icon(imageVector = if (!isFavorite) Icons.Default.FavoriteBorder else Icons.Default.Favorite,
+                        contentDescription = "")
+                }
+
+                IconButton(onClick={
+                    isCarted = !isCarted
+                    viewModel.updateCartList(
+                        userId = userId,
+                        productId = product.productId,
+                        isCarted = isCarted,
+                        quantity = 1
+                    )
+                }) {
+                    Icon(imageVector = if(!isCarted) Icons.Default.ShoppingCart else Icons.Default.MailOutline,"")
+                }
+
             }
 
             Column(

@@ -13,12 +13,14 @@ import androidx.navigation.navArgument
 import androidx.navigation.toRoute
 import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes.ProfileScreen
+import com.itssagnikmukherjee.blueteauser.presentation.screens.CartScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
 import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProductDetailsScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProfileScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.WishListScreen
+import okhttp3.Route
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, navController: NavHostController) {
@@ -41,6 +43,11 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
             WishListScreen(navController = navController, userId = data.userId)
         }
 
+        composable<Routes.CartScreen>{
+            val data = it.toRoute<Routes.CartScreen>()
+            CartScreen(navController = navController, userId = data.userId)
+        }
+
         composable<Routes.ProfileScreen> {
             val data = it.toRoute<Routes.ProfileScreen>()
             ProfileScreen(navController = navController, userId = data.userId)
@@ -50,5 +57,6 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
             val data = it.toRoute<Routes.ProductDetailsScreen>()
             ProductDetailsScreen(navController = navController, productId = data.productId, userId = data.userId)
         }
+
     }
 }
