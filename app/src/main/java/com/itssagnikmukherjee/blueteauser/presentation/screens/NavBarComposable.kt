@@ -88,10 +88,10 @@ fun NavbarComposable(navController: NavController, userId: String) {
 
                                 val currentDestination = navController.currentBackStackEntry?.destination?.route
                                 val targetRoute = when (navItemList[item].text) {
-                                    "Profile" -> Routes.ProfileScreen(userId)
                                     "Home" -> Routes.HomeScreen
                                     "Favorite" -> Routes.WishListScreen(userId)
                                     "Cart" -> Routes.CartScreen(userId)
+                                    "Profile" -> Routes.ProfileScreen(userId)
                                     else -> null
                                 }
 
