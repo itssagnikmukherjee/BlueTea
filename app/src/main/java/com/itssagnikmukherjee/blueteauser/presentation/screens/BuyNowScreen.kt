@@ -1,6 +1,11 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import android.app.Activity
+import android.widget.RadioGroup
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,8 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +37,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
 
 @Composable
 fun BuyNowScreen(
@@ -39,7 +48,7 @@ fun BuyNowScreen(
     quantity: String
 ) {
     var shippingAddress by remember { mutableStateOf("") }
-    var paymentMethod by remember { mutableStateOf("Credit Card") }
+    var selectedPaymentMethod by remember { mutableStateOf("Cash on Delivery") }
 
     val getProductsState = viewModel.getProductState.collectAsState()
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
@@ -160,12 +169,50 @@ fun BuyNowScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Payment Method")
-        OutlinedTextField(
-            value = paymentMethod,
-            onValueChange = { paymentMethod = it },
-            label = { Text("Enter your payment method") },
-            modifier = Modifier.fillMaxWidth()
-        )
+
+        val paymentOptions = listOf("Cash on Delivery", "Credit Card", "UPI", "Net Banking")
+
+        Column {
+            paymentOptions.forEach { method ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedPaymentMethod = method }
+                        .padding(vertical = 4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = (selectedPaymentMethod == method),
+                            onClick = { selectedPaymentMethod = method }
+                        )
+                        Text(
+                            text = method,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
+                    if (selectedPaymentMethod == "UPI" && method == "UPI") {
+                        OutlinedTextField(
+                            value = "upiId@oksbi",
+                            onValueChange = { },
+                            label = { Text("Enter UPI ID") },
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                        )
+                    }
+                    if (selectedPaymentMethod == "Credit Card" && method == "Credit Card" ||
+                        selectedPaymentMethod == "Net Banking" && method == "Net Banking"
+                        ) {
+                        Button(
+                            onClick = {
+
+                            }) {
+                            Text("Pay via Razorpay")
+                        }
+                    }
+                }
+            }
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 

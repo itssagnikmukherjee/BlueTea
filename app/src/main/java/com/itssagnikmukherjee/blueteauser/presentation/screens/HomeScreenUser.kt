@@ -50,6 +50,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
@@ -108,7 +109,8 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                                 Log.e("HomeScreenUser", "Invalid productId: $productId")
                             }
                         },
-                        userId = userId
+                        userId = userId,
+                        navController = navController
                     )
                 }
             }
@@ -274,7 +276,7 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
 }
 
 @Composable
-fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = hiltViewModel(), userId : String) {
+fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = hiltViewModel(), userId : String, navController: NavController) {
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
 
     LaunchedEffect(userId.isNotEmpty()) {
@@ -345,7 +347,16 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                 Text(text = product.productDescription)
                 Text(text = "Original Price: $${product.productPrePrice}")
                 Text(text = "Discounted Price: $${product.productFinalPrice}")
-                Button(onClick = {}){
+                Button(onClick = {
+                    navController.navigate(
+                        Routes.BuyNowScreen(
+                        products = listOf(product.productId),
+                        totalPrice = product.productFinalPrice.toDouble(),
+                        userId = userId,
+                        quantity = Json.encodeToString(mapOf(product.productId to 1))
+                        )
+                    )
+                }){
                     Text("Buy Now")
                 }
             }
