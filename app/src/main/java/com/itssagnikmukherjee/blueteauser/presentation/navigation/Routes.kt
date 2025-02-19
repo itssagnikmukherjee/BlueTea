@@ -1,5 +1,7 @@
 package com.itssagnikmukherjee.blueteauser.presentation.navigation
 
+import androidx.compose.ui.graphics.drawscope.Stroke
+import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,7 +31,11 @@ sealed class Routes {
     )
 
     @Serializable
-    object CheckoutScreen
+    data class BuyNowScreen(
+        val products: List<String>,
+        val totalPrice: Double,
+        val userId: String
+    )
 
     @Serializable
     object PaymentScreen

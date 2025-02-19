@@ -1,18 +1,15 @@
 package com.itssagnikmukherjee.blueteauser.presentation.navigation
 
-import android.util.Log
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import androidx.navigation.toRoute
 import com.google.firebase.auth.FirebaseAuth
-import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes.ProfileScreen
+import com.itssagnikmukherjee.blueteauser.presentation.screens.BuyNowScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.CartScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
 import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
@@ -20,7 +17,6 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.ProductDetailsScr
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProfileScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.WishListScreen
-import okhttp3.Route
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, navController: NavHostController) {
@@ -56,6 +52,11 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
         composable<Routes.ProductDetailsScreen> {
             val data = it.toRoute<Routes.ProductDetailsScreen>()
             ProductDetailsScreen(navController = navController, productId = data.productId, userId = data.userId)
+        }
+
+        composable<Routes.BuyNowScreen>{
+            val data = it.toRoute<Routes.BuyNowScreen>()
+            BuyNowScreen(navController = navController, cartItems = data.products, totalPrice = data.totalPrice, userId = data.userId)
         }
 
     }

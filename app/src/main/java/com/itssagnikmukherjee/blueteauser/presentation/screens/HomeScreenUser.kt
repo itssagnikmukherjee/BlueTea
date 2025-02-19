@@ -318,7 +318,6 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                 }) {
                     Icon(imageVector = if(!isCarted) Icons.Default.ShoppingCart else Icons.Default.MailOutline,"")
                 }
-
             }
 
             Column(
@@ -346,6 +345,9 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                 Text(text = product.productDescription)
                 Text(text = "Original Price: $${product.productPrePrice}")
                 Text(text = "Discounted Price: $${product.productFinalPrice}")
+                Button(onClick = {}){
+                    Text("Buy Now")
+                }
             }
         }
     }

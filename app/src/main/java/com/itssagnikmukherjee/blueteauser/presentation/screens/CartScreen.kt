@@ -1,6 +1,5 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -18,7 +17,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -28,8 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 
 @Composable
 fun CartScreen(
@@ -60,8 +60,14 @@ fun CartScreen(
                     product = cartProducts[cartProduct],
                     initialQuantity = productID[cartProducts[cartProduct].productId] ?: 0,
                     onQuantityUpdate = { newQuantity ->
-                        viewModel.updateCartQuantity(userId, cartProducts[cartProduct].productId, newQuantity)
-                    }
+                        viewModel.updateCartQuantity(
+                            userId,
+                            cartProducts[cartProduct].productId,
+                            newQuantity
+                        )
+                    },
+                    navController = navController,
+                    userId = userId
                 )
             }
         }
@@ -72,7 +78,6 @@ fun CartScreen(
             Text("Checkout (${cartItems.size})")
         }
     }
-
 }
 
 
@@ -80,7 +85,9 @@ fun CartScreen(
 fun CartItem(
     product: Product,
     initialQuantity: Int,
-    onQuantityUpdate: (Int) -> Unit
+    onQuantityUpdate: (Int) -> Unit,
+    navController: NavController,
+    userId: String
 ) {
     var quantity by rememberSaveable { mutableIntStateOf(initialQuantity) }
 
@@ -121,7 +128,9 @@ fun CartItem(
             }
 
             // Buy Now Button
-            Button(onClick = { /* Handle buy now action */ }) {
+            Button(onClick = {
+                navController.navigate(Routes.BuyNowScreen(products = listOf(product.productId), totalPrice = product.productFinalPrice.toDouble(), userId = userId))
+            }) {
                 Text("Buy Now")
             }
         }
