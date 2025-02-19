@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,7 +59,7 @@ fun BuyNowScreen(
         allProducts.filter { it.productId in cartItems }
     }
 
-    val quantityMap: Map<String, Int> = remember { Json.decodeFromString(quantity) }
+    var quantityMap by remember { mutableStateOf(Json.decodeFromString<Map<String, Int>>(quantity)) }
 
     LaunchedEffect(Unit) {
         viewModel.getProducts()
@@ -73,10 +75,14 @@ fun BuyNowScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         products.forEach { product ->
+            val productId = product.productId
+            val currentQuantity = quantityMap[productId] ?: 1
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 AsyncImage(
                     model = product.productImages[0],
@@ -87,17 +93,45 @@ fun BuyNowScreen(
                 Column {
                     Text(product.productName)
                     Text("Price: $${product.productFinalPrice}")
-                    Text("Quantity: ${quantityMap[product.productId] ?: 1}") // Corrected quantity display
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                if (currentQuantity > 1) {
+                                    quantityMap = quantityMap.toMutableMap().apply {
+                                        this[productId] = currentQuantity - 1
+                                    }
+                                    viewModel.updateCartList(userId, productId, currentQuantity - 1, true)
+                                }
+                            }
+                        ) {
+                            Text("-")
+                        }
+
+                        Text("Quantity: $currentQuantity")
+
+                        IconButton(
+                            onClick = {
+                                quantityMap = quantityMap.toMutableMap().apply {
+                                    this[productId] = currentQuantity + 1
+                                }
+                                viewModel.updateCartList(userId, productId, currentQuantity + 1, true)
+                            }
+                        ) {
+                            Text("+")
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         val totalPrice = products.sumOf { product ->
             val quantity = quantityMap[product.productId] ?: 1
             product.productFinalPrice.toDouble() * quantity
         }
+
         Text("Total Price: $$totalPrice")
         Spacer(modifier = Modifier.height(16.dp))
 

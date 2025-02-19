@@ -1,5 +1,6 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -10,6 +11,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
@@ -102,10 +105,16 @@ fun CartItem(
     initialQuantity: Int,
     onQuantityUpdate: (Int) -> Unit,
     navController: NavController,
-    userId: String
+    userId: String,
+    viewModels: ViewModels = hiltViewModel()
 ) {
     var quantity by rememberSaveable { mutableIntStateOf(initialQuantity) }
-
+    Box{
+        IconButton(onClick = {
+            viewModels.updateCartList(userId = userId, productId = product.productId, quantity = 0, isCarted = false)
+        }, modifier = Modifier.align(Alignment.TopEnd)) {
+            Icon(Icons.Default.Clear, contentDescription = "Delete Item")
+        }
     Row {
         AsyncImage(
             model = product.productImages[0],
@@ -153,5 +162,6 @@ fun CartItem(
                 Text("Buy Now")
             }
         }
+    }
     }
 }
