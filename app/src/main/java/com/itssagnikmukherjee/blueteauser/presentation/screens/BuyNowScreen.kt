@@ -26,14 +26,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import kotlinx.serialization.json.Json
 
 @Composable
 fun BuyNowScreen(
     navController: NavController,
     viewModel: ViewModels = hiltViewModel(),
     cartItems: List<String>,
-    totalPrice: Double,
-    userId: String
+    userId: String,
+    quantity: String
 ) {
     var shippingAddress by remember { mutableStateOf("") }
     var paymentMethod by remember { mutableStateOf("Credit Card") }
@@ -42,26 +43,21 @@ fun BuyNowScreen(
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
 
     val userData = getUserDetailsState.value.data
-    var phoneNo by remember { mutableStateOf("")}
-    var email by remember { mutableStateOf("")}
+    var phoneNo by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
 
     LaunchedEffect(userData) {
-        userData?.address?.let {
-            shippingAddress = it
-        }
-        userData?.phoneNo.let{
-            phoneNo = it.toString()
-        }
-        userData?.email.let{
-            email = it.toString()
-        }
+        userData?.address?.let { shippingAddress = it }
+        userData?.phoneNo?.let { phoneNo = it.toString() }
+        userData?.email?.let { email = it.toString() }
     }
 
     val allProducts = getProductsState.value.data ?: emptyList()
-
     val products = remember(cartItems, allProducts) {
         allProducts.filter { it.productId in cartItems }
     }
+
+    val quantityMap: Map<String, Int> = remember { Json.decodeFromString(quantity) }
 
     LaunchedEffect(Unit) {
         viewModel.getProducts()
@@ -91,12 +87,17 @@ fun BuyNowScreen(
                 Column {
                     Text(product.productName)
                     Text("Price: $${product.productFinalPrice}")
+                    Text("Quantity: ${quantityMap[product.productId] ?: 1}") // Corrected quantity display
                 }
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
+        val totalPrice = products.sumOf { product ->
+            val quantity = quantityMap[product.productId] ?: 1
+            product.productFinalPrice.toDouble() * quantity
+        }
         Text("Total Price: $$totalPrice")
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -109,15 +110,17 @@ fun BuyNowScreen(
         )
 
         OutlinedTextField(
-            value = phoneNo.toString(),
+            value = phoneNo,
             onValueChange = { phoneNo = it },
             label = { Text("Enter your phone number") },
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
-            value = email.toString(),
+            value = email,
             onValueChange = { email = it },
-            label = { Text("Enter your phone number") },
+            label = { Text("Enter your email") },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -142,4 +145,3 @@ fun BuyNowScreen(
         }
     }
 }
-

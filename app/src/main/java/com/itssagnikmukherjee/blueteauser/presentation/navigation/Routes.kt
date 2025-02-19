@@ -34,7 +34,8 @@ sealed class Routes {
     data class BuyNowScreen(
         val products: List<String>,
         val totalPrice: Double,
-        val userId: String
+        val userId: String,
+        val quantity: String
     )
 
     @Serializable

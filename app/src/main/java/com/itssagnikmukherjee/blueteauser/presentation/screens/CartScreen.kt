@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -30,6 +31,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import kotlinx.serialization.json.Json
 
 @Composable
 fun CartScreen(
@@ -41,7 +43,6 @@ fun CartScreen(
     val getProductsState = viewModel.getProductState.collectAsState()
 
     val productID = getUserDetailsState.value.data?.cartItems ?: emptyMap()
-
     val cartProducts = getProductsState.value.data ?: emptyList()
 
     val cartItems = remember(cartProducts, productID) {
@@ -53,18 +54,20 @@ fun CartScreen(
         viewModel.getProducts()
     }
 
+    val totalPrice = cartItems.sumOf { product ->
+        val quantity = productID[product.productId] ?: 1
+        product.productFinalPrice.toDouble() * quantity
+    }
+
     Column {
         LazyColumn {
-            items(cartItems.size, key = { cartItems[it].productId }) { cartProduct ->
+            items(cartItems.size, key = { cartItems[it].productId }) { index ->
+                val product = cartItems[index]
                 CartItem(
-                    product = cartProducts[cartProduct],
-                    initialQuantity = productID[cartProducts[cartProduct].productId] ?: 0,
+                    product = product,
+                    initialQuantity = productID[product.productId] ?: 1,
                     onQuantityUpdate = { newQuantity ->
-                        viewModel.updateCartQuantity(
-                            userId,
-                            cartProducts[cartProduct].productId,
-                            newQuantity
-                        )
+                        viewModel.updateCartQuantity(userId, product.productId, newQuantity)
                     },
                     navController = navController,
                     userId = userId
@@ -73,13 +76,25 @@ fun CartScreen(
         }
 
         Text("Total Items: ${cartItems.size}")
-        Text("Total Price: ${cartItems.sumOf { it.productFinalPrice.toDouble() }}")
-        Button(onClick = { /* Handle checkout action */ }) {
+        Text("Total Price: $$totalPrice")
+
+        Button(onClick = {
+            val cartItemsMap = cartItems.associate { it.productId to (productID[it.productId] ?: 1) }
+            val serializedQuantities = Json.encodeToString(cartItemsMap)
+
+            navController.navigate(
+                Routes.BuyNowScreen(
+                    products = cartItems.map { it.productId },
+                    totalPrice = totalPrice,
+                    userId = userId,
+                    quantity = serializedQuantities
+                )
+            )
+        }) {
             Text("Checkout (${cartItems.size})")
         }
     }
 }
-
 
 @Composable
 fun CartItem(
@@ -91,24 +106,19 @@ fun CartItem(
 ) {
     var quantity by rememberSaveable { mutableIntStateOf(initialQuantity) }
 
-    val quantityText by remember { derivedStateOf { "Quantity: $quantity" } }
-
     Row {
-        // Product Image
         AsyncImage(
             model = product.productImages[0],
             contentDescription = null,
             modifier = Modifier.size(200.dp)
         )
 
-        // Product Details
         Column {
             Text(product.productName)
             Text(product.productDescription)
             Text("Pre-price: ${product.productPrePrice}")
             Text("Final price: ${product.productFinalPrice}")
 
-            // Quantity Controls
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = {
                     if (quantity > 1) {
@@ -118,7 +128,9 @@ fun CartItem(
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = "Decrease Quantity")
                 }
-                Text(quantityText) // Only this Text will recompose when quantity changes
+
+                Text("Quantity: $quantity")
+
                 IconButton(onClick = {
                     quantity++
                     onQuantityUpdate(quantity)
@@ -127,9 +139,16 @@ fun CartItem(
                 }
             }
 
-            // Buy Now Button
             Button(onClick = {
-                navController.navigate(Routes.BuyNowScreen(products = listOf(product.productId), totalPrice = product.productFinalPrice.toDouble(), userId = userId))
+                val quantityMap = Json.encodeToString(mapOf(product.productId to quantity))
+                navController.navigate(
+                    Routes.BuyNowScreen(
+                        products = listOf(product.productId),
+                        totalPrice = product.productFinalPrice.toDouble() * quantity,
+                        userId = userId,
+                        quantity = quantityMap
+                    )
+                )
             }) {
                 Text("Buy Now")
             }

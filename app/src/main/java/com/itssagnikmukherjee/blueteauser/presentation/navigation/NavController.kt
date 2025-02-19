@@ -56,7 +56,7 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
 
         composable<Routes.BuyNowScreen>{
             val data = it.toRoute<Routes.BuyNowScreen>()
-            BuyNowScreen(navController = navController, cartItems = data.products, totalPrice = data.totalPrice, userId = data.userId)
+            BuyNowScreen(navController = navController, cartItems = data.products, userId = data.userId, quantity = data.quantity)
         }
 
     }
