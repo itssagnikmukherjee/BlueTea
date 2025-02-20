@@ -3,11 +3,13 @@ package com.itssagnikmukherjee.blueteauser.presentation.screens
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.GetUserDetailsState
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 
@@ -34,11 +39,16 @@ fun OrdersScreen(
     userId: String
 ) {
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
+    val getProductsState = viewModel.getProductState.collectAsState()
 
     val orders = getUserDetailsState.value.data?.orderedItems as? Map<String, Map<String, Any>> ?: emptyMap()
+    val products = getProductsState.value.data ?: emptyList()
+
+    val productMap = remember(products) { products.associateBy { it.productId } }
 
     LaunchedEffect(userId) {
         viewModel.getUserDetails(userId)
+        viewModel.getProducts()
     }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
@@ -47,7 +57,7 @@ fun OrdersScreen(
         if (orders.isNotEmpty()) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(orders.entries.toList().size) { order ->
-                    OrderItemCard(orderId = orders.entries.toList()[order].key, orderDetails = orders.entries.toList()[order].value)
+                    OrderItemCard(orderId = orders.entries.toList()[order].key, orderDetails = orders.entries.toList()[order].value, productMap = productMap)
                 }
             }
         } else {
@@ -57,8 +67,9 @@ fun OrdersScreen(
 }
 
 
+
 @Composable
-fun OrderItemCard(orderId: String, orderDetails: Map<String, Any>) {
+fun OrderItemCard(orderId: String, orderDetails: Map<String, Any>, productMap: Map<String, Product>) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -78,8 +89,21 @@ fun OrderItemCard(orderId: String, orderDetails: Map<String, Any>) {
             val items = orderDetails["items"] as? Map<String, Long> ?: emptyMap()
             Text(text = "Items:", fontWeight = FontWeight.Bold)
             items.forEach { (productId, quantity) ->
-                Text(text = "- $productId x $quantity")
+                val product = productMap[productId]
+                if (product != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AsyncImage(
+                            model = product.productImages[0],
+                            contentDescription = product.productName,
+                            modifier = Modifier.size(50.dp).padding(end = 8.dp)
+                        )
+                        Text(text = "- ${product.productName} x $quantity")
+                    }
+                } else {
+                    Text(text = "- Unknown Product ($productId) x $quantity")
+                }
             }
         }
     }
 }
+
