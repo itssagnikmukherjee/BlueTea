@@ -383,7 +383,16 @@ class ViewModels @Inject constructor(
     }
 
     //place order
-    fun placeOrder(userId: String, totalPrice: Double, address: String, phone: String, email: String, paymentMethod: String) {
+    fun placeOrder(
+        userId: String,
+        totalPrice: Double,
+        address: String,
+        phone: String,
+        email: String,
+        paymentMethod: String,
+        isDirectPurchase: Boolean = false,
+        directPurchaseItem: Map<String, Int>? = null
+    ) {
         viewModelScope.launch {
             val db = FirebaseFirestore.getInstance()
             val userRef = db.collection(Constants.USERS).document(userId)
@@ -391,13 +400,14 @@ class ViewModels @Inject constructor(
             db.runTransaction { transaction ->
                 val snapshot = transaction.get(userRef)
                 val cartItems = snapshot.get("cartItems") as? Map<String, Int> ?: emptyMap()
-                val orderedItems = snapshot.get("orderedItems") as? Map<String, Any> ?: emptyMap()
 
-                if (cartItems.isNotEmpty()) {
+                // Use directPurchaseItem if available, otherwise use cartItems
+                val finalItems = if (isDirectPurchase) directPurchaseItem ?: emptyMap() else cartItems
+
+                if (finalItems.isNotEmpty()) {
                     val orderId = System.currentTimeMillis().toString()
-
                     val orderDetails = mapOf(
-                        "items" to cartItems,
+                        "items" to finalItems,
                         "totalPrice" to totalPrice,
                         "address" to address,
                         "phone" to phone,
@@ -407,13 +417,18 @@ class ViewModels @Inject constructor(
                         "status" to "Pending"
                     )
 
+                    val orderedItems = snapshot.get("orderedItems") as? Map<String, Any> ?: emptyMap()
                     val updatedOrderedItems = orderedItems + (orderId to orderDetails)
 
                     // Update Firestore
                     transaction.update(userRef, "orderedItems", updatedOrderedItems)
-                    transaction.update(userRef, "cartItems", emptyMap<String, Int>())
+
+                    // Clear the cart only if it's NOT a direct purchase
+                    if (!isDirectPurchase) {
+                        transaction.update(userRef, "cartItems", emptyMap<String, Int>())
+                    }
                 } else {
-                    throw Exception("Cart is empty!")
+                    throw Exception("No items to order!")
                 }
             }.addOnSuccessListener {
                 Log.d("PlaceOrder", "Order placed successfully!")
@@ -423,6 +438,8 @@ class ViewModels @Inject constructor(
             }
         }
     }
+
+
 
     //cancel order
     fun cancelOrder(userId: String, orderId: String) {

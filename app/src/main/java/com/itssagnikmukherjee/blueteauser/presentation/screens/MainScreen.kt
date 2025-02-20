@@ -33,8 +33,14 @@ fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, use
         Routes.SignUpScreen::class.simpleName,
     )
 
+    val hideBottomNavStrings = listOf<String>(
+        "ProductDetailsScreen",
+        "BuyNowScreen",
+        "OrdersScreen"
+    )
+
     val showBottomNav = currentScreen !in hideBottomNavRoutes &&
-            !currentScreen.contains("ProductDetailsScreen", ignoreCase = true) && !currentScreen.contains("BuyNowScreen", ignoreCase = true)
+            hideBottomNavStrings.none { currentRoute.contains(it) }
 
     Scaffold(
         bottomBar = {

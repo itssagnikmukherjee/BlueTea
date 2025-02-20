@@ -259,13 +259,16 @@ fun BuyNowScreen(
 
         Button(
             onClick = {
+                val isDirectPurchase = quantity!=null
                 viewModel.placeOrder(
                     userId = userId,
                     totalPrice = totalPrice,
                     address = shippingAddress,
                     phone = phoneNo,
                     email = email,
-                    paymentMethod = selectedPaymentMethod
+                    paymentMethod = selectedPaymentMethod,
+                    isDirectPurchase = isDirectPurchase,
+                    directPurchaseItem = if(isDirectPurchase) Json.decodeFromString<Map<String,Int>>(quantity) else null
                     )
                 navController.popBackStack()
             },

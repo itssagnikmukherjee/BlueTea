@@ -287,8 +287,8 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
         mutableStateOf(getUserDetailsState.value.data?.wishlistItems?.contains(product.productId) ?: false)
     }
 
-    var isCarted by remember  (getUserDetailsState.value.data){
-        mutableStateOf(getUserDetailsState.value.data?.cartItems?.contains(product.productId)?:false)
+    var isCarted by remember(getUserDetailsState.value.data) {
+        mutableStateOf(getUserDetailsState.value.data?.cartItems?.containsKey(product.productId) ?: false)
     }
 
     Card {
