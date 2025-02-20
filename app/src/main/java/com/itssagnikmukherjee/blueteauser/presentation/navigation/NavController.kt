@@ -13,6 +13,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.BuyNowScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.CartScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
 import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
+import com.itssagnikmukherjee.blueteauser.presentation.screens.OrdersScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProductDetailsScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProfileScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
@@ -58,6 +59,11 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
         composable<Routes.BuyNowScreen>{
             val data = it.toRoute<Routes.BuyNowScreen>()
             BuyNowScreen(navController = navController, cartItems = data.products, userId = data.userId, quantity = data.quantity.toString(), paymentSheet = paymentSheet)
+        }
+
+        composable<Routes.OrdersScreen>{
+            val data = it.toRoute<Routes.OrdersScreen>()
+            OrdersScreen(navController = navController, userId = data.userId)
         }
 
     }

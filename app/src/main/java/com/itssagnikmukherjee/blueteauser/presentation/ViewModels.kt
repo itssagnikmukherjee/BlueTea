@@ -423,9 +423,13 @@ class ViewModels @Inject constructor(
         }
     }
 
-
-
 }
+
+data class GetOrdersState(
+    val isLoading: Boolean = false,
+    val data: Map<String, Map<String, Any>>? = null,
+    val error: String? = null
+)
 
 
 data class GetUserDetailsState(

@@ -151,6 +151,7 @@ class repoImpl @Inject constructor(
         awaitClose{close()}
     }
 
+
     override fun logout() {
         FirebaseAuth.getInstance().signOut()
     }

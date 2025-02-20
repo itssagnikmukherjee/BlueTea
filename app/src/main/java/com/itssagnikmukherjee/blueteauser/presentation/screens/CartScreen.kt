@@ -96,7 +96,9 @@ fun CartScreen(
         }) {
             Text("Checkout (${cartItems.size})")
         }
-        Button(onClick = {}) {
+        Button(onClick = {
+            navController.navigate(Routes.OrdersScreen(userId = userId))
+        }) {
             Text("Goto Orders")
         }
     }

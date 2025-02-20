@@ -39,7 +39,9 @@ sealed class Routes {
     )
 
     @Serializable
-    object PaymentScreen
+    data class OrdersScreen(
+        val userId: String
+    )
 
     @Serializable
     object SeeAllProductScreen
