@@ -96,6 +96,9 @@ fun CartScreen(
         }) {
             Text("Checkout (${cartItems.size})")
         }
+        Button(onClick = {}) {
+            Text("Goto Orders")
+        }
     }
 }
 

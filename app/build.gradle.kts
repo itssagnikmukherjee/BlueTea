@@ -94,6 +94,7 @@ dependencies {
     //stripe
     implementation("com.stripe:stripe-android:21.4.2")
 
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

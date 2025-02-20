@@ -259,6 +259,14 @@ fun BuyNowScreen(
 
         Button(
             onClick = {
+                viewModel.placeOrder(
+                    userId = userId,
+                    totalPrice = totalPrice,
+                    address = shippingAddress,
+                    phone = phoneNo,
+                    email = email,
+                    paymentMethod = selectedPaymentMethod
+                    )
                 navController.popBackStack()
             },
             modifier = Modifier.fillMaxWidth()

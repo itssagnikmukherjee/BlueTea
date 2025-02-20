@@ -381,6 +381,50 @@ class ViewModels @Inject constructor(
         }
     }
 
+    //place order
+    fun placeOrder(userId: String, totalPrice: Double, address: String, phone: String, email: String, paymentMethod: String) {
+        viewModelScope.launch {
+            val db = FirebaseFirestore.getInstance()
+            val userRef = db.collection(Constants.USERS).document(userId)
+
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(userRef)
+                val cartItems = snapshot.get("cartItems") as? Map<String, Int> ?: emptyMap()
+                val orderedItems = snapshot.get("orderedItems") as? Map<String, Any> ?: emptyMap()
+
+                if (cartItems.isNotEmpty()) {
+                    val orderId = System.currentTimeMillis().toString()
+
+                    val orderDetails = mapOf(
+                        "items" to cartItems,
+                        "totalPrice" to totalPrice,
+                        "address" to address,
+                        "phone" to phone,
+                        "email" to email,
+                        "paymentMethod" to paymentMethod,
+                        "timestamp" to System.currentTimeMillis(),
+                        "status" to "Pending"
+                    )
+
+                    val updatedOrderedItems = orderedItems + (orderId to orderDetails)
+
+                    // Update Firestore
+                    transaction.update(userRef, "orderedItems", updatedOrderedItems)
+                    transaction.update(userRef, "cartItems", emptyMap<String, Int>())
+                } else {
+                    throw Exception("Cart is empty!")
+                }
+            }.addOnSuccessListener {
+                Log.d("PlaceOrder", "Order placed successfully!")
+                getUserDetails(userId)
+            }.addOnFailureListener { e ->
+                Log.e("PlaceOrder", "Error placing order", e)
+            }
+        }
+    }
+
+
+
 }
 
 

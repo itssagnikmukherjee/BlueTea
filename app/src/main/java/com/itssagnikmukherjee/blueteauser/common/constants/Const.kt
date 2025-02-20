@@ -5,4 +5,5 @@ object Constants{
     const val BANNER = "BANNER"
     const val PRODUCT = "PRODUCT"
     const val USERS = "USERS"
+    const val ORDERS = "ORDERS"
 }
