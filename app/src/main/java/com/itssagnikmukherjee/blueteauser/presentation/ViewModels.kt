@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.auth.User
 import com.itssagnikmukherjee.blueteauser.common.ResultState
@@ -423,13 +424,21 @@ class ViewModels @Inject constructor(
         }
     }
 
-}
+    //cancel order
+    fun cancelOrder(userId: String, orderId: String) {
+        val db = FirebaseFirestore.getInstance()
+        val userRef = db.collection(Constants.USERS).document(userId)
 
-data class GetOrdersState(
-    val isLoading: Boolean = false,
-    val data: Map<String, Map<String, Any>>? = null,
-    val error: String? = null
-)
+        userRef.update(mapOf("orderedItems.$orderId" to FieldValue.delete()))
+            .addOnSuccessListener {
+                Log.d("ViewModel", "Order $orderId canceled successfully")
+                getUserDetails(userId)
+            }
+            .addOnFailureListener { e ->
+                Log.e("ViewModel", "Error canceling order", e)
+            }
+    }
+}
 
 
 data class GetUserDetailsState(
