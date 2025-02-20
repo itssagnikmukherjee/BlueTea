@@ -17,9 +17,10 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.ProductDetailsScr
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProfileScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.WishListScreen
+import com.stripe.android.paymentsheet.PaymentSheet
 
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, navController: NavHostController) {
+fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, navController: NavHostController, paymentSheet: PaymentSheet) {
     val startDestination = if (firebaseAuth.currentUser == null) Routes.LoginScreen else Routes.HomeScreen
 
     NavHost(
@@ -56,7 +57,7 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
 
         composable<Routes.BuyNowScreen>{
             val data = it.toRoute<Routes.BuyNowScreen>()
-            BuyNowScreen(navController = navController, cartItems = data.products, userId = data.userId, quantity = data.quantity.toString())
+            BuyNowScreen(navController = navController, cartItems = data.products, userId = data.userId, quantity = data.quantity.toString(), paymentSheet = paymentSheet)
         }
 
     }

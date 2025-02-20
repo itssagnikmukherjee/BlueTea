@@ -1,8 +1,14 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.os.Bundle
+import android.util.Log
 import android.widget.RadioGroup
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,14 +34,32 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.itssagnikmukherjee.blueteauser.BuildConfig
+import com.itssagnikmukherjee.blueteauser.presentation.PaymentViewModel
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.stripe.android.PaymentConfiguration
+import com.stripe.android.PaymentIntentResult
+import com.stripe.android.Stripe
+import com.stripe.android.model.Card
+import com.stripe.android.model.ConfirmPaymentIntentParams
+import com.stripe.android.model.PaymentMethod
+import com.stripe.android.model.PaymentMethodCreateParams
+import com.stripe.android.payments.paymentlauncher.PaymentResult
+import com.stripe.android.payments.paymentlauncher.StripePaymentLauncher
+import com.stripe.android.paymentsheet.PaymentSheet
+import com.stripe.android.paymentsheet.PaymentSheetResult
+import com.stripe.android.paymentsheet.rememberPaymentSheet
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 
@@ -43,10 +67,13 @@ import org.json.JSONObject
 fun BuyNowScreen(
     navController: NavController,
     viewModel: ViewModels = hiltViewModel(),
+    paymentViewModel : PaymentViewModel = hiltViewModel(),
     cartItems: List<String>,
     userId: String,
-    quantity: String
+    quantity: String,
+    paymentSheet: PaymentSheet
 ) {
+
     var shippingAddress by remember { mutableStateOf("") }
     var selectedPaymentMethod by remember { mutableStateOf("Cash on Delivery") }
 
@@ -56,12 +83,26 @@ fun BuyNowScreen(
     val userData = getUserDetailsState.value.data
     var phoneNo by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     LaunchedEffect(userData) {
         userData?.address?.let { shippingAddress = it }
         userData?.phoneNo?.let { phoneNo = it.toString() }
         userData?.email?.let { email = it.toString() }
     }
+
+    LaunchedEffect(userId) {
+        paymentViewModel.fetchEphemeralKey(userId)
+    }
+
+
+    fun presentPaymentSheet() {
+        val clientSecret = "pi_3QuVQwSCfayi15o209uDvjTQ_secret_HSorm2BbAXIia8t78jYOTMP1z"
+
+        val config = PaymentSheet.Configuration("Demo Merchant")
+        paymentSheet.presentWithPaymentIntent(clientSecret, config)
+    }
+
 
     val allProducts = getProductsState.value.data ?: emptyList()
     val products = remember(cartItems, allProducts) {
@@ -201,12 +242,12 @@ fun BuyNowScreen(
                     }
                     if (selectedPaymentMethod == "Credit Card" && method == "Credit Card" ||
                         selectedPaymentMethod == "Net Banking" && method == "Net Banking"
-                        ) {
+                    ) {
                         Button(
                             onClick = {
-
+                                presentPaymentSheet()
                             }) {
-                            Text("Pay via Razorpay")
+                            Text("Pay via Stripe")
                         }
                     }
                 }
@@ -226,3 +267,4 @@ fun BuyNowScreen(
         }
     }
 }
+

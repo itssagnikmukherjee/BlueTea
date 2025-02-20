@@ -19,9 +19,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.AppNavigation
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.stripe.android.paymentsheet.PaymentSheet
 
 @Composable
-fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, userId: String) {
+fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, userId: String, paymentSheet: PaymentSheet) {
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = currentBackStackEntry?.destination?.route ?: ""
 
@@ -50,7 +51,8 @@ fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, use
         AppNavigation(
             modifier = Modifier.padding(innerPadding),
             firebaseAuth = firebaseAuth,
-            navController = navController
+            navController = navController,
+            paymentSheet = paymentSheet
         )
     }
 }

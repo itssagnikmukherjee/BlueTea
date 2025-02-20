@@ -8,11 +8,6 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.storage.Storage
-//import io.github.jan.supabase.BuildConfig
-//import io.github.jan.supabase.SupabaseClient
-//import io.github.jan.supabase.annotations.SupabaseInternal
-//import io.github.jan.supabase.createSupabaseClient
-//import io.github.jan.supabase.storage.Storage
 import javax.inject.Singleton
 
 @Module

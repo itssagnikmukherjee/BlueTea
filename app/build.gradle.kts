@@ -28,7 +28,8 @@ android {
         properties.load(project.rootProject.file("local.properties").inputStream())
         buildConfigField("String","SUPABASE_KEY",properties.getProperty("SUPABASE_KEY"))
         buildConfigField("String","SUPABASE_URL",properties.getProperty("SUPABASE_URL"))
-
+        buildConfigField("String","STRIPE_PUBLISHABLE_KEY",properties.getProperty("STRIPE_PUBLISHABLE_KEY"))
+        buildConfigField("String","STRIPE_SECRET_KEY",properties.getProperty("STRIPE_SECRET_KEY"))
     }
 
     buildTypes {
@@ -84,8 +85,14 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.ktor:ktor-client-android:3.0.3")
 
-    //stripe
+    //retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
+    //gson
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    //stripe
+    implementation("com.stripe:stripe-android:21.4.2")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
