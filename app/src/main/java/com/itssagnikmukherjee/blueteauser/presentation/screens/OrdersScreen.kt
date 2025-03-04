@@ -37,6 +37,7 @@ import coil3.compose.AsyncImage
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.GetUserDetailsState
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 
 @Composable
 fun OrdersScreen(
@@ -65,7 +66,7 @@ fun OrdersScreen(
         if (orders.isNotEmpty()) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(orders.entries.toList().size) { order ->
-                    OrderItemCard(orderId = orders.entries.toList()[order].key, orderDetails = orders.entries.toList()[order].value, productMap = productMap, userId= userId)
+                    OrderItemCard(orderId = orders.entries.toList()[order].key, orderDetails = orders.entries.toList()[order].value, productMap = productMap, userId= userId, navController = navController)
                 }
             }
         } else {
@@ -76,7 +77,7 @@ fun OrdersScreen(
 
 
 @Composable
-fun OrderItemCard(orderId: String, orderDetails: Map<String, Any>, productMap: Map<String, Product>, viewModel: ViewModels = hiltViewModel(), userId: String) {
+fun OrderItemCard(orderId: String, orderDetails: Map<String, Any>, productMap: Map<String, Product>, viewModel: ViewModels = hiltViewModel(), userId: String, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -120,7 +121,9 @@ fun OrderItemCard(orderId: String, orderDetails: Map<String, Any>, productMap: M
         }
         Text(text = "${orderDetails["paymentMethod"]}")
         Text(text = "${orderDetails["totalPrice"]}")
-        Button(onClick = {}) {
+        Button(onClick = {
+            navController.navigate(Routes.TrackOrderScreen(orderId=orderId, userId = userId))
+        }) {
             Text("Track Order")
         }
         Button(onClick = {

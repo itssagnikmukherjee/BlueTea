@@ -94,6 +94,8 @@ dependencies {
     //stripe
     implementation("com.stripe:stripe-android:21.4.2")
 
+    //kotstep
+    implementation("com.github.binayshaw7777:KotStep:2.3.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

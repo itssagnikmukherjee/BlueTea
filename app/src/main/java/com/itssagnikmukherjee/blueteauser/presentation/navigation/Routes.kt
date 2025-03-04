@@ -47,6 +47,12 @@ sealed class Routes {
     object SeeAllProductScreen
 
     @Serializable
+    data class TrackOrderScreen(
+        val orderId: String,
+        val userId: String,
+    )
+
+    @Serializable
     data class ProductDetailsScreen(
         val productId: String,
         val userId: String

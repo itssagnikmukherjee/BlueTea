@@ -36,7 +36,8 @@ fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, use
     val hideBottomNavStrings = listOf<String>(
         "ProductDetailsScreen",
         "BuyNowScreen",
-        "OrdersScreen"
+        "OrdersScreen",
+        "TrackOrderScreen"
     )
 
     val showBottomNav = currentScreen !in hideBottomNavRoutes &&

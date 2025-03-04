@@ -17,6 +17,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.OrdersScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProductDetailsScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.ProfileScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
+import com.itssagnikmukherjee.blueteauser.presentation.screens.TrackOrderScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.WishListScreen
 import com.stripe.android.paymentsheet.PaymentSheet
 
@@ -66,5 +67,9 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
             OrdersScreen(navController = navController, userId = data.userId)
         }
 
+        composable<Routes.TrackOrderScreen> {
+            val data = it.toRoute<Routes.TrackOrderScreen>()
+            TrackOrderScreen(navController = navController, orderId = data.orderId, userId = data.userId)
+        }
     }
 }
