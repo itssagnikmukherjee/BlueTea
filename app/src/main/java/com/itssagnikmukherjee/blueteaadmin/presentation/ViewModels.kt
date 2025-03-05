@@ -3,9 +3,6 @@ package com.itssagnikmukherjee.blueteaadmin.presentation
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,8 +12,12 @@ import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
+import com.itssagnikmukherjee.blueteaadmin.domain.models.OrderDetails
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
+import com.itssagnikmukherjee.blueteaadmin.domain.models.UserData
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
+import com.itssagnikmukherjee.blueteaadmin.domain.usecases.getProductsFromFirebaseUsecase
+import com.itssagnikmukherjee.blueteaadmin.domain.usecases.getUserDetailsUsecase
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerAnimationSettings
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.BannerImageData
 import com.itssagnikmukherjee.blueteauser.domain.usecases.getBannersFromFirebaseUsecase
@@ -36,7 +37,9 @@ class ViewModels @Inject constructor(
     private val getAllCategories: getCategoriesFromFirebaseUsecase,
     private val getAllBanners: getBannersFromFirebaseUsecase,
     private val repo: Repo,
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
+    private val getUserDetails: getUserDetailsUsecase,
+    private val getAllProducts: getProductsFromFirebaseUsecase
 ) : ViewModel() {
 
     // Categories
@@ -309,7 +312,7 @@ class ViewModels @Inject constructor(
     }
 
 
-    //Product
+    //add Product
     private val _addProduct = MutableStateFlow(AddProductState())
     val addProductState = _addProduct.asStateFlow()
     fun addProduct(product: Product, context: Context, imageUris: List<Uri>) {
@@ -377,6 +380,103 @@ class ViewModels @Inject constructor(
         return imageUrls
     }
 
+    //get products
+    private val _getProductState = MutableStateFlow(GetProductState())
+    val getProductState = _getProductState.asStateFlow()
+
+    fun getProducts() {
+        viewModelScope.launch {
+            getAllProducts.GetProductsFromFirebaseUsecase().collectLatest { result ->
+                when (result) {
+                    is ResultState.Success -> {
+                        // Directly assign the List<Product> to the state
+                        val productList: List<Product> = result.data as List<Product>
+                        _getProductState.value = GetProductState(data = productList)
+                    }
+
+                    is ResultState.Error -> {
+                        _getProductState.value = GetProductState(error = result.error)
+                    }
+
+                    is ResultState.Loading -> {
+                        _getProductState.value = GetProductState(isLoading = true)
+                    }
+                }
+            }
+        }
+    }
+
+    //   get user details
+    private val _getUserDetailsState = MutableStateFlow(GetUserDetailsState())
+    val getUserDetailsState = _getUserDetailsState.asStateFlow()
+
+    fun getUserDetails(userId: String) {
+        viewModelScope.launch {
+            getUserDetails.GetUserDetailsUsecase(UserData(userId = userId))
+                .collectLatest { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            _getUserDetailsState.value = GetUserDetailsState(isLoading = true)
+                        }
+
+                        is ResultState.Success -> {
+                            _getUserDetailsState.value = GetUserDetailsState(data = result.data)
+                        }
+
+                        is ResultState.Error -> {
+                            _getUserDetailsState.value = GetUserDetailsState(error = result.error)
+                        }
+                    }
+                }
+        }
+
+    }
+
+    private val _orderDetailsState = MutableStateFlow(GetOrderDetailsState())
+    val orderDetailsState = _orderDetailsState.asStateFlow()
+
+    fun getOrderDetails() {
+        viewModelScope.launch {
+            repo.getOrders().collectLatest { result ->
+                when (result) {
+                    is ResultState.Loading -> {
+                        _orderDetailsState.value = GetOrderDetailsState(isLoading = true)
+                    }
+                    is ResultState.Success -> {
+                        _orderDetailsState.value = GetOrderDetailsState(data = result.data)
+                    }
+                    is ResultState.Error -> {
+                        _orderDetailsState.value = GetOrderDetailsState(error = result.error)
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateOrderStatus(orderId: String, newStatus: String) {
+        viewModelScope.launch {
+            repo.updateOrderStatus(orderId, newStatus)
+                .collect { result ->
+                    when (result) {
+                        is ResultState.Loading -> {
+                            // Handle loading state
+                        }
+                        is ResultState.Success -> {
+                            // Handle success state
+                            val message = result.data
+                            println(message)
+                        }
+                        is ResultState.Error -> {
+                            // Handle error state
+                            val errorMessage = result.error
+                            println(errorMessage)
+                        }
+                    }
+                }
+            getOrderDetails()
+        }
+    }
+
 }
 
 // Data Classes
@@ -384,6 +484,18 @@ data class AddProductState(
     val isLoading: Boolean = false,
     val error: String = "",
     val data: String = ""
+)
+
+data class GetOrderDetailsState(
+    val isLoading: Boolean = false,
+    val data: List<OrderDetails> = emptyList(),
+    val error: String? = null
+)
+
+data class GetUserDetailsState(
+    val isLoading: Boolean = false,
+    val data: UserData? = null,
+    val error: String? = null
 )
 
 data class AddBannerState(
@@ -408,4 +520,10 @@ data class GetBannerState(
     val isLoading: Boolean = false,
     val error: String = "",
     val data: List<Banner> = emptyList()
+)
+
+data class GetProductState(
+    val data: List<Product> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String = ""
 )

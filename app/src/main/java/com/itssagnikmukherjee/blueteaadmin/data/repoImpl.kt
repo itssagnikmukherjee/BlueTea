@@ -6,15 +6,21 @@ import com.itssagnikmukherjee.blueteaadmin.common.ResultState
 import com.itssagnikmukherjee.blueteaadmin.common.constants.Constants
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
+import com.itssagnikmukherjee.blueteaadmin.domain.models.OrderDetails
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
+import com.itssagnikmukherjee.blueteaadmin.domain.models.UserData
 import com.itssagnikmukherjee.blueteaadmin.domain.repo.Repo
+import com.itssagnikmukherjee.blueteaadmin.domain.usecases.getProductsFromFirebaseUsecase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import kotlin.text.get
 
-class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirestore) : Repo {
+class repoImpl @Inject constructor(
+    private val FirebaseFirestore: FirebaseFirestore,
+    ) : Repo {
 
     // getting categories from firebase
     override fun getCategories(): Flow<ResultState<List<Category>>> = callbackFlow {
@@ -144,5 +150,97 @@ class repoImpl @Inject constructor(private val FirebaseFirestore: FirebaseFirest
                 trySend(ResultState.Error(e.message.toString()))
             }
         awaitClose{close()}
+    }
+
+    override fun getProducts(): Flow<ResultState<List<Product>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.PRODUCT).get().addOnSuccessListener {
+            val products = it.documents.mapNotNull {
+                it.toObject(Product::class.java)?.copy(productId = it.id)
+            }
+            trySend(ResultState.Success(products))
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose {
+            close()
+        }
+    }
+
+    override fun getUserDetails(userId: String): Flow<ResultState<UserData>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.USERS).get().addOnSuccessListener {
+            val users = it.documents.mapNotNull { it.toObject(UserData::class.java)?.copy(userId = it.id) }
+            val user = users.find { it.userId == userId }
+            if (user != null) {
+                trySend(ResultState.Success(user))
+            } else {
+                trySend(ResultState.Error("User not found"))
+            }
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose{close()}
+    }
+
+    override fun getOrders(): Flow<ResultState<List<OrderDetails>>> = callbackFlow {
+        trySend(ResultState.Loading)
+        FirebaseFirestore.collection(Constants.ORDERS).get().addOnSuccessListener {
+            val orders = it.documents.mapNotNull {
+                it.toObject(OrderDetails::class.java)?.copy(orderId = it.id)
+            }
+            trySend(ResultState.Success(orders))
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+        }
+        awaitClose {
+            close()
+        }
+    }
+
+    override fun updateOrderStatus(orderId: String, newStatus: String): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading) // Emit loading state
+
+        // Access Firestore and update the status
+        FirebaseFirestore.collection(Constants.USERS)
+            .document(orderId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // Get the current orderedItems map
+                    val orderedItems = document.get("orderedItems") as? Map<String, Map<String, Any>> ?: emptyMap()
+
+                    // Update the status for each order in orderedItems
+                    val updatedOrderedItems = orderedItems.mapValues { (_, orderDetails) ->
+                        orderDetails.toMutableMap().apply {
+                            put("status", newStatus)
+                        }
+                    }
+
+                    // Update the Firestore document with the new orderedItems
+                    FirebaseFirestore
+                        .collection(Constants.USERS)
+                        .document(orderId)
+                        .update("orderedItems", updatedOrderedItems)
+                        .addOnSuccessListener {
+                            trySend(ResultState.Success("Status updated successfully")) // Emit success state
+                            close() // Close the flow
+                        }
+                        .addOnFailureListener { e ->
+                            trySend(ResultState.Error(e.localizedMessage ?: "Failed to update status")) // Emit error state
+                            close() // Close the flow
+                        }
+                } else {
+                    trySend(ResultState.Error("User document not found")) // Emit error state
+                    close() // Close the flow
+                }
+            }
+            .addOnFailureListener { e ->
+                trySend(ResultState.Error(e.localizedMessage ?: "Failed to fetch user document")) // Emit error state
+                close() // Close the flow
+            }
+
+        // Close the flow when the coroutine scope is cancelled
+        awaitClose { close() }
     }
 }
