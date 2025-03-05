@@ -1,36 +1,46 @@
 package com.itssagnikmukherjee.blueteaadmin.presentation.screens
 
-import android.util.Log
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import com.itssagnikmukherjee.blueteaadmin.domain.models.OrderDetails
-import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
-import com.itssagnikmukherjee.blueteaadmin.domain.models.UserData
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
     val orderDetailsState = viewModel.orderDetailsState.collectAsState()
@@ -72,8 +82,12 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
+                    // Extract and format the order date
+                    val orderTimestamp = userDetails?.orderedItems?.keys?.firstOrNull()
+                    val orderDate = orderTimestamp?.let { time(it.toLong()) } ?: "Invalid Date"
+
                     Text(
-                        text = "Order Date: ${userDetails?.orderedItems?.keys}",
+                        text = "Order Date: $orderDate",
                         style = MaterialTheme.typography.bodyMedium
                     )
 
@@ -107,7 +121,10 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                     // Display the current status and a button to change it
                     val currentStatus = orderDetail?.get("status") as? String ?: "N/A"
                     var showStatusDialog by remember { mutableStateOf(false) }
-                    if(currentStatus == "Delivered") Text("Delivered on ${orderDetail?.get("deliveredTime")}")else{
+
+                    if (currentStatus == "Delivered") {
+                        Text("Delivered on ${time(orderDetail?.get("deliveredTime") as Long)}")
+                    } else {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -216,4 +233,11 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
             }
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun time(t: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy @ hh:mm:ss a")
+        .withZone(ZoneId.systemDefault())
+    return formatter.format(Instant.ofEpochMilli(t))
 }
