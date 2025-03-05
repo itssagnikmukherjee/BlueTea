@@ -115,8 +115,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    //orderId
+                    //order id
                     Text("")
+
                     // Row for product details and expand icon
                     Row(
                         modifier = Modifier.fillMaxWidth(),
