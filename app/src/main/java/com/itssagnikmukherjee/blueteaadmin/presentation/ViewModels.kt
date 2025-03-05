@@ -453,27 +453,26 @@ class ViewModels @Inject constructor(
         }
     }
 
-    fun updateOrderStatus(orderId: String, newStatus: String) {
+    fun updateOrderStatus(userId: String, orderId: String, newStatus: String) {
         viewModelScope.launch {
-            repo.updateOrderStatus(orderId, newStatus)
-                .collect { result ->
-                    when (result) {
+            repo.updateOrderStatus(userId, orderId, newStatus)
+                .collect { resultState ->
+                    when (resultState) {
                         is ResultState.Loading -> {
                             // Handle loading state
                         }
                         is ResultState.Success -> {
                             // Handle success state
-                            val message = result.data
-                            println(message)
+                            Log.d("UpdateOrderStatus", resultState.data)
+                            // Refresh user details to reflect the updated status in the UI
+                            getUserDetails(userId)
                         }
                         is ResultState.Error -> {
                             // Handle error state
-                            val errorMessage = result.error
-                            println(errorMessage)
+                            Log.e("UpdateOrderStatus", resultState.error)
                         }
                     }
                 }
-            getOrderDetails()
         }
     }
 

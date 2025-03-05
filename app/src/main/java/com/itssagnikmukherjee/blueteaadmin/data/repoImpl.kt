@@ -198,23 +198,25 @@ class repoImpl @Inject constructor(
         }
     }
 
-    override fun updateOrderStatus(orderId: String, newStatus: String): Flow<ResultState<String>> = callbackFlow {
+    override fun updateOrderStatus(userId: String, orderId: String, newStatus: String): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading) // Emit loading state
 
         // Access Firestore and update the status
-        FirebaseFirestore.collection(Constants.USERS)
-            .document(orderId)
+        FirebaseFirestore
+            .collection(Constants.USERS)
+            .document(userId) // Use userId to fetch the user document
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     // Get the current orderedItems map
                     val orderedItems = document.get("orderedItems") as? Map<String, Map<String, Any>> ?: emptyMap()
 
-                    // Update the status for each order in orderedItems
-                    val updatedOrderedItems = orderedItems.mapValues { (_, orderDetails) ->
-                        orderDetails.toMutableMap().apply {
+                    // Update only the specific order identified by orderId
+                    val updatedOrderedItems = orderedItems.toMutableMap().apply {
+                        this[orderId] = this[orderId]?.toMutableMap()?.apply {
                             put("status", newStatus)
 
+                            // Update transitTime or deliveredTime based on the new status
                             when (newStatus) {
                                 "In Transit" -> {
                                     put("transitTime", System.currentTimeMillis())
@@ -223,14 +225,13 @@ class repoImpl @Inject constructor(
                                     put("deliveredTime", System.currentTimeMillis())
                                 }
                             }
-
-                        }
+                        } ?: throw IllegalStateException("Order not found")
                     }
 
                     // Update the Firestore document with the new orderedItems
                     FirebaseFirestore
                         .collection(Constants.USERS)
-                        .document(orderId)
+                        .document(userId)
                         .update("orderedItems", updatedOrderedItems)
                         .addOnSuccessListener {
                             trySend(ResultState.Success("Status updated successfully")) // Emit success state

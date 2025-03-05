@@ -19,5 +19,5 @@ interface Repo {
     fun getProducts(): Flow<ResultState<List<Product>>>
     fun getUserDetails(userId: String): Flow<ResultState<UserData>>
     fun getOrders(): Flow<ResultState<List<OrderDetails>>>
-    fun updateOrderStatus(orderId: String, newStatus: String): Flow<ResultState<String>>
+    fun updateOrderStatus(userId: String, orderId: String, newStatus: String): Flow<ResultState<String>>
 }

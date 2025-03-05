@@ -13,7 +13,6 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
-
 android {
     namespace = "com.itssagnikmukherjee.blueteaadmin"
     compileSdk = 35
