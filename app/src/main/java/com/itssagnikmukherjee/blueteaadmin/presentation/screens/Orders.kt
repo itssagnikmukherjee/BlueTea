@@ -107,9 +107,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                     // Display the current status and a button to change it
                     val currentStatus = orderDetail?.get("status") as? String ?: "N/A"
                     var showStatusDialog by remember { mutableStateOf(false) }
-
-                    // Hide the button if the status is "Delivered"
-                    if (currentStatus != "Delivered") {
+                    if(currentStatus == "Delivered") Text("Delivered on ${orderDetail?.get("deliveredTime")}")else{
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(bottom = 8.dp)

@@ -214,6 +214,16 @@ class repoImpl @Inject constructor(
                     val updatedOrderedItems = orderedItems.mapValues { (_, orderDetails) ->
                         orderDetails.toMutableMap().apply {
                             put("status", newStatus)
+
+                            when (newStatus) {
+                                "In Transit" -> {
+                                    put("transitTime", System.currentTimeMillis())
+                                }
+                                "Delivered" -> {
+                                    put("deliveredTime", System.currentTimeMillis())
+                                }
+                            }
+
                         }
                     }
 
