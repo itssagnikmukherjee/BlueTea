@@ -82,6 +82,9 @@ dependencies {
     //navigation
     implementation(libs.androidx.navigation.compose)
 
+    //kotstep
+    implementation("com.github.binayshaw7777:KotStep:2.3.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
