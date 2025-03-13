@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="BlueTeaAdmin.app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-02-05T16:21:10.398921900Z">
+        <DropdownSelection timestamp="2025-03-06T05:19:07.556642500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\sagnix\.android\avd\Pixel_7.avd" />

@@ -97,6 +97,9 @@ dependencies {
     //kotstep
     implementation("com.github.binayshaw7777:KotStep:2.3.0")
 
+    //swipe refresh
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.27.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

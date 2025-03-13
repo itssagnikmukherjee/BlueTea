@@ -52,6 +52,14 @@ class ViewModels @Inject constructor(
     private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+    fun refreshOrderDetails(userId: String) {
+        _isRefreshing.value = true
+        getUserDetails(userId)
+        _isRefreshing.value = false
+    }
+
     private val _getProductDetailsState = MutableStateFlow(GetProductDetailsState())
     val getProductDetailsState = _getProductDetailsState.asStateFlow()
 
