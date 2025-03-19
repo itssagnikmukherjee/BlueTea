@@ -3,6 +3,7 @@ package com.itssagnikmukherjee.blueteaadmin.presentation.screens
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,9 +25,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -55,6 +61,7 @@ import com.binayshaw7777.kotstep.model.iconHorizontal
 import com.binayshaw7777.kotstep.model.numberedHorizontal
 import com.binayshaw7777.kotstep.ui.horizontal.HorizontalStepper
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -83,6 +90,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
         viewModel.getProducts()
     }
 
+    Column {
+        OrderFilterChips()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -115,15 +124,30 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Column(
+                    Row(
+                        modifier = Modifier.fillMaxWidth(1f).background(Color.Cyan),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Text(
+                            "#$orderId",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontSize = 20.sp,
+                            modifier = Modifier.background(Color.Cyan)
+                                .padding(vertical = 10.dp, horizontal = 20.dp).zIndex(1f)
+                        )
+                        IconButton(onClick = { isExpanded = !isExpanded }, modifier = Modifier.zIndex(999f)) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                                contentDescription = if (isExpanded) "Collapse" else "Expand"
+                            )
+                        }
+                    }
+                        Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
-                        // Display order ID
-                        Text("Order ID: $orderId", style = MaterialTheme.typography.bodyLarge)
 
-                        // Display items in the order
                         val itemsMap = orderDetail["items"] as? Map<String, Int> ?: emptyMap()
                         itemsMap.forEach { (productId, quantity) ->
                             val product = productMap[productId]
@@ -136,39 +160,44 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                         model = product.productImages[0],
                                         contentDescription = null,
                                         modifier = Modifier
-                                            .size(80.dp)
+                                            .size(100.dp)
                                             .clip(MaterialTheme.shapes.medium)
                                     )
 
                                     Spacer(modifier = Modifier.width(16.dp))
 
                                     Column {
-                                        Text(
-                                            text = product.productName,
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ){
+                                            Text(
+                                                text = product.productName,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Column (
+                                                horizontalAlignment = Alignment.End
+                                            ){
+                                                Text(
+                                                    text = " x $quantity",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontFamily = fontFamily,
+                                                    fontWeight = FontWeight.Black
+                                                )
+                                                Text(
+                                                    text = "₹${product.productFinalPrice}",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
 
-                                        Text(
-                                            text = "Quantity: $quantity",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
+                                            }
 
-                                        Text(
-                                            text = "Price: ${product.productFinalPrice}",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        // Expand/collapse icon button
-                        IconButton(onClick = { isExpanded = !isExpanded }) {
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand"
-                            )
-                        }
+
 
                         // Order date and payment method
                         Text(
@@ -337,9 +366,18 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalAlignment = Alignment.Start
                                             ) {
-                                                Text("Ordered", style = MaterialTheme.typography.bodyMedium)
-                                                Text("Date: $orderDate", style = MaterialTheme.typography.bodySmall)
-                                                Text("Time: $orderTime", style = MaterialTheme.typography.bodySmall)
+                                                Text(
+                                                    "Ordered",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                                Text(
+                                                    "Date: $orderDate",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                                Text(
+                                                    "Time: $orderTime",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
                                             }
                                         }
                                     }
@@ -351,9 +389,18 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalAlignment = Alignment.Start
                                             ) {
-                                                Text("In Transit", style = MaterialTheme.typography.bodyMedium)
-                                                Text("Date: $inTransitDate", style = MaterialTheme.typography.bodySmall)
-                                                Text("Time: $inTransitTime", style = MaterialTheme.typography.bodySmall)
+                                                Text(
+                                                    "In Transit",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                                Text(
+                                                    "Date: $inTransitDate",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                                Text(
+                                                    "Time: $inTransitTime",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
                                             }
                                         }
                                     }
@@ -365,9 +412,18 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalAlignment = Alignment.End
                                             ) {
-                                                Text("Delivered", style = MaterialTheme.typography.bodyMedium)
-                                                Text("Date: $deliveredDate", style = MaterialTheme.typography.bodySmall)
-                                                Text("Time: $deliveredTime", style = MaterialTheme.typography.bodySmall)
+                                                Text(
+                                                    "Delivered",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                                Text(
+                                                    "Date: $deliveredDate",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                                Text(
+                                                    "Time: $deliveredTime",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
                                             }
                                         }
                                     }
@@ -379,7 +435,48 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
             }
         }
     }
+    }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OrderFilterChips() {
+
+    var selectedChip by remember { mutableStateOf("All") }
+
+    val chips = listOf("All", "In Transit", "Ordered", "Delivered", "Cancelled", "Refunded") // Added more chips for demonstration
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp)
+    ) {
+        Text(
+            text = "Orders",
+            fontSize = 20.sp,
+            modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
+        )
+
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp), // Horizontal padding
+            horizontalArrangement = Arrangement.spacedBy(8.dp) // Space between chips
+        ) {
+            items(chips) { chip ->
+                FilterChip(
+                    selected = (chip == selectedChip),
+                    onClick = { selectedChip = chip },
+                    label = {
+                        Text(text = chip)
+                    },
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 fun formatDate(timestamp: Long): String {
     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
