@@ -415,6 +415,7 @@ class ViewModels @Inject constructor(
                 if (finalItems.isNotEmpty()) {
                     val orderId = System.currentTimeMillis().toString()
                     val orderDetails = mapOf(
+                        "userId" to userId,
                         "items" to finalItems,
                         "totalPrice" to totalPrice,
                         "address" to address,
@@ -425,11 +426,14 @@ class ViewModels @Inject constructor(
                         "status" to "Pending"
                     )
 
+                    // Add order to the user's orderedItems
                     val orderedItems = snapshot.get("orderedItems") as? Map<String, Any> ?: emptyMap()
                     val updatedOrderedItems = orderedItems + (orderId to orderDetails)
-
-                    // Update Firestore
                     transaction.update(userRef, "orderedItems", updatedOrderedItems)
+
+                    // Add order to the ORDERS collection
+                    val ordersRef = db.collection(Constants.ORDERS).document(orderId)
+                    transaction.set(ordersRef, orderDetails)
 
                     // Clear the cart only if it's NOT a direct purchase
                     if (!isDirectPurchase) {
