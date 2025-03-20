@@ -25,9 +25,13 @@ import com.itssagnikmukherjee.blueteauser.domain.usecases.getCategoriesFromFireb
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.InputStream
 import javax.inject.Inject
@@ -381,61 +385,16 @@ class ViewModels @Inject constructor(
     }
 
     //get products
-    private val _getProductState = MutableStateFlow(GetProductState())
-    val getProductState = _getProductState.asStateFlow()
-
-    fun getProducts() {
-        viewModelScope.launch {
-            getAllProducts.GetProductsFromFirebaseUsecase().collectLatest { result ->
-                when (result) {
-                    is ResultState.Success -> {
-                        // Directly assign the List<Product> to the state
-                        val productList: List<Product> = result.data as List<Product>
-                        _getProductState.value = GetProductState(data = productList)
-                    }
-
-                    is ResultState.Error -> {
-                        _getProductState.value = GetProductState(error = result.error)
-                    }
-
-                    is ResultState.Loading -> {
-                        _getProductState.value = GetProductState(isLoading = true)
-                    }
-                }
-            }
-        }
-    }
-
-    //   get user details
-    private val _getUserDetailsState = MutableStateFlow(GetUserDetailsState())
-    val getUserDetailsState = _getUserDetailsState.asStateFlow()
-
-    fun getUserDetails(userId: String) {
-        viewModelScope.launch {
-            getUserDetails.GetUserDetailsUsecase(UserData(userId = userId))
-                .collectLatest { result ->
-                    when (result) {
-                        is ResultState.Loading -> {
-                            _getUserDetailsState.value = GetUserDetailsState(isLoading = true)
-                        }
-
-                        is ResultState.Success -> {
-                            _getUserDetailsState.value = GetUserDetailsState(data = result.data)
-                        }
-
-                        is ResultState.Error -> {
-                            _getUserDetailsState.value = GetUserDetailsState(error = result.error)
-                        }
-                    }
-                }
-        }
-
-    }
-
     private val _orderDetailsState = MutableStateFlow(GetOrderDetailsState())
     val orderDetailsState = _orderDetailsState.asStateFlow()
 
-    fun getOrderDetails() {
+    private val _userDetailsMap = MutableStateFlow<Map<String, UserData>>(emptyMap())
+    val userDetailsMap = _userDetailsMap.asStateFlow()
+
+    private val _productDetailsMap = MutableStateFlow<Map<String, Product>>(emptyMap())
+    val productDetailsMap = _productDetailsMap.asStateFlow()
+
+    internal fun getOrderDetails() {
         viewModelScope.launch {
             repo.getOrders().collectLatest { result ->
                 when (result) {
@@ -443,7 +402,17 @@ class ViewModels @Inject constructor(
                         _orderDetailsState.value = GetOrderDetailsState(isLoading = true)
                     }
                     is ResultState.Success -> {
-                        _orderDetailsState.value = GetOrderDetailsState(data = result.data)
+                        val orders = result.data
+                        _orderDetailsState.value = GetOrderDetailsState(data = orders)
+
+                        // Fetch user and product details asynchronously without awaiting all
+                        orders.map { it.userId }.distinct().forEach { userId ->
+                            getUserDetails(userId)
+                        }
+
+                        orders.flatMap { it.items.keys }.distinct().forEach { productId ->
+                            getProductDetails(productId)
+                        }
                     }
                     is ResultState.Error -> {
                         _orderDetailsState.value = GetOrderDetailsState(error = result.error)
@@ -453,26 +422,43 @@ class ViewModels @Inject constructor(
         }
     }
 
-    fun updateOrderStatus(userId: String, orderId: String, newStatus: String) {
+    private fun getUserDetails(userId: String) {
         viewModelScope.launch {
-            repo.updateOrderStatus(userId, orderId, newStatus)
-                .collect { resultState ->
-                    when (resultState) {
-                        is ResultState.Loading -> {
-                            // Handle loading state
-                        }
-                        is ResultState.Success -> {
-                            // Handle success state
-                            Log.d("UpdateOrderStatus", resultState.data)
-                            // Refresh user details to reflect the updated status in the UI
-                            getUserDetails(userId)
-                        }
-                        is ResultState.Error -> {
-                            // Handle error state
-                            Log.e("UpdateOrderStatus", resultState.error)
-                        }
+            repo.getUserDetails(userId).collectLatest { result ->
+                if (result is ResultState.Success) {
+                    _userDetailsMap.update { it + (userId to result.data) }
+                }
+            }
+        }
+    }
+
+    private fun getProductDetails(productId: String) {
+        viewModelScope.launch {
+            repo.getProducts().collectLatest { result ->
+                if (result is ResultState.Success) {
+                    val product = result.data.find { it.productId == productId }
+                    product?.let {
+                        _productDetailsMap.update { currentMap -> currentMap + (productId to it) }
                     }
                 }
+            }
+        }
+    }
+
+    fun updateOrderStatus(userId: String, orderId: String, newStatus: String) {
+        viewModelScope.launch {
+            repo.updateOrderStatus(userId, orderId, newStatus).collect { resultState ->
+                when (resultState) {
+                    is ResultState.Success -> {
+                        Log.d("UpdateOrderStatus", resultState.data)
+                        getOrderDetails() // Refresh order details after updating status
+                    }
+                    is ResultState.Error -> {
+                        Log.e("UpdateOrderStatus", resultState.error)
+                    }
+                    else -> Unit
+                }
+            }
         }
     }
 

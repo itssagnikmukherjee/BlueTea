@@ -153,19 +153,25 @@ class repoImpl @Inject constructor(
     }
 
     override fun getProducts(): Flow<ResultState<List<Product>>> = callbackFlow {
-        trySend(ResultState.Loading)
-        FirebaseFirestore.collection(Constants.PRODUCT).get().addOnSuccessListener {
-            val products = it.documents.mapNotNull {
-                it.toObject(Product::class.java)?.copy(productId = it.id)
+        trySend(ResultState.Loading) // Emit loading state
+
+        val listener = FirebaseFirestore.collection(Constants.PRODUCT)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val products = querySnapshot.documents.mapNotNull { document ->
+                    document.toObject(Product::class.java)?.copy(productId = document.id)
+                }
+                trySend(ResultState.Success(products))
+                close() // Close the flow after success
             }
-            trySend(ResultState.Success(products))
-        }.addOnFailureListener {
-            trySend(ResultState.Error(it.message.toString()))
-        }
-        awaitClose {
-            close()
-        }
+            .addOnFailureListener { exception ->
+                trySend(ResultState.Error(exception.localizedMessage ?: "Failed to fetch products"))
+                close() // Close the flow after error
+            }
+
+        awaitClose { listener }
     }
+
 
     override fun getUserDetails(userId: String): Flow<ResultState<UserData>> = callbackFlow {
         trySend(ResultState.Loading)
@@ -201,57 +207,65 @@ class repoImpl @Inject constructor(
     override fun updateOrderStatus(userId: String, orderId: String, newStatus: String): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading) // Emit loading state
 
-        // Access Firestore and update the status
-        FirebaseFirestore
-            .collection(Constants.USERS)
-            .document(userId) // Use userId to fetch the user document
+        val firestore = FirebaseFirestore
+
+        // Update user document
+        firestore.collection(Constants.USERS)
+            .document(userId)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // Get the current orderedItems map
                     val orderedItems = document.get("orderedItems") as? Map<String, Map<String, Any>> ?: emptyMap()
 
-                    // Update only the specific order identified by orderId
                     val updatedOrderedItems = orderedItems.toMutableMap().apply {
                         this[orderId] = this[orderId]?.toMutableMap()?.apply {
                             put("status", newStatus)
-
-                            // Update transitTime or deliveredTime based on the new status
                             when (newStatus) {
-                                "In Transit" -> {
-                                    put("transitTime", System.currentTimeMillis())
-                                }
-                                "Delivered" -> {
-                                    put("deliveredTime", System.currentTimeMillis())
-                                }
+                                "In Transit" -> put("transitTime", System.currentTimeMillis())
+                                "Delivered" -> put("deliveredTime", System.currentTimeMillis())
                             }
                         } ?: throw IllegalStateException("Order not found")
                     }
 
-                    // Update the Firestore document with the new orderedItems
-                    FirebaseFirestore
-                        .collection(Constants.USERS)
+                    // Update user document
+                    firestore.collection(Constants.USERS)
                         .document(userId)
                         .update("orderedItems", updatedOrderedItems)
                         .addOnSuccessListener {
-                            trySend(ResultState.Success("Status updated successfully")) // Emit success state
-                            close() // Close the flow
+                            // Now update the ORDERS collection
+                            firestore.collection(Constants.ORDERS)
+                                .document(orderId)
+                                .update(
+                                    mapOf(
+                                        "status" to newStatus,
+                                        when (newStatus) {
+                                            "In Transit" -> "transitTime" to System.currentTimeMillis()
+                                            "Delivered" -> "deliveredTime" to System.currentTimeMillis()
+                                            else -> "" to ""
+                                        }
+                                    ).filterKeys { it.isNotEmpty() } // Remove empty keys
+                                )
+                                .addOnSuccessListener {
+                                    trySend(ResultState.Success("Status updated successfully"))
+                                    close()
+                                }
+                                .addOnFailureListener {
+                                    close()
+                                }
                         }
-                        .addOnFailureListener { e ->
-                            trySend(ResultState.Error(e.localizedMessage ?: "Failed to update status")) // Emit error state
-                            close() // Close the flow
+                        .addOnFailureListener {
+                            close()
                         }
                 } else {
-                    trySend(ResultState.Error("User document not found")) // Emit error state
-                    close() // Close the flow
+                    trySend(ResultState.Error("User document not found"))
+                    close()
                 }
             }
-            .addOnFailureListener { e ->
-                trySend(ResultState.Error(e.localizedMessage ?: "Failed to fetch user document")) // Emit error state
-                close() // Close the flow
+            .addOnFailureListener {
+                close()
             }
 
-        // Close the flow when the coroutine scope is cancelled
         awaitClose { close() }
     }
+
 }

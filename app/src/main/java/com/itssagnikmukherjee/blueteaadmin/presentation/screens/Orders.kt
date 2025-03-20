@@ -4,9 +4,11 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
@@ -27,8 +30,11 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -48,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +67,7 @@ import com.binayshaw7777.kotstep.model.StepStyle
 import com.binayshaw7777.kotstep.model.iconHorizontal
 import com.binayshaw7777.kotstep.model.numberedHorizontal
 import com.binayshaw7777.kotstep.ui.horizontal.HorizontalStepper
+import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import java.time.Instant
@@ -69,364 +77,359 @@ import java.time.format.DateTimeFormatter
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
-    val orderDetailsState = viewModel.orderDetailsState.collectAsState()
-    val getProductState = viewModel.getProductState.collectAsState()
-    val userDetailsState = viewModel.getUserDetailsState.collectAsState()
-
-    val orders = orderDetailsState.value.data ?: emptyList()
-    val products = getProductState.value.data ?: emptyList()
-
-    val allActiveOrderUserIds = remember(orders) { orders.map { it.userId }.distinct() }
-    val productMap = remember(products) { products.associateBy { it.productId } }
-
-    LaunchedEffect(allActiveOrderUserIds) {
-        allActiveOrderUserIds.forEach { userId ->
-            viewModel.getUserDetails(userId)
-        }
-    }
+    val orderDetailsState by viewModel.orderDetailsState.collectAsState()
+    val userDetailsMap by viewModel.userDetailsMap.collectAsState()
+    val productDetailsMap by viewModel.productDetailsMap.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.getOrderDetails()
-        viewModel.getProducts()
     }
 
-    Column {
-        OrderFilterChips()
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Iterate over users
-        items(allActiveOrderUserIds) { userId ->
-            val userDetails = userDetailsState.value.data
-            val orderedItems = userDetails?.orderedItems ?: emptyMap()
+    val orders = orderDetailsState.data ?: emptyList()
 
-            // Iterate over orders for the user
-            orderedItems.forEach { (orderId, orderDetail) ->
-                // State to manage card expansion
-                var isExpanded by remember { mutableStateOf(false) }
-
-                // Extract timestamps
-                val inTransitTimestamp = orderDetail["transitTime"] as? Long
-                val deliveredTimestamp = orderDetail["deliveredTime"] as? Long
-
-                // Format timestamps into date and time
-                val orderDate = orderDetail["timestamp"]?.let { formatDate(it as Long) } ?: "N/A"
-                val orderTime = orderDetail["timestamp"]?.let { formatTime(it as Long) } ?: "N/A"
-                val deliveredDate = deliveredTimestamp?.let { formatDate(it) } ?: "N/A"
-                val deliveredTime = deliveredTimestamp?.let { formatTime(it) } ?: "N/A"
-                val inTransitDate = inTransitTimestamp?.let { formatDate(it) } ?: "N/A"
-                val inTransitTime = inTransitTimestamp?.let { formatTime(it) } ?: "N/A"
-
-                // Card for each order
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(1f).background(Color.Cyan),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Text(
-                            "#$orderId",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontSize = 20.sp,
-                            modifier = Modifier.background(Color.Cyan)
-                                .padding(vertical = 10.dp, horizontal = 20.dp).zIndex(1f)
-                        )
-                        IconButton(onClick = { isExpanded = !isExpanded }, modifier = Modifier.zIndex(999f)) {
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand"
-                            )
-                        }
-                    }
-                        Column(
-                        modifier = Modifier.padding(16.dp)
+    Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) {
+        when {
+            orderDetailsState.isLoading -> {
+//                Box(modifier = Modifier.size(200.dp).shimmer().background(Color.Black).fillMaxSize())
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            orderDetailsState.error != null -> {
+                Text(
+                    text = "Error: ${orderDetailsState.error}",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.Red
+                )
+            }
+            orders.isEmpty() -> {
+                Text(
+                    text = "No orders available",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            else -> {
+                Column {
+                    OrderFilterChips()
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        items(orders) { order ->
+                            val userDetails = userDetailsMap[order.userId]
+                            var isExpanded by remember { mutableStateOf(false) }
 
-                        val itemsMap = orderDetail["items"] as? Map<String, Int> ?: emptyMap()
-                        itemsMap.forEach { (productId, quantity) ->
-                            val product = productMap[productId]
-                            if (product != null) {
+                            //date time stamps
+                            val inTransitTimestamp = order.transitTime
+                            val deliveredTimestamp = order.deliveredTime
+
+                            val deliveredDate = formatDate(deliveredTimestamp)
+                            val deliveredTime = formatTime(deliveredTimestamp)
+                            val inTransitDate = formatDate(inTransitTimestamp)
+                            val inTransitTime = formatTime(inTransitTimestamp)
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                            ) {
                                 Row(
+                                    modifier = Modifier.fillMaxWidth().background(Color.Cyan).padding(horizontal = 20.dp, vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(vertical = 8.dp)
                                 ) {
-                                    AsyncImage(
-                                        model = product.productImages[0],
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(100.dp)
-                                            .clip(MaterialTheme.shapes.medium)
+                                    Text(
+                                        text = "#${order.orderId}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = order.status,
+                                            fontSize = 14.sp,
+                                        )
+                                        IconButton(
+                                            onClick = { isExpanded = !isExpanded }
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                contentDescription = if (isExpanded) "Collapse" else "Expand"
+                                            )
+                                        }
+                                    }
+                                }
 
-                                    Spacer(modifier = Modifier.width(16.dp))
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    order.items.forEach { (productId, quantity) ->
+                                        val productData = productDetailsMap[productId]
 
-                                    Column {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ){
+                                        if (productData != null) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                AsyncImage(
+                                                    model = productData.productImages[0],
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .size(100.dp)
+                                                        .clip(MaterialTheme.shapes.medium)
+                                                )
+
+                                                Spacer(modifier = Modifier.width(16.dp))
+
+                                                // Product Details
+                                                Column(
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    Text(
+                                                        text = productData.productName,
+                                                        style = MaterialTheme.typography.bodyLarge
+                                                    )
+                                                    Text(
+                                                        text = "₹${productData.productFinalPrice}",
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                }
+
+                                                // Quantity
+                                                Text(
+                                                    text = "x $quantity",
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+
+                                            // Subtotal
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                Text(
+                                                    text = "Subtotal  ₹${productData.productFinalPrice * quantity}",
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        } else {
                                             Text(
-                                                text = product.productName,
+                                                text = "Loading product details...",
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
+
+                                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                                    if (userDetails != null) {
+                                        Column(
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        ) {
+                                            Text(
+                                                text = "${userDetails.firstName} ${userDetails.lastName} | ${userDetails.phoneNo}",
                                                 style = MaterialTheme.typography.bodyLarge
                                             )
-                                            Column (
-                                                horizontalAlignment = Alignment.End
-                                            ){
-                                                Text(
-                                                    text = " x $quantity",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontFamily = fontFamily,
-                                                    fontWeight = FontWeight.Black
-                                                )
-                                                Text(
-                                                    text = "₹${product.productFinalPrice}",
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-
-                                            }
-
+                                            Text(
+                                                text = userDetails.email,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
                                         }
-                                    }
-                                }
-                            }
-                        }
-
-
-
-                        // Order date and payment method
-                        Text(
-                            text = "Order Date: $orderDate",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-
-                        Text(
-                            text = "Payment Method: ${orderDetail["paymentMethod"]}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-
-                        // Display the current status and a button to change it
-                        val currentStatus = orderDetail["status"] as? String ?: "N/A"
-                        var showStatusDialog by remember { mutableStateOf(false) }
-
-                        if (currentStatus == "Delivered") {
-                            Text("Delivered on $deliveredDate @ $deliveredTime")
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            ) {
-                                Text(
-                                    text = "Status:",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                                Button(onClick = { showStatusDialog = true }) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(currentStatus)
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
+                                    } else {
+                                        Text(
+                                            text = "Loading user details...",
+                                            color = Color.Gray
                                         )
                                     }
-                                }
-                            }
-                        }
 
-                        // Dialog to change the status
-                        if (showStatusDialog) {
-                            val statusOptions = when (currentStatus) {
-                                "Pending" -> listOf("In Transit", "Cancelled")
-                                "In Transit" -> listOf("Delivered", "Cancelled")
-                                else -> emptyList() // No options for "Delivered" or "Cancelled"
-                            }
+                                    // Order Total (if multiple products)
+                                    if (order.items.size > 1) {
+                                        val total = order.items.entries.sumOf { (productId, quantity) ->
+                                            productDetailsMap[productId]?.productFinalPrice?.times(
+                                                quantity
+                                            )
+                                                ?: 0
+                                        }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            Text(
+                                                text = "Order Total: ₹$total",
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
 
-                            AlertDialog(
-                                onDismissRequest = { showStatusDialog = false },
-                                title = { Text("Change Status") },
-                                text = {
-                                    Column {
-                                        statusOptions.forEach { status ->
-                                            TextButton(
-                                                onClick = {
-                                                    // Update the status in the backend
-                                                    viewModel.updateOrderStatus(
-                                                        userId = userId, // Pass the user ID
-                                                        orderId = orderId, // Pass the order ID
-                                                        newStatus = status // Pass the new status
+                                    AnimatedVisibility(visible = isExpanded) {
+                                        Column(
+                                            modifier = Modifier.padding(top = 16.dp)
+                                        ) {
+                                            // Stepper
+                                            val currentStep = when (order.status) {
+                                                "Pending" -> 1
+                                                "In Transit" -> 2
+                                                "Delivered" -> 3
+                                                else -> 1
+                                            }
+
+                                            val customStepStyle = StepStyle(
+                                                stepSize = 50.dp,
+                                                stepShape = CircleShape,
+                                                textSize = 16.sp,
+                                                iconSize = 24.dp,
+                                                lineStyle = LineDefault(lineSize = 70.dp),
+                                                stepPadding = 2.dp,
+                                                showCheckMarkOnDone = true,
+                                                showStrokeOnCurrent = false,
+                                                colors = StepDefaults(
+                                                    todoContainerColor = Color.DarkGray,
+                                                    todoContentColor = Color.DarkGray,
+                                                    todoLineColor = Color.Gray,
+                                                    currentContainerColor = Color.Green,
+                                                    currentContentColor = Color.White,
+                                                    currentLineColor = Color.Green,
+                                                    doneContainerColor = Color.Green,
+                                                    doneContentColor = Color.White,
+                                                    doneLineColor = Color.Green,
+                                                    checkMarkColor = Color.Black
+                                                )
+                                            )
+
+                                            HorizontalStepper(
+                                                style = iconHorizontal(
+                                                    stepStyle = customStepStyle,
+                                                    currentStep = currentStep,
+                                                    icons = listOf(
+                                                        Icons.Default.CheckCircle,
+                                                        Icons.Default.CheckCircle,
+                                                        Icons.Default.CheckCircle
                                                     )
-                                                    showStatusDialog = false
-                                                },
-                                                modifier = Modifier.fillMaxWidth()
+                                                )
+                                            )
+
+                                            // Date and Times
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                Text(status)
+                                                Column(
+                                                    horizontalAlignment = Alignment.Start
+                                                ) {
+                                                    Text(
+                                                        text = "Ordered",
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                    Text(
+                                                        text = formatDate(order.timestamp),
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                    Text(
+                                                        text = formatTime(order.timestamp),
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                }
+
+                                                if (currentStep >= 2) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally
+                                                    ) {
+                                                        Text(
+                                                            text = "In Transit",
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                        Text(
+                                                            text = inTransitDate,
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                        Text(
+                                                            text = inTransitTime,
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                    }
+                                                }
+
+                                                if (currentStep >= 3) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.End
+                                                    ) {
+                                                        Text(
+                                                            text = "Delivered",
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    Text(
+                                                        text = deliveredDate,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                    Text(
+                                                        text = deliveredTime,
+                                                        style = MaterialTheme.typography.bodySmall
+                                                    )
+                                                    }
+                                                }
                                             }
                                         }
                                     }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { showStatusDialog = false }) {
-                                        Text("Close")
-                                    }
-                                }
-                            )
-                        }
 
-                        // Expanded section (visible when expanded)
-                        AnimatedVisibility(visible = isExpanded) {
-                            Column {
-                                // User details
-                                Text(
-                                    text = "User ID: $userId",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
+                                    val currentStatus = order.status
+                                    var showStatusDialog by remember { mutableStateOf(false) }
 
-                                Text(
-                                    text = "${userDetails?.firstName} ${userDetails?.lastName}",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
-
-                                Text(
-                                    text = userDetails?.email.toString(),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-
-                                Text(
-                                    text = userDetails?.phoneNo.toString(),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-
-                                Text(
-                                    text = userDetails?.address.toString(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-
-                                // Stepper for order status
-                                val currentStep = when (currentStatus) {
-                                    "Pending" -> 1
-                                    "In Transit" -> 2
-                                    else -> 3
-                                }
-
-                                val customStepStyle = StepStyle(
-                                    stepSize = 50.dp,
-                                    stepShape = CircleShape,
-                                    textSize = 16.sp,
-                                    iconSize = 24.dp,
-                                    lineStyle = LineDefault(
-                                        lineSize = 70.dp
-                                    ),
-                                    stepPadding = 2.dp,
-                                    showCheckMarkOnDone = true,
-                                    showStrokeOnCurrent = false,
-                                    colors = StepDefaults(
-                                        todoContainerColor = Color.DarkGray,
-                                        todoContentColor = Color.DarkGray,
-                                        todoLineColor = Color.Gray,
-                                        currentContainerColor = Color.Green,
-                                        currentContentColor = Color.White,
-                                        currentLineColor = Color.Green,
-                                        doneContainerColor = Color.Green,
-                                        doneContentColor = Color.White,
-                                        doneLineColor = Color.Green,
-                                        checkMarkColor = Color.Black
-                                    )
-                                )
-
-                                HorizontalStepper(
-                                    style = iconHorizontal(
-                                        stepStyle = customStepStyle,
-                                        currentStep = currentStep,
-                                        icons = listOf(
-                                            Icons.Default.CheckCircle,
-                                            Icons.Default.CheckCircle,
-                                            Icons.Default.CheckCircle
+                                    if (currentStatus == "Delivered") {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(2.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center,
+                                        ){
+                                            Text("Delivered  ", fontSize = 14.sp, color = Color.Gray)
+                                            Icon(painter = painterResource(R.drawable.calendar),"", modifier = Modifier.size(12.dp), tint = Color.Gray)
+                                      Text("  $deliveredDate  ", fontSize = 14.sp, color = Color.Gray)
+                                            Icon(painter = painterResource(R.drawable.clock_solid),"", modifier = Modifier.size(12.dp), tint = Color.Gray)
+                                      Text("  $deliveredTime", fontSize = 14.sp, color = Color.Gray)
+                                        }
+                                    } else {
+                                        CustomStatusButton(
+                                            modifier = Modifier.padding(top=10.dp),
+                                            status = currentStatus,
+                                            onClick = { showStatusDialog = true }
                                         )
-                                    )
-                                )
-
-                                // Display status and corresponding date/time
-                                Row(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    // Ordered Section (Visible if currentStep >= 1)
-                                    if (currentStep >= 1) {
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            Column(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalAlignment = Alignment.Start
-                                            ) {
-                                                Text(
-                                                    "Ordered",
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                                Text(
-                                                    "Date: $orderDate",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    "Time: $orderTime",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                            }
-                                        }
                                     }
 
-                                    // In Transit Section (Visible if currentStep >= 2)
-                                    if (currentStep >= 2) {
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            Column(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalAlignment = Alignment.Start
-                                            ) {
-                                                Text(
-                                                    "In Transit",
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                                Text(
-                                                    "Date: $inTransitDate",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    "Time: $inTransitTime",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                            }
+                                    if (showStatusDialog) {
+                                        val statusOptions = when (currentStatus) {
+                                            "Pending" -> listOf("In Transit", "Cancelled")
+                                            "In Transit" -> listOf("Delivered", "Cancelled")
+                                            else -> emptyList()
                                         }
+
+                                        AlertDialog(
+                                            onDismissRequest = { showStatusDialog = false },
+                                            title = { Text("Change Status", fontFamily = fontFamily) },
+                                            text = {
+                                                Column {
+                                                    statusOptions.forEach { status ->
+                                                        Text(status,
+                                                            modifier = Modifier.fillMaxWidth().padding(20.dp).clickable{
+                                                                viewModel.updateOrderStatus(
+                                                                    userId = order.userId,
+                                                                    orderId = order.orderId,
+                                                                    newStatus = status
+                                                                )
+                                                                showStatusDialog = false
+                                                            })
+                                                    }
+                                                }
+                                            },
+                                            confirmButton = {
+                                                TextButton(onClick = { showStatusDialog = false }) {
+                                                    Text("Close")
+                                                }
+                                            }
+                                        )
                                     }
 
-                                    // Delivered Section (Visible if currentStep >= 3)
-                                    if (currentStep >= 3) {
-                                        Box(modifier = Modifier.weight(1f)) {
-                                            Column(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalAlignment = Alignment.End
-                                            ) {
-                                                Text(
-                                                    "Delivered",
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                                Text(
-                                                    "Date: $deliveredDate",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    "Time: $deliveredTime",
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -435,8 +438,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
             }
         }
     }
-    }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -460,8 +463,8 @@ fun OrderFilterChips() {
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp), // Horizontal padding
-            horizontalArrangement = Arrangement.spacedBy(8.dp) // Space between chips
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(chips) { chip ->
                 FilterChip(
@@ -478,15 +481,51 @@ fun OrderFilterChips() {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun formatDate(timestamp: Long): String {
-    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-        .withZone(ZoneId.systemDefault())
-    return formatter.format(Instant.ofEpochMilli(timestamp))
+fun formatDate(timestamp: Long?): String {
+    return timestamp?.let {
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
+        Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).format(formatter)
+    } ?: "N/A"
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun formatTime(timestamp: Long): String {
-    val formatter = DateTimeFormatter.ofPattern("hh:mm:ss a")
-        .withZone(ZoneId.systemDefault())
-    return formatter.format(Instant.ofEpochMilli(timestamp))
+fun formatTime(timestamp: Long?): String {
+    return timestamp?.let {
+        val formatter = DateTimeFormatter.ofPattern("hh:mm a")
+        Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).format(formatter)
+    } ?: "N/A"
+}
+
+@Composable
+fun CustomStatusButton(
+    status: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().height(50.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = status,
+                fontFamily = fontFamily,
+                fontSize = 16.sp
+            )
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
 }
