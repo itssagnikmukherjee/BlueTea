@@ -394,7 +394,7 @@ class ViewModels @Inject constructor(
     private val _productDetailsMap = MutableStateFlow<Map<String, Product>>(emptyMap())
     val productDetailsMap = _productDetailsMap.asStateFlow()
 
-    internal fun getOrderDetails() {
+    fun getOrderDetails() {
         viewModelScope.launch {
             repo.getOrders().collectLatest { result ->
                 when (result) {

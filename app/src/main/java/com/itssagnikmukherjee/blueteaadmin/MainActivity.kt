@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -61,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +72,7 @@ import com.itssagnikmukherjee.blueteaadmin.presentation.screens.OrdersScreen
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.banner.AddBannerScreen
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.BlueTeaAdminTheme
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -151,21 +154,27 @@ fun FloatingTopBar(modifier: Modifier = Modifier, scrollBehavior: TopAppBarScrol
         TopAppBar(
             modifier = Modifier
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)), // Semi-transparent background
+                .background(primaryBlack),
             scrollBehavior = scrollBehavior,
             title = {
-                Text(
-                    text = "BaazarIO",
-                    fontFamily = fontFamily,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ){
+                    Text(
+                        text = "BaazarIO",
+                        fontFamily = fontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
             },
             navigationIcon = {
                     Icon(
                         painter = painterResource(R.drawable.bars),
                         contentDescription = "Menu",
-                        tint = MaterialTheme.colorScheme.onSurface,
+                        tint = Color.White,
                         modifier = Modifier.clickable{
                             onMenuClick()
                         }.size(40.dp).padding(horizontal = 10.dp)
@@ -185,14 +194,9 @@ fun FloatingTopBar(modifier: Modifier = Modifier, scrollBehavior: TopAppBarScrol
                     Icon(
                         painter = painterResource(R.drawable.bell_solid),
                         contentDescription = "Notifications",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = Color.White
                     )
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .background(Color.Black, CircleShape).size(5.dp)
-                    )
+                    Text("3", fontFamily = fontFamily, fontWeight = FontWeight.Bold, color = primaryBlack, modifier = Modifier.padding(horizontal = 6.dp))
                 }
             }
         )
@@ -233,10 +237,11 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                 Text(
                     text = "Blue Tea",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = primaryBlack,
                     modifier = Modifier.padding(top = 8.dp),
                     fontSize = 20.sp,
                     fontFamily = fontFamily,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -245,7 +250,7 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
 
         Column {
             NavigationDrawerItem(
-                label = { Text("Categories", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text("Categories", style = MaterialTheme.typography.bodyLarge, color = primaryBlack) },
                 selected = false,
                 onClick = { onItemClick("Modify Categories") },
                 colors = NavigationDrawerItemDefaults.colors(
@@ -253,10 +258,10 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                     unselectedContainerColor = Color.White
                 ),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-                icon = { Icon(painter = painterResource(R.drawable.categories), contentDescription = null, modifier = Modifier.size(20.dp)) }
+                icon = { Icon(painter = painterResource(R.drawable.categories), contentDescription = null, modifier = Modifier.size(20.dp), tint = primaryBlack) }
             )
             NavigationDrawerItem(
-                label = { Text("Banner Settings", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text("Banner Settings", style = MaterialTheme.typography.bodyLarge, color = primaryBlack) },
                 selected = false,
                 onClick = { onItemClick("Banner Settings") },
                 colors = NavigationDrawerItemDefaults.colors(
@@ -264,10 +269,10 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                     unselectedContainerColor = Color.White
                 ),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-                icon = { Icon(painter = painterResource(R.drawable.banner), contentDescription = null, modifier = Modifier.size(20.dp)) }
+                icon = { Icon(painter = painterResource(R.drawable.banner), contentDescription = null, modifier = Modifier.size(20.dp), tint = primaryBlack) }
             )
             NavigationDrawerItem(
-                label = { Text("Manage Products", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text("Manage Products", style = MaterialTheme.typography.bodyLarge, color = primaryBlack) },
                 selected = false,
                 onClick = { onItemClick("Manage Products") },
                 colors = NavigationDrawerItemDefaults.colors(
@@ -275,10 +280,10 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                     unselectedContainerColor = Color.White
                 ),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-                icon = { Icon(painter = painterResource(R.drawable.box), contentDescription = null, modifier = Modifier.size(20.dp)) }
+                icon = { Icon(painter = painterResource(R.drawable.box), contentDescription = null, modifier = Modifier.size(20.dp), tint = primaryBlack) }
             )
             NavigationDrawerItem(
-                label = { Text("Manage Orders", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text("Manage Orders", style = MaterialTheme.typography.bodyLarge, color = primaryBlack) },
                 selected = false,
                 onClick = { onItemClick("Manage Orders") },
                 colors = NavigationDrawerItemDefaults.colors(
@@ -286,7 +291,7 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                     unselectedContainerColor = Color.White
                 ),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-                icon = { Icon(painter = painterResource(R.drawable.clipboard), contentDescription = null, modifier = Modifier.size(20.dp)) }
+                icon = { Icon(painter = painterResource(R.drawable.clipboard), contentDescription = null, modifier = Modifier.size(20.dp), tint = primaryBlack) }
             )
         }
 
@@ -303,7 +308,7 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             NavigationDrawerItem(
-                label = { Text("Store", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text("Store", style = MaterialTheme.typography.bodyLarge, color = primaryBlack) },
                 selected = false,
                 onClick = { onItemClick("Store") },
                 colors = NavigationDrawerItemDefaults.colors(
@@ -311,10 +316,10 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                     unselectedContainerColor = Color.White
                 ),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-                icon = { Icon(painter = painterResource(R.drawable.store_solid), contentDescription = null, modifier = Modifier.size(20.dp)) }
+                icon = { Icon(painter = painterResource(R.drawable.store_solid), contentDescription = null, modifier = Modifier.size(20.dp) , tint = primaryBlack) }
             )
             NavigationDrawerItem(
-                label = { Text("Settings", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text("Settings", style = MaterialTheme.typography.bodyLarge , color = primaryBlack) },
                 selected = false,
                 onClick = { onItemClick("Settings") },
                 colors = NavigationDrawerItemDefaults.colors(
@@ -322,7 +327,7 @@ fun NavigationDrawerContent(onItemClick: (String) -> Unit) {
                     unselectedContainerColor = Color.White
                 ),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-                icon = { Icon(painter = painterResource(R.drawable.gear_solid), contentDescription = null, modifier = Modifier.size(20.dp)) }
+                icon = { Icon(painter = painterResource(R.drawable.gear_solid), contentDescription = null, modifier = Modifier.size(20.dp) , tint = primaryBlack) }
             )
         }
     }

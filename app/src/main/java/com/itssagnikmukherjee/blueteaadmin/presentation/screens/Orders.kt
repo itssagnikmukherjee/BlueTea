@@ -3,7 +3,9 @@ package com.itssagnikmukherjee.blueteaadmin.presentation.screens
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +13,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,9 +28,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -37,9 +44,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,6 +65,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -70,6 +81,7 @@ import com.binayshaw7777.kotstep.ui.horizontal.HorizontalStepper
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -90,7 +102,6 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) {
         when {
             orderDetailsState.isLoading -> {
-//                Box(modifier = Modifier.size(200.dp).shimmer().background(Color.Black).fillMaxSize())
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
             orderDetailsState.error != null -> {
@@ -108,13 +119,13 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
             }
             else -> {
                 Column {
-                    OrderFilterChips()
+                    OrderFilterChips(totalOrders = orders.size)
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(orders) { order ->
+                        items(orders.reversed()) { order ->
                             val userDetails = userDetailsMap[order.userId]
                             var isExpanded by remember { mutableStateOf(false) }
 
@@ -133,7 +144,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                     .padding(vertical = 8.dp),
                             ) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().background(Color.Cyan).padding(horizontal = 20.dp, vertical = 2.dp),
+                                    modifier = Modifier.fillMaxWidth().background(primaryBlack).padding(horizontal = 20.dp, vertical = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
@@ -141,28 +152,47 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                         text = "#${order.orderId}",
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
                                     )
+
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        Icon(
+                                            painter = painterResource(
+                                                when(order.status){
+                                                    "Delivered" -> R.drawable.truck_solid
+                                                    "In Transit" -> R.drawable.transit
+                                                    else -> R.drawable.pending
+                                                }
+                                            ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(12.dp),
+                                            tint = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = order.status,
                                             fontSize = 14.sp,
+                                            color = Color.White
                                         )
-                                        IconButton(
-                                            onClick = { isExpanded = !isExpanded }
-                                        ) {
+                                        IconButton(onClick = {
+                                            isExpanded = !isExpanded
+                                        }) {
                                             Icon(
                                                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                                contentDescription = if (isExpanded) "Collapse" else "Expand"
+                                                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                                tint = Color.White,
                                             )
                                         }
+
                                     }
                                 }
 
                                 Column(
-                                    modifier = Modifier.padding(16.dp)
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     order.items.forEach { (productId, quantity) ->
                                         val productData = productDetailsMap[productId]
@@ -170,50 +200,71 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                         if (productData != null) {
                                             Row(
                                                 modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp),
+                                                    .fillMaxWidth().padding(bottom = 10.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 AsyncImage(
                                                     model = productData.productImages[0],
                                                     contentDescription = null,
                                                     modifier = Modifier
-                                                        .size(100.dp)
+                                                        .size(120.dp)
                                                         .clip(MaterialTheme.shapes.medium)
                                                 )
 
                                                 Spacer(modifier = Modifier.width(16.dp))
 
-                                                // Product Details
-                                                Column(
-                                                    modifier = Modifier.weight(1f)
-                                                ) {
-                                                    Text(
-                                                        text = productData.productName,
-                                                        style = MaterialTheme.typography.bodyLarge
-                                                    )
-                                                    Text(
-                                                        text = "₹${productData.productFinalPrice}",
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
+                                                Column (
+                                                    modifier = Modifier.height(120.dp),
+                                                    verticalArrangement = Arrangement.SpaceBetween
+                                                ){
+                                                    Row{
+                                                        Column(
+                                                            modifier = Modifier.weight(1f)
+                                                                .align(Alignment.Top)
+                                                        ) {
+                                                            Text(
+                                                                text = productData.productName,
+                                                                fontFamily = fontFamily,
+                                                                fontSize = 18.sp,
+                                                                color = primaryBlack
+                                                            )
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ){
+                                                                Text(
+                                                                    text = "₹${productData.productFinalPrice}",
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 20.sp,
+                                                                    color = primaryBlack,
+                                                                    fontWeight = FontWeight.Medium
+                                                                )
+                                                                Text(
+                                                                    text = "x   $quantity",
+                                                                    fontSize = 20.sp,
+                                                                    fontWeight = FontWeight.Black,
+                                                                    color = primaryBlack
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        if(order.items.size > 1) Text("Subtotal", color = primaryBlack) else Text("Total", color = primaryBlack)
+                                                        Text(
+                                                            text = "₹${productData.productFinalPrice * quantity}",
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = primaryBlack,
+                                                            fontSize = 28.sp
+                                                        )
+                                                    }
+
                                                 }
-
-                                                // Quantity
-                                                Text(
-                                                    text = "x $quantity",
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                            }
-
-                                            // Subtotal
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.End
-                                            ) {
-                                                Text(
-                                                    text = "Subtotal  ₹${productData.productFinalPrice * quantity}",
-                                                    fontWeight = FontWeight.Bold
-                                                )
                                             }
                                         } else {
                                             Text(
@@ -223,20 +274,75 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                         }
                                     }
 
-                                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-
                                     if (userDetails != null) {
-                                        Column(
-                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(95.dp)
                                         ) {
-                                            Text(
-                                                text = "${userDetails.firstName} ${userDetails.lastName} | ${userDetails.phoneNo}",
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                            Text(
-                                                text = userDetails.email,
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .background(Color.White)
+                                                    .zIndex(1f).padding(horizontal = 10.dp)
+                                            ){
+                                                Text(
+                                                    text = "#${userDetails.userId}",
+                                                    fontSize = 12.sp,
+                                                    color = Color.Gray,
+                                                )
+                                            }
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp).align(Alignment.BottomEnd)
+                                            ) {
+                                                Column {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = "${userDetails.firstName} ${userDetails.lastName}",
+                                                            fontWeight = FontWeight.Medium,
+                                                            fontSize = 18.sp,
+                                                            color = primaryBlack,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        Icon(
+                                                            imageVector = Icons.Default.Phone,
+                                                            contentDescription = "Phone Icon",
+                                                            tint = primaryBlack,
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            text = userDetails.phoneNo,
+                                                            fontSize = 14.sp,
+                                                            color = primaryBlack
+                                                        )
+                                                    }
+
+                                                    Spacer(modifier = Modifier.height(2.dp))
+
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Email,
+                                                            contentDescription = "Email Icon",
+                                                            tint = Color.Gray,
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                            text = userDetails.email,
+                                                            fontSize = 14.sp,
+                                                            color = Color.Gray
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
                                     } else {
                                         Text(
@@ -244,6 +350,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                             color = Color.Gray
                                         )
                                     }
+
 
                                     // Order Total (if multiple products)
                                     if (order.items.size > 1) {
@@ -443,22 +550,33 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OrderFilterChips() {
+fun OrderFilterChips(totalOrders: Int = 0) {
 
     var selectedChip by remember { mutableStateOf("All") }
 
-    val chips = listOf("All", "In Transit", "Ordered", "Delivered", "Cancelled", "Refunded") // Added more chips for demonstration
+    val chips = listOf("All", "In Transit", "Ordered", "Delivered")
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 20.dp)
     ) {
-        Text(
-            text = "Orders",
-            fontSize = 20.sp,
-            modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
-        )
+        Box(
+            Modifier.width(120.dp).height(50.dp)
+        ){
+            Box(
+                Modifier.size(22.dp).clip(CircleShape).fillMaxWidth().align(Alignment.TopEnd)
+            ){
+                Text("$totalOrders", fontSize = 14.sp, color = Color.White, modifier = Modifier.background(primaryBlack).fillMaxSize(), textAlign = TextAlign.Center)
+            }
+            Text(
+                text = "Orders",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 20.dp, bottom = 8.dp).align(Alignment.CenterStart),
+                color = primaryBlack
+            )
+        }
 
         LazyRow(
             modifier = Modifier
@@ -471,9 +589,15 @@ fun OrderFilterChips() {
                     selected = (chip == selectedChip),
                     onClick = { selectedChip = chip },
                     label = {
-                        Text(text = chip)
+                        Text(text = chip, fontFamily = fontFamily)
                     },
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    leadingIcon = {if(chip == selectedChip) Icon(Icons.Default.Check, contentDescription = null)},
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = primaryBlack,
+                        selectedLabelColor = Color.White,
+                        selectedLeadingIconColor = Color.White
+                    )
                 )
             }
         }
