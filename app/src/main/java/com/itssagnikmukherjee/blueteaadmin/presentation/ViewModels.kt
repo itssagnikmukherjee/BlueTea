@@ -451,7 +451,7 @@ class ViewModels @Inject constructor(
                 when (resultState) {
                     is ResultState.Success -> {
                         Log.d("UpdateOrderStatus", resultState.data)
-                        getOrderDetails() // Refresh order details after updating status
+                        getOrderDetails()
                     }
                     is ResultState.Error -> {
                         Log.e("UpdateOrderStatus", resultState.error)

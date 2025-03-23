@@ -3,6 +3,20 @@ package com.itssagnikmukherjee.blueteaadmin.presentation.screens
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,7 +62,9 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableChipColors
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,10 +73,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
@@ -81,7 +99,11 @@ import com.binayshaw7777.kotstep.ui.horizontal.HorizontalStepper
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.lightBackgroundColor
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -92,6 +114,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
     val orderDetailsState by viewModel.orderDetailsState.collectAsState()
     val userDetailsMap by viewModel.userDetailsMap.collectAsState()
     val productDetailsMap by viewModel.productDetailsMap.collectAsState()
+    val selectedFilters = remember { mutableStateOf(setOf<String>()) }
+    val refreshRotation = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         viewModel.getOrderDetails()
@@ -99,444 +123,655 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
 
     val orders = orderDetailsState.data ?: emptyList()
 
-    Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) {
-        when {
-            orderDetailsState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    val filteredOrders = remember(orders, selectedFilters.value) {
+        if (selectedFilters.value.isEmpty()) {
+            orders
+        } else {
+            orders.filter { order ->
+                selectedFilters.value.contains(order.status)
             }
-            orderDetailsState.error != null -> {
-                Text(
-                    text = "Error: ${orderDetailsState.error}",
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color.Red
+        }
+    }
+    val coroutineScope = rememberCoroutineScope()
+    Column {
+        val totalPendingOrdersCount = orders.count { it.status == "Pending" }
+        val totalInTransitOrdersCount = orders.count { it.status == "In Transit" }
+        val totalDeliveredOrdersCount = orders.count { it.status == "Delivered" }
+
+        OrderFilterChips(
+            totalOrders = orders.size,
+            selectedFilters = selectedFilters.value,
+            onFilterSelected = { filter ->
+                selectedFilters.value = if (selectedFilters.value.contains(filter)) {
+                    selectedFilters.value - filter
+                } else {
+                    selectedFilters.value + filter
+                }
+            },
+
+        onRefreshClick = {
+            coroutineScope.launch {
+                refreshRotation.snapTo(90f)
+                viewModel.getOrderDetails()
+
+                refreshRotation.animateTo(
+                    targetValue = 180f,
+                    animationSpec = tween(
+                        durationMillis = 800,
+                        easing = FastOutSlowInEasing
+                    )
                 )
             }
-            orders.isEmpty() -> {
-                Text(
-                    text = "No orders available",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-            else -> {
-                Column {
-                    OrderFilterChips(totalOrders = orders.size)
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(orders.reversed()) { order ->
-                            val userDetails = userDetailsMap[order.userId]
-                            var isExpanded by remember { mutableStateOf(false) }
+        },
+        pendingCount = totalPendingOrdersCount,
+            inTransitCount = totalInTransitOrdersCount,
+            deliveredCount = totalDeliveredOrdersCount
+        )
 
-                            //date time stamps
-                            val inTransitTimestamp = order.transitTime
-                            val deliveredTimestamp = order.deliveredTime
-
-                            val deliveredDate = formatDate(deliveredTimestamp)
-                            val deliveredTime = formatTime(deliveredTimestamp)
-                            val inTransitDate = formatDate(inTransitTimestamp)
-                            val inTransitTime = formatTime(inTransitTimestamp)
-
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().background(primaryBlack).padding(horizontal = 20.dp, vertical = 2.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
+        Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) {
+            when {
+                orderDetailsState.isLoading -> {
+                    ShimmerScreen()
+                }
+                orderDetailsState.error != null -> {
+                    Text(
+                        text = "Error: ${orderDetailsState.error}",
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color.Red
+                    )
+                }
+                filteredOrders.isEmpty() -> {
+                    Text(
+                        text = if (orders.isEmpty()) "No orders available" else{
+                            "No orders match the selected filters" },
+                        modifier = Modifier.align(Alignment.Center),
+                        fontFamily = fontFamily,
+                    )
+                }
+                else -> {
+                    Column {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filteredOrders.reversed()) { order ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = slideInVertically(initialOffsetY = {it}) + fadeIn(),
+                                    exit = slideOutVertically() + fadeOut()
                                 ) {
-                                    Text(
-                                        text = "#${order.orderId}",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color.White
+                                    val userDetails = userDetailsMap[order.userId]
+                                    var isExpanded by remember { mutableStateOf(false) }
+                                    val rotationState by animateFloatAsState(
+                                        targetValue = if (isExpanded) 180f else 0f,
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            easing = FastOutSlowInEasing
+                                        ),
+                                        label = "expandRotation"
                                     )
 
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
+                                    //date time stamps
+                                    val inTransitTimestamp = order.transitTime
+                                    val deliveredTimestamp = order.deliveredTime
+
+                                    val deliveredDate = formatDate(deliveredTimestamp)
+                                    val deliveredTime = formatTime(deliveredTimestamp)
+                                    val inTransitDate = formatDate(inTransitTimestamp)
+                                    val inTransitTime = formatTime(inTransitTimestamp)
+
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 8.dp),
                                     ) {
-                                        Icon(
-                                            painter = painterResource(
-                                                when(order.status){
-                                                    "Delivered" -> R.drawable.truck_solid
-                                                    "In Transit" -> R.drawable.transit
-                                                    else -> R.drawable.pending
-                                                }
-                                            ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(12.dp),
-                                            tint = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = order.status,
-                                            fontSize = 14.sp,
-                                            color = Color.White
-                                        )
-                                        IconButton(onClick = {
-                                            isExpanded = !isExpanded
-                                        }) {
-                                            Icon(
-                                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                                contentDescription = if (isExpanded) "Collapse" else "Expand",
-                                                tint = Color.White,
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(primaryBlack)
+                                                .padding(horizontal = 20.dp, vertical = 2.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                text = "#${order.orderId}",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color.White
                                             )
-                                        }
 
-                                    }
-                                }
-
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    order.items.forEach { (productId, quantity) ->
-                                        val productData = productDetailsMap[productId]
-
-                                        if (productData != null) {
                                             Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth().padding(bottom = 10.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                AsyncImage(
-                                                    model = productData.productImages[0],
-                                                    contentDescription = null,
-                                                    modifier = Modifier
-                                                        .size(120.dp)
-                                                        .clip(MaterialTheme.shapes.medium)
-                                                )
+                                                // Animate status icon entrance
+                                                AnimatedVisibility(
+                                                    visible = true,
+                                                    enter = slideInHorizontally(
+                                                        initialOffsetX = { it },
+                                                        animationSpec = tween(durationMillis = 500)
+                                                    ) + fadeIn(),
+                                                    exit = slideOutHorizontally() + fadeOut()
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                when (order.status) {
+                                                                    "Delivered" -> R.drawable.truck_solid
+                                                                    "In Transit" -> R.drawable.transit
+                                                                    else -> R.drawable.pending
+                                                                }
+                                                            ),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(12.dp),
+                                                            tint = Color.White
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Text(
+                                                            text = order.status,
+                                                            fontSize = 14.sp,
+                                                            color = Color.White
+                                                        )
+                                                    }
+                                                }
 
-                                                Spacer(modifier = Modifier.width(16.dp))
+                                                IconButton(onClick = {
+                                                    isExpanded = !isExpanded
+                                                }) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                                                        tint = Color.White,
+                                                        modifier = Modifier.rotate(rotationState)
+                                                    )
+                                                }
+                                            }
+                                        }
 
-                                                Column (
-                                                    modifier = Modifier.height(120.dp),
-                                                    verticalArrangement = Arrangement.SpaceBetween
-                                                ){
-                                                    Row{
+                                        Column(
+                                            modifier = Modifier.padding(16.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            order.items.forEach { (productId, quantity) ->
+                                                val productData = productDetailsMap[productId]
+
+                                                if (productData != null) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth().padding(bottom = 10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        AsyncImage(
+                                                            model = productData.productImages[0],
+                                                            contentDescription = null,
+                                                            modifier = Modifier
+                                                                .size(120.dp)
+                                                                .clip(MaterialTheme.shapes.medium)
+                                                        )
+
+                                                        Spacer(modifier = Modifier.width(16.dp))
+
                                                         Column(
-                                                            modifier = Modifier.weight(1f)
-                                                                .align(Alignment.Top)
+                                                            modifier = Modifier.height(120.dp),
+                                                            verticalArrangement = Arrangement.SpaceBetween
                                                         ) {
-                                                            Text(
-                                                                text = productData.productName,
-                                                                fontFamily = fontFamily,
-                                                                fontSize = 18.sp,
-                                                                color = primaryBlack
-                                                            )
+                                                            Row {
+                                                                Column(
+                                                                    modifier = Modifier.weight(1f)
+                                                                        .align(Alignment.Top)
+                                                                ) {
+                                                                    Text(
+                                                                        text = productData.productName,
+                                                                        fontFamily = fontFamily,
+                                                                        fontSize = 18.sp,
+                                                                        color = primaryBlack
+                                                                    )
+                                                                    Row(
+                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                                        verticalAlignment = Alignment.CenterVertically
+                                                                    ) {
+                                                                        Text(
+                                                                            text = "₹${productData.productFinalPrice}",
+                                                                            fontFamily = fontFamily,
+                                                                            fontSize = 20.sp,
+                                                                            color = primaryBlack,
+                                                                            fontWeight = FontWeight.Medium
+                                                                        )
+                                                                        Text(
+                                                                            text = "x   $quantity",
+                                                                            fontSize = 20.sp,
+                                                                            fontWeight = FontWeight.Black,
+                                                                            color = primaryBlack
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+
                                                             Row(
                                                                 modifier = Modifier.fillMaxWidth(),
                                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                                 verticalAlignment = Alignment.CenterVertically
-                                                            ){
-                                                                Text(
-                                                                    text = "₹${productData.productFinalPrice}",
-                                                                    fontFamily = fontFamily,
-                                                                    fontSize = 20.sp,
-                                                                    color = primaryBlack,
-                                                                    fontWeight = FontWeight.Medium
+                                                            ) {
+                                                                if (order.items.size > 1) Text(
+                                                                    "Subtotal",
+                                                                    color = primaryBlack
+                                                                ) else Text(
+                                                                    "Total",
+                                                                    color = primaryBlack
                                                                 )
                                                                 Text(
-                                                                    text = "x   $quantity",
-                                                                    fontSize = 20.sp,
-                                                                    fontWeight = FontWeight.Black,
-                                                                    color = primaryBlack
+                                                                    text = "₹${productData.productFinalPrice * quantity}",
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = primaryBlack,
+                                                                    fontSize = 28.sp
                                                                 )
                                                             }
                                                         }
                                                     }
-
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        if(order.items.size > 1) Text("Subtotal", color = primaryBlack) else Text("Total", color = primaryBlack)
-                                                        Text(
-                                                            text = "₹${productData.productFinalPrice * quantity}",
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = primaryBlack,
-                                                            fontSize = 28.sp
-                                                        )
-                                                    }
-
-                                                }
-                                            }
-                                        } else {
-                                            Text(
-                                                text = "Loading product details...",
-                                                color = Color.Gray
-                                            )
-                                        }
-                                    }
-
-                                    if (userDetails != null) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(95.dp)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .background(Color.White)
-                                                    .zIndex(1f).padding(horizontal = 10.dp)
-                                            ){
-                                                Text(
-                                                    text = "#${userDetails.userId}",
-                                                    fontSize = 12.sp,
-                                                    color = Color.Gray,
-                                                )
-                                            }
-
-                                            Box(
-                                                modifier = Modifier
-                                                    .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
-                                                    .fillMaxWidth()
-                                                    .padding(16.dp).align(Alignment.BottomEnd)
-                                            ) {
-                                                Column {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Text(
-                                                            text = "${userDetails.firstName} ${userDetails.lastName}",
-                                                            fontWeight = FontWeight.Medium,
-                                                            fontSize = 18.sp,
-                                                            color = primaryBlack,
-                                                            modifier = Modifier.weight(1f)
-                                                        )
-                                                        Icon(
-                                                            imageVector = Icons.Default.Phone,
-                                                            contentDescription = "Phone Icon",
-                                                            tint = primaryBlack,
-                                                            modifier = Modifier.size(16.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text(
-                                                            text = userDetails.phoneNo,
-                                                            fontSize = 14.sp,
-                                                            color = primaryBlack
-                                                        )
-                                                    }
-
-                                                    Spacer(modifier = Modifier.height(2.dp))
-
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Email,
-                                                            contentDescription = "Email Icon",
-                                                            tint = Color.Gray,
-                                                            modifier = Modifier.size(16.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text(
-                                                            text = userDetails.email,
-                                                            fontSize = 14.sp,
-                                                            color = Color.Gray
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        Text(
-                                            text = "Loading user details...",
-                                            color = Color.Gray
-                                        )
-                                    }
-
-
-                                    // Order Total (if multiple products)
-                                    if (order.items.size > 1) {
-                                        val total = order.items.entries.sumOf { (productId, quantity) ->
-                                            productDetailsMap[productId]?.productFinalPrice?.times(
-                                                quantity
-                                            )
-                                                ?: 0
-                                        }
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.End
-                                        ) {
-                                            Text(
-                                                text = "Order Total: ₹$total",
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-
-                                    AnimatedVisibility(visible = isExpanded) {
-                                        Column(
-                                            modifier = Modifier.padding(top = 16.dp)
-                                        ) {
-                                            // Stepper
-                                            val currentStep = when (order.status) {
-                                                "Pending" -> 1
-                                                "In Transit" -> 2
-                                                "Delivered" -> 3
-                                                else -> 1
-                                            }
-
-                                            val customStepStyle = StepStyle(
-                                                stepSize = 50.dp,
-                                                stepShape = CircleShape,
-                                                textSize = 16.sp,
-                                                iconSize = 24.dp,
-                                                lineStyle = LineDefault(lineSize = 70.dp),
-                                                stepPadding = 2.dp,
-                                                showCheckMarkOnDone = true,
-                                                showStrokeOnCurrent = false,
-                                                colors = StepDefaults(
-                                                    todoContainerColor = Color.DarkGray,
-                                                    todoContentColor = Color.DarkGray,
-                                                    todoLineColor = Color.Gray,
-                                                    currentContainerColor = Color.Green,
-                                                    currentContentColor = Color.White,
-                                                    currentLineColor = Color.Green,
-                                                    doneContainerColor = Color.Green,
-                                                    doneContentColor = Color.White,
-                                                    doneLineColor = Color.Green,
-                                                    checkMarkColor = Color.Black
-                                                )
-                                            )
-
-                                            HorizontalStepper(
-                                                style = iconHorizontal(
-                                                    stepStyle = customStepStyle,
-                                                    currentStep = currentStep,
-                                                    icons = listOf(
-                                                        Icons.Default.CheckCircle,
-                                                        Icons.Default.CheckCircle,
-                                                        Icons.Default.CheckCircle
+                                                } else {
+                                                    Text(
+                                                        text = "Loading product details...",
+                                                        color = Color.Gray
                                                     )
-                                                )
-                                            )
+                                                }
+                                            }
 
-                                            // Date and Times
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            // Order Total (if multiple products)
+                                            if (order.items.size > 1) {
+                                                Divider(
+                                                    Modifier.padding(vertical = 8.dp).fillMaxWidth()
+                                                        .background(
+                                                            Color.Gray
+                                                        )
+                                                )
+                                                val total =
+                                                    order.items.entries.sumOf { (productId, quantity) ->
+                                                        productDetailsMap[productId]?.productFinalPrice?.times(
+                                                            quantity
+                                                        )
+                                                            ?: 0
+                                                    }
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text("Order Total")
+                                                    Text(
+                                                        text = "₹$total",
+                                                        fontSize = 28.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = primaryBlack,
+                                                    )
+                                                }
+                                            }
+
+                                            if (userDetails != null) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(95.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .background(lightBackgroundColor)
+                                                            .zIndex(1f).padding(end = 10.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "#${userDetails.userId}",
+                                                            fontSize = 12.sp,
+                                                            color = Color.Gray,
+                                                        )
+                                                    }
+
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .border(
+                                                                1.dp,
+                                                                Color.Gray,
+                                                                RoundedCornerShape(12.dp)
+                                                            )
+                                                            .fillMaxWidth()
+                                                            .padding(16.dp)
+                                                            .align(Alignment.BottomEnd)
+                                                    ) {
+                                                        Column {
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                Text(
+                                                                    text = "${userDetails.firstName} ${userDetails.lastName}",
+                                                                    fontWeight = FontWeight.Medium,
+                                                                    fontSize = 18.sp,
+                                                                    color = primaryBlack,
+                                                                    modifier = Modifier.weight(1f)
+                                                                )
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Phone,
+                                                                    contentDescription = "Phone Icon",
+                                                                    tint = primaryBlack,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                                Spacer(modifier = Modifier.width(4.dp))
+                                                                Text(
+                                                                    text = userDetails.phoneNo,
+                                                                    fontSize = 14.sp,
+                                                                    color = primaryBlack
+                                                                )
+                                                            }
+
+                                                            Spacer(modifier = Modifier.height(2.dp))
+
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Email,
+                                                                    contentDescription = "Email Icon",
+                                                                    tint = Color.Gray,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                                Spacer(modifier = Modifier.width(4.dp))
+                                                                Text(
+                                                                    text = userDetails.email,
+                                                                    fontSize = 14.sp,
+                                                                    color = Color.Gray
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                Text(
+                                                    text = "Loading user details...",
+                                                    color = Color.Gray
+                                                )
+                                            }
+
+                                            AnimatedVisibility(
+                                                visible = isExpanded,
+                                                enter = expandVertically(
+                                                    animationSpec = tween(durationMillis = 300)
+                                                ),
+                                                exit = shrinkVertically(
+                                                    animationSpec = tween(durationMillis = 300)
+                                                )
                                             ) {
                                                 Column(
-                                                    horizontalAlignment = Alignment.Start
+                                                    modifier = Modifier.padding(top = 16.dp)
+                                                ) {
+                                                    // Stepper
+                                                    val currentStep = when (order.status) {
+                                                        "Pending" -> 1
+                                                        "In Transit" -> 2
+                                                        "Delivered" -> 3
+                                                        else -> 1
+                                                    }
+
+                                                    val customStepStyle = StepStyle(
+                                                        stepSize = 50.dp,
+                                                        stepShape = CircleShape,
+                                                        textSize = 16.sp,
+                                                        iconSize = 24.dp,
+                                                        lineStyle = LineDefault(lineSize = 70.dp),
+                                                        stepPadding = 2.dp,
+                                                        showCheckMarkOnDone = true,
+                                                        showStrokeOnCurrent = false,
+                                                        colors = StepDefaults(
+                                                            todoContainerColor = Color.DarkGray,
+                                                            todoContentColor = Color.DarkGray,
+                                                            todoLineColor = Color.Gray,
+                                                            currentContainerColor = Color.Green,
+                                                            currentContentColor = Color.White,
+                                                            currentLineColor = Color.Green,
+                                                            doneContainerColor = Color.Green,
+                                                            doneContentColor = Color.White,
+                                                            doneLineColor = Color.Green,
+                                                            checkMarkColor = Color.Black
+                                                        )
+                                                    )
+
+                                                    HorizontalStepper(
+                                                        style = iconHorizontal(
+                                                            stepStyle = customStepStyle,
+                                                            currentStep = currentStep,
+                                                            icons = listOf(
+                                                                Icons.Default.CheckCircle,
+                                                                Icons.Default.CheckCircle,
+                                                                Icons.Default.CheckCircle
+                                                            )
+                                                        )
+                                                    )
+
+                                                    // Date and Times
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth()
+                                                            .padding(top = 10.dp),
+                                                        horizontalArrangement = Arrangement.Start
+                                                    ) {
+                                                        Column(
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            modifier = Modifier.padding(horizontal = 20.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = "Ordered",
+                                                                fontFamily = fontFamily,
+                                                                fontSize = 15.sp,
+                                                                color = primaryBlack,
+                                                                fontWeight = FontWeight.SemiBold
+
+                                                            )
+                                                            Text(
+                                                                text = formatDate(order.timestamp),
+                                                                fontFamily = fontFamily,
+                                                                fontSize = 12.sp,
+                                                                color = primaryBlack
+
+                                                            )
+                                                            Text(
+                                                                text = formatTime(order.timestamp),
+                                                                fontFamily = fontFamily,
+                                                                fontSize = 12.sp,
+                                                                color = primaryBlack
+
+                                                            )
+                                                        }
+
+                                                        if (currentStep >= 2) {
+                                                            Column(
+                                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                                modifier = Modifier.padding(
+                                                                    horizontal = 20.dp
+                                                                )
+                                                            ) {
+                                                                Text(
+                                                                    text = "In Transit",
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 15.sp,
+                                                                    color = primaryBlack,
+                                                                    fontWeight = FontWeight.SemiBold
+
+                                                                )
+                                                                Text(
+                                                                    text = inTransitDate,
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 12.sp,
+                                                                    color = primaryBlack
+
+                                                                )
+                                                                Text(
+                                                                    text = inTransitTime,
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 12.sp,
+                                                                    color = primaryBlack
+
+                                                                )
+                                                            }
+                                                        }
+
+                                                        if (currentStep >= 3) {
+                                                            Column(
+                                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                                modifier = Modifier.padding(
+                                                                    horizontal = 20.dp
+                                                                )
+                                                            ) {
+                                                                Text(
+                                                                    text = "Delivered",
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 14.sp,
+                                                                    color = primaryBlack,
+                                                                    fontWeight = FontWeight.SemiBold,
+                                                                )
+                                                                Text(
+                                                                    text = deliveredDate,
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 12.sp,
+                                                                    color = primaryBlack
+
+                                                                )
+                                                                Text(
+                                                                    text = deliveredTime,
+                                                                    fontFamily = fontFamily,
+                                                                    fontSize = 12.sp,
+                                                                    color = primaryBlack
+
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            val currentStatus = order.status
+                                            var showStatusDialog by remember { mutableStateOf(false) }
+
+                                            if (currentStatus == "Delivered") {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth()
+                                                        .padding(top = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center,
                                                 ) {
                                                     Text(
-                                                        text = "Ordered",
-                                                        style = MaterialTheme.typography.bodyMedium
+                                                        "Delivered  ",
+                                                        fontSize = 14.sp,
+                                                        color = Color.Gray
+                                                    )
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.calendar),
+                                                        "",
+                                                        modifier = Modifier.size(12.dp),
+                                                        tint = Color.Gray
                                                     )
                                                     Text(
-                                                        text = formatDate(order.timestamp),
-                                                        style = MaterialTheme.typography.bodySmall
+                                                        "  $deliveredDate  ",
+                                                        fontSize = 14.sp,
+                                                        color = Color.Gray
+                                                    )
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.clock_solid),
+                                                        "",
+                                                        modifier = Modifier.size(12.dp),
+                                                        tint = Color.Gray
                                                     )
                                                     Text(
-                                                        text = formatTime(order.timestamp),
-                                                        style = MaterialTheme.typography.bodySmall
+                                                        "  $deliveredTime",
+                                                        fontSize = 14.sp,
+                                                        color = Color.Gray
                                                     )
                                                 }
-
-                                                if (currentStep >= 2) {
-                                                    Column(
-                                                        horizontalAlignment = Alignment.CenterHorizontally
-                                                    ) {
-                                                        Text(
-                                                            text = "In Transit",
-                                                            style = MaterialTheme.typography.bodyMedium
-                                                        )
-                                                        Text(
-                                                            text = inTransitDate,
-                                                            style = MaterialTheme.typography.bodySmall
-                                                        )
-                                                        Text(
-                                                            text = inTransitTime,
-                                                            style = MaterialTheme.typography.bodySmall
-                                                        )
-                                                    }
-                                                }
-
-                                                if (currentStep >= 3) {
-                                                    Column(
-                                                        horizontalAlignment = Alignment.End
-                                                    ) {
-                                                        Text(
-                                                            text = "Delivered",
-                                                            style = MaterialTheme.typography.bodyMedium
-                                                        )
-                                                    Text(
-                                                        text = deliveredDate,
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                    Text(
-                                                        text = deliveredTime,
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                    }
-                                                }
+                                            } else {
+                                                CustomStatusButton(
+                                                    modifier = Modifier.padding(top = 15.dp),
+                                                    status = currentStatus,
+                                                    onClick = { showStatusDialog = true }
+                                                )
                                             }
-                                        }
-                                    }
 
-                                    val currentStatus = order.status
-                                    var showStatusDialog by remember { mutableStateOf(false) }
+                                            if (showStatusDialog) {
+                                                val statusOptions = when (currentStatus) {
+                                                    "Pending" -> listOf("In Transit", "Cancelled")
+                                                    "In Transit" -> listOf("Delivered", "Cancelled")
+                                                    else -> emptyList()
+                                                }
 
-                                    if (currentStatus == "Delivered") {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().padding(2.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center,
-                                        ){
-                                            Text("Delivered  ", fontSize = 14.sp, color = Color.Gray)
-                                            Icon(painter = painterResource(R.drawable.calendar),"", modifier = Modifier.size(12.dp), tint = Color.Gray)
-                                      Text("  $deliveredDate  ", fontSize = 14.sp, color = Color.Gray)
-                                            Icon(painter = painterResource(R.drawable.clock_solid),"", modifier = Modifier.size(12.dp), tint = Color.Gray)
-                                      Text("  $deliveredTime", fontSize = 14.sp, color = Color.Gray)
-                                        }
-                                    } else {
-                                        CustomStatusButton(
-                                            modifier = Modifier.padding(top=10.dp),
-                                            status = currentStatus,
-                                            onClick = { showStatusDialog = true }
-                                        )
-                                    }
-
-                                    if (showStatusDialog) {
-                                        val statusOptions = when (currentStatus) {
-                                            "Pending" -> listOf("In Transit", "Cancelled")
-                                            "In Transit" -> listOf("Delivered", "Cancelled")
-                                            else -> emptyList()
-                                        }
-
-                                        AlertDialog(
-                                            onDismissRequest = { showStatusDialog = false },
-                                            title = { Text("Change Status", fontFamily = fontFamily) },
-                                            text = {
-                                                Column {
-                                                    statusOptions.forEach { status ->
-                                                        Text(status,
-                                                            modifier = Modifier.fillMaxWidth().padding(20.dp).clickable{
-                                                                viewModel.updateOrderStatus(
-                                                                    userId = order.userId,
-                                                                    orderId = order.orderId,
-                                                                    newStatus = status
-                                                                )
-                                                                showStatusDialog = false
-                                                            })
+                                                AlertDialog(
+                                                    onDismissRequest = { showStatusDialog = false },
+                                                    title = {
+                                                        Text(
+                                                            "Change Status",
+                                                            fontFamily = fontFamily
+                                                        )
+                                                    },
+                                                    text = {
+                                                        Column(
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            verticalArrangement = Arrangement.Center
+                                                        ) {
+                                                            statusOptions.forEach { status ->
+                                                                Box(
+                                                                    modifier = Modifier.clip(
+                                                                        RoundedCornerShape(10.dp)
+                                                                    ).clickable {
+                                                                        viewModel.updateOrderStatus(
+                                                                            userId = order.userId,
+                                                                            orderId = order.orderId,
+                                                                            newStatus = status
+                                                                        )
+                                                                        showStatusDialog = false
+                                                                    },
+                                                                ) {
+                                                                    Row(
+                                                                        modifier = Modifier.fillMaxWidth()
+                                                                            .padding(horizontal = 20.dp),
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                    ) {
+                                                                        Icon(
+                                                                            painter = painterResource(
+                                                                                when (status) {
+                                                                                    "Delivered" -> R.drawable.truck_solid
+                                                                                    "In Transit" -> R.drawable.transit
+                                                                                    "Cancelled" -> R.drawable.xmark_solid
+                                                                                    else -> R.drawable.pending
+                                                                                }
+                                                                            ),
+                                                                            "",
+                                                                            modifier = Modifier.size(
+                                                                                20.dp
+                                                                            )
+                                                                        )
+                                                                        Text(
+                                                                            status,
+                                                                            modifier = Modifier.fillMaxWidth()
+                                                                                .padding(20.dp),
+                                                                            fontFamily = fontFamily,
+                                                                            fontSize = 18.sp
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    confirmButton = {
+                                                        OutlinedButton(onClick = {
+                                                            showStatusDialog = false
+                                                        }, modifier = Modifier.fillMaxWidth()) {
+                                                            Text(
+                                                                "Close",
+                                                                fontFamily = fontFamily,
+                                                                color = primaryBlack
+                                                            )
+                                                        }
                                                     }
-                                                }
-                                            },
-                                            confirmButton = {
-                                                TextButton(onClick = { showStatusDialog = false }) {
-                                                    Text("Close")
-                                                }
+                                                )
                                             }
-                                        )
-                                    }
 
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -548,21 +783,42 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OrderFilterChips(totalOrders: Int = 0) {
+fun OrderFilterChips(
+    totalOrders: Int = 0,
+    selectedFilters: Set<String> = emptySet(),
+    onFilterSelected: (String) -> Unit,
+    onRefreshClick: () -> Unit,
+    refreshRotation: Float = 0f,
+    pendingCount : Int = 0,
+    inTransitCount : Int = 0,
+    deliveredCount : Int = 0,
+    cancelledCount : Int = 0
+) {
+    val statusOptions = listOf("Pending", "In Transit", "Delivered", "Cancelled")
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    var selectedChip by remember { mutableStateOf("All") }
+    val refreshRotation by animateFloatAsState(
+        targetValue = if (isRefreshing) 0f else 360f,
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+        label = "refreshRotation"
+    )
 
-    val chips = listOf("All", "In Transit", "Ordered", "Delivered")
-
-    Column(
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            delay(100)
+            isRefreshing = false
+        }
+    }
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp)
+            .padding(top = 20.dp, start = 16.dp, end = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            Modifier.width(120.dp).height(50.dp)
+            Modifier.width(95.dp).height(50.dp)
         ){
             Box(
                 Modifier.size(22.dp).clip(CircleShape).fillMaxWidth().align(Alignment.TopEnd)
@@ -573,32 +829,121 @@ fun OrderFilterChips(totalOrders: Int = 0) {
                 text = "Orders",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 20.dp, bottom = 8.dp).align(Alignment.CenterStart),
+                modifier = Modifier.align(Alignment.CenterStart),
                 color = primaryBlack
             )
         }
 
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(chips) { chip ->
-                FilterChip(
-                    selected = (chip == selectedChip),
-                    onClick = { selectedChip = chip },
-                    label = {
-                        Text(text = chip, fontFamily = fontFamily)
-                    },
-                    leadingIcon = {if(chip == selectedChip) Icon(Icons.Default.Check, contentDescription = null)},
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = primaryBlack,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White
-                    )
+        IconButton(onClick = {
+            isRefreshing = true
+            onRefreshClick()
+        }) {
+            Icon(
+                painter = painterResource(R.drawable.arrows_rotate_solid),
+                contentDescription = "Refresh",
+                modifier = Modifier
+                    .rotate(refreshRotation)
+                    .size(18.dp),
+                tint = primaryBlack
+            )
+        }
+    }
+
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(statusOptions) { status ->
+            val isSelected = selectedFilters.contains(status)
+            val backgroundColor by animateColorAsState(
+                targetValue = if (isSelected) primaryBlack else Color.Transparent,
+                animationSpec = tween(durationMillis = 300),
+                label = "chipBackgroundColor"
+            )
+
+            val contentColor by animateColorAsState(
+                targetValue = if (isSelected) Color.White else Color.DarkGray,
+                animationSpec = tween(durationMillis = 300),
+                label = "chipContentColor"
+            )
+
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(durationMillis = 500, delayMillis = statusOptions.indexOf(status) * 100)
+                ) + fadeIn(
+                    animationSpec = tween(durationMillis = 300, delayMillis = statusOptions.indexOf(status) * 100)
                 )
+            ) {
+                Box(Modifier.clip(RoundedCornerShape(10.dp))) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isSelected) backgroundColor else Color.Transparent,
+                        modifier = Modifier
+                            .height(36.dp).border(border = BorderStroke(1.dp, primaryBlack), shape = RoundedCornerShape(10.dp))
+                            .clickable { onFilterSelected(status)}
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = slideInHorizontally(
+                                    initialOffsetX = { -it },
+                                    animationSpec = tween(durationMillis = 500, delayMillis = statusOptions.indexOf(status) * 100)
+                                )
+                            ) {
+                                if(!isSelected){
+                                    Icon(
+                                        painter = painterResource(
+                                            when (status) {
+                                                "Delivered" -> R.drawable.truck_solid
+                                                "In Transit" -> R.drawable.transit
+                                                "Cancelled" -> R.drawable.xmark_solid
+                                                else -> R.drawable.pending
+                                            }
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = contentColor
+                                    )
+                                }else{
+                                    Box(modifier = Modifier.size(18.dp).clip(CircleShape)) {
+                                        Box(modifier = Modifier.fillMaxSize().background(contentColor).align(Alignment.Center)){
+                                            Text(
+                                                text = when (status) {
+                                                    "Delivered" -> deliveredCount.toString()
+                                                    "In Transit" -> inTransitCount.toString()
+                                                    "Cancelled" -> cancelledCount.toString()
+                                                    else -> pendingCount.toString()
+                                                },
+                                                color = backgroundColor,
+                                                fontSize = 12.sp,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                fontFamily = fontFamily,
+                                                fontWeight = FontWeight.Bold,
+                                                lineHeight = 18.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+
+                            Text(
+                                text = status,
+                                color = if (isSelected) Color.White else Color.DarkGray,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -630,7 +975,7 @@ fun CustomStatusButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth().height(50.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
+            containerColor = primaryBlack,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ),
         shape = RoundedCornerShape(12.dp)
@@ -646,7 +991,7 @@ fun CustomStatusButton(
                 fontSize = 16.sp
             )
             Icon(
-                imageVector = Icons.Default.ArrowDropDown,
+                painter = painterResource(R.drawable.change),
                 contentDescription = null,
                 modifier = Modifier.size(16.dp)
             )
