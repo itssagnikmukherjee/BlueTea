@@ -115,7 +115,6 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
     val userDetailsMap by viewModel.userDetailsMap.collectAsState()
     val productDetailsMap by viewModel.productDetailsMap.collectAsState()
     val selectedFilters = remember { mutableStateOf(setOf<String>()) }
-    val refreshRotation = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         viewModel.getOrderDetails()
@@ -151,16 +150,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
 
         onRefreshClick = {
             coroutineScope.launch {
-                refreshRotation.snapTo(90f)
                 viewModel.getOrderDetails()
-
-                refreshRotation.animateTo(
-                    targetValue = 180f,
-                    animationSpec = tween(
-                        durationMillis = 800,
-                        easing = FastOutSlowInEasing
-                    )
-                )
             }
         },
         pendingCount = totalPendingOrdersCount,
