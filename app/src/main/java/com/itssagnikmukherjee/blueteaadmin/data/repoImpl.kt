@@ -56,16 +56,13 @@ class repoImpl @Inject constructor(
         trySend(ResultState.Loading) // Send loading state
 
         try {
-            // Query Firestore to find the document with the matching categoryName
             FirebaseFirestore.collection(Constants.CATEGORY)
-                .whereEqualTo("categoryName", categoryName) // Query by categoryName
+                .whereEqualTo("categoryName", categoryName)
                 .get()
                 .addOnSuccessListener { querySnapshot ->
                     if (querySnapshot.isEmpty) {
-                        // No document found with the given categoryName
                         trySend(ResultState.Error("Category not found"))
                     } else {
-                        // Delete the first document (assuming category names are unique)
                         val document = querySnapshot.documents[0]
                         document.reference.delete()
                             .addOnSuccessListener {
@@ -152,8 +149,9 @@ class repoImpl @Inject constructor(
         awaitClose{close()}
     }
 
+    //getting all products
     override fun getProducts(): Flow<ResultState<List<Product>>> = callbackFlow {
-        trySend(ResultState.Loading) // Emit loading state
+        trySend(ResultState.Loading)
 
         val listener = FirebaseFirestore.collection(Constants.PRODUCT)
             .get()
@@ -162,11 +160,11 @@ class repoImpl @Inject constructor(
                     document.toObject(Product::class.java)?.copy(productId = document.id)
                 }
                 trySend(ResultState.Success(products))
-                close() // Close the flow after success
+                close()
             }
             .addOnFailureListener { exception ->
                 trySend(ResultState.Error(exception.localizedMessage ?: "Failed to fetch products"))
-                close() // Close the flow after error
+                close()
             }
 
         awaitClose { listener }
@@ -227,12 +225,10 @@ class repoImpl @Inject constructor(
                         } ?: throw IllegalStateException("Order not found")
                     }
 
-                    // Update user document
                     firestore.collection(Constants.USERS)
                         .document(userId)
                         .update("orderedItems", updatedOrderedItems)
                         .addOnSuccessListener {
-                            // Now update the ORDERS collection
                             firestore.collection(Constants.ORDERS)
                                 .document(orderId)
                                 .update(

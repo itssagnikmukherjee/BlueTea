@@ -158,7 +158,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
             deliveredCount = totalDeliveredOrdersCount
         )
 
-        Box(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(10.dp))) {
             when {
                 orderDetailsState.isLoading -> {
                     ShimmerScreen()
@@ -289,7 +291,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 if (productData != null) {
                                                     Row(
                                                         modifier = Modifier
-                                                            .fillMaxWidth().padding(bottom = 10.dp),
+                                                            .fillMaxWidth()
+                                                            .padding(bottom = 10.dp),
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         AsyncImage(
@@ -308,7 +311,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                         ) {
                                                             Row {
                                                                 Column(
-                                                                    modifier = Modifier.weight(1f)
+                                                                    modifier = Modifier
+                                                                        .weight(1f)
                                                                         .align(Alignment.Top)
                                                                 ) {
                                                                     Text(
@@ -371,7 +375,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                             // Order Total (if multiple products)
                                             if (order.items.size > 1) {
                                                 Divider(
-                                                    Modifier.padding(vertical = 8.dp).fillMaxWidth()
+                                                    Modifier
+                                                        .padding(vertical = 8.dp)
+                                                        .fillMaxWidth()
                                                         .background(
                                                             Color.Gray
                                                         )
@@ -407,7 +413,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                     Box(
                                                         modifier = Modifier
                                                             .background(lightBackgroundColor)
-                                                            .zIndex(1f).padding(end = 10.dp)
+                                                            .zIndex(1f)
+                                                            .padding(end = 10.dp)
                                                     ) {
                                                         Text(
                                                             text = "#${userDetails.userId}",
@@ -538,7 +545,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
 
                                                     // Date and Times
                                                     Row(
-                                                        modifier = Modifier.fillMaxWidth()
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
                                                             .padding(top = 10.dp),
                                                         horizontalArrangement = Arrangement.Start
                                                     ) {
@@ -641,7 +649,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
 
                                             if (currentStatus == "Delivered") {
                                                 Row(
-                                                    modifier = Modifier.fillMaxWidth()
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
                                                         .padding(top = 10.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                     horizontalArrangement = Arrangement.Center,
@@ -704,19 +713,22 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                         ) {
                                                             statusOptions.forEach { status ->
                                                                 Box(
-                                                                    modifier = Modifier.clip(
-                                                                        RoundedCornerShape(10.dp)
-                                                                    ).clickable {
-                                                                        viewModel.updateOrderStatus(
-                                                                            userId = order.userId,
-                                                                            orderId = order.orderId,
-                                                                            newStatus = status
+                                                                    modifier = Modifier
+                                                                        .clip(
+                                                                            RoundedCornerShape(10.dp)
                                                                         )
-                                                                        showStatusDialog = false
-                                                                    },
+                                                                        .clickable {
+                                                                            viewModel.updateOrderStatus(
+                                                                                userId = order.userId,
+                                                                                orderId = order.orderId,
+                                                                                newStatus = status
+                                                                            )
+                                                                            showStatusDialog = false
+                                                                        },
                                                                 ) {
                                                                     Row(
-                                                                        modifier = Modifier.fillMaxWidth()
+                                                                        modifier = Modifier
+                                                                            .fillMaxWidth()
                                                                             .padding(horizontal = 20.dp),
                                                                         verticalAlignment = Alignment.CenterVertically,
                                                                     ) {
@@ -736,7 +748,8 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                         )
                                                                         Text(
                                                                             status,
-                                                                            modifier = Modifier.fillMaxWidth()
+                                                                            modifier = Modifier
+                                                                                .fillMaxWidth()
                                                                                 .padding(20.dp),
                                                                             fontFamily = fontFamily,
                                                                             fontSize = 18.sp
@@ -808,12 +821,26 @@ fun OrderFilterChips(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            Modifier.width(95.dp).height(50.dp)
-        ){
+            Modifier
+                .width(95.dp)
+                .height(50.dp)
+        ) {
             Box(
-                Modifier.size(22.dp).clip(CircleShape).fillMaxWidth().align(Alignment.TopEnd)
-            ){
-                Text("$totalOrders", fontSize = 14.sp, color = Color.White, modifier = Modifier.background(primaryBlack).fillMaxSize(), textAlign = TextAlign.Center)
+                Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .fillMaxWidth()
+                    .align(Alignment.TopEnd)
+            ) {
+                Text(
+                    "$totalOrders",
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    modifier = Modifier
+                        .background(primaryBlack)
+                        .fillMaxSize(),
+                    textAlign = TextAlign.Center
+                )
             }
             Text(
                 text = "Orders",
@@ -873,8 +900,12 @@ fun OrderFilterChips(
                         shape = RoundedCornerShape(10.dp),
                         color = if (isSelected) backgroundColor else Color.Transparent,
                         modifier = Modifier
-                            .height(36.dp).border(border = BorderStroke(1.dp, primaryBlack), shape = RoundedCornerShape(10.dp))
-                            .clickable { onFilterSelected(status)}
+                            .height(36.dp)
+                            .border(
+                                border = BorderStroke(1.dp, primaryBlack),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable { onFilterSelected(status) }
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 12.dp),
@@ -902,8 +933,13 @@ fun OrderFilterChips(
                                         tint = contentColor
                                     )
                                 }else{
-                                    Box(modifier = Modifier.size(18.dp).clip(CircleShape)) {
-                                        Box(modifier = Modifier.fillMaxSize().background(contentColor).align(Alignment.Center)){
+                                    Box(modifier = Modifier
+                                        .size(18.dp)
+                                        .clip(CircleShape)) {
+                                        Box(modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(contentColor)
+                                            .align(Alignment.Center)){
                                             Text(
                                                 text = when (status) {
                                                     "Delivered" -> deliveredCount.toString()
@@ -963,7 +999,9 @@ fun CustomStatusButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(50.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(50.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = primaryBlack,
             contentColor = MaterialTheme.colorScheme.onPrimary

@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.screens.ShimmerScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
@@ -47,11 +48,6 @@ fun AnimatedBannerSection(
     banners: List<Banner>,
     viewModels: ViewModels
 ) {
-    if (banners.isEmpty()) {
-        CircularProgressIndicator()
-        return
-    }
-
     var settings by remember { mutableStateOf(BannerAnimationSettings()) }
     val allImages = banners.flatMap { it.bannerImageUrls }
 

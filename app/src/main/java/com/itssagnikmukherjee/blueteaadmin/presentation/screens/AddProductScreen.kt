@@ -5,28 +5,41 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,15 +53,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
+import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 
 @Composable
 fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hiltViewModel()) {
@@ -64,14 +88,13 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
     val getCategoryState by viewModel.getCategoryState.collectAsState()
     val context = LocalContext.current
 
-    var isDropdownExpanded by remember { mutableStateOf(false) } // State for dropdown visibility
+    var isDropdownExpanded by remember { mutableStateOf(false) }
 
-    // Fetch categories when the screen is launched
     LaunchedEffect(Unit) {
         viewModel.getCategories()
+        viewModel.getProducts()
     }
 
-    // Image picker launcher
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -84,12 +107,12 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
         }
     }
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        AllProducts()
         Text("Add Product")
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Product Image Picker
         LazyRow {
             items(productImageUris.size) { index ->
                 Box(
@@ -134,7 +157,6 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Product Name Field
         OutlinedTextField(
             value = productName,
             onValueChange = { productName = it },
@@ -144,7 +166,6 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Product Description Field
         OutlinedTextField(
             value = productDescription,
             onValueChange = { productDescription = it },
@@ -154,7 +175,6 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Product Price Field
         OutlinedTextField(
             value = prePrice.toString(),
             onValueChange = { prePrice = it.toIntOrNull() ?: 0 },
@@ -164,7 +184,6 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Discount Price Field (only shown if prePrice is not zero)
         if (prePrice != 0) {
             OutlinedTextField(
                 value = finalPrice.toString(),
@@ -175,7 +194,6 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        // Product Category Dropdown
         Box(modifier = Modifier.fillMaxWidth()
             .clickable { isDropdownExpanded = true }) {
             OutlinedTextField(
@@ -194,17 +212,16 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
                     expanded = isDropdownExpanded,
                     categories = getCategoryState.data.mapNotNull { it?.categoryName },
                     onCategorySelected = { selectedCategory ->
-                        productCategory = selectedCategory // Set the selected category
-                        isDropdownExpanded = false // Close the dropdown
+                        productCategory = selectedCategory
+                        isDropdownExpanded = false
                     },
-                    onDismiss = { isDropdownExpanded = false }// Close the dropdown on dismiss
+                    onDismiss = { isDropdownExpanded = false }
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Available Units Field
         OutlinedTextField(
             value = availableUnits.toString(),
             onValueChange = { availableUnits = it.toIntOrNull() ?: 0 },
@@ -214,7 +231,6 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Add Product Button
         Button(
             onClick = {
                 val product = Product(
@@ -223,7 +239,7 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
                     productPrePrice = prePrice,
                     productFinalPrice = finalPrice,
                     productCategory = productCategory,
-                    productImages = emptyList(), // Initially empty, will be updated after upload
+                    productImages = emptyList(),
                     availableUnits = availableUnits
                 )
                 viewModel.addProduct(product,context, productImageUris.filterNotNull())
@@ -271,6 +287,112 @@ fun CategoryDropDown(
                 },
                 modifier = Modifier.width(150.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun AllProducts(viewModel: ViewModels = hiltViewModel()){
+    val getProductState = viewModel.getProductState.collectAsState()
+    val productData = getProductState.value.data
+    var isProductCardExpanded by remember { mutableStateOf(false) }
+    Box(
+        Modifier
+            .width(115.dp)
+            .height(50.dp)
+    ) {
+        Box(
+            Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .fillMaxWidth()
+                .align(Alignment.TopEnd)
+        ) {
+            Text(
+                "${productData.size}",
+                fontSize = 14.sp,
+                color = Color.White,
+                modifier = Modifier
+                    .background(primaryBlack)
+                    .fillMaxSize(),
+                textAlign = TextAlign.Center
+            )
+        }
+        Text(
+            text = "Products",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.CenterStart),
+            color = primaryBlack
+        )
+    }
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ){
+        items(productData.size) {
+            Card(
+                modifier = Modifier.width(200.dp).clip(RoundedCornerShape(20.dp))
+            ){
+                Box{
+                AsyncImage(model = productData[it].productImages[0], contentDescription = null, modifier = Modifier.size(200.dp).clip(RoundedCornerShape(20.dp)))
+                    IconButton(onClick = {
+                        isProductCardExpanded = !isProductCardExpanded
+                    }, modifier = Modifier.padding(10.dp).align(Alignment.TopEnd).size(24.dp)
+                        , colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = primaryBlack,
+                            contentColor = Color.White
+                    ),
+                        ) {
+                        Icon(painter = painterResource(R.drawable.ellipsis_solid), contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                }
+                AnimatedVisibility(visible = isProductCardExpanded) {
+                    Column(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ){
+                        Row(
+                            Modifier.fillMaxWidth().height(30.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                    Text(text = productData[it].productName, color = primaryBlack)
+                            IconButton(onClick = {}, modifier = Modifier.size(28.dp), colors = IconButtonDefaults.iconButtonColors(containerColor = primaryBlack)) {
+                                Icon(painter = painterResource(R.drawable.change),"", modifier = Modifier.size(14.dp), tint = Color.White)
+                            }
+                        }
+                        Row {
+                            Box(Modifier.border(1.dp, primaryBlack, RoundedCornerShape(10.dp))) {
+                                Text(
+                                    text = productData[it].productCategory,
+                                    modifier = Modifier.padding(
+                                        horizontal = 10.dp,
+                                        vertical = 2.dp
+                                    ),
+                                    color = primaryBlack,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Spacer(Modifier.width(5.dp))
+                            Box(Modifier.clip(CircleShape).background(primaryBlack)) {
+                                Text(
+                                    text = productData[it].availableUnits.toString(),
+                                    modifier = Modifier.padding(
+                                        horizontal = 10.dp,
+                                        vertical = 2.dp
+                                    ),
+                                    color = Color.White,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Spacer(Modifier.width(5.dp))
+                            Text("₹${productData[it].productFinalPrice}", color = primaryBlack)
+                        }
+                    }
+                }
+            }
         }
     }
 }

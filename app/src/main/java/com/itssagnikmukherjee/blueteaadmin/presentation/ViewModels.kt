@@ -377,8 +377,31 @@ class ViewModels @Inject constructor(
 
         return imageUrls
     }
+    //get product
+    private val _getProductState = MutableStateFlow(GetProductState())
+    val getProductState = _getProductState.asStateFlow()
+    fun getProducts() {
+        viewModelScope.launch {
+            getAllProducts.GetProductsFromFirebaseUsecase().collectLatest { result ->
+                when (result) {
+                    is ResultState.Success -> {
+                        val productList: List<Product> = result.data as List<Product>
+                        _getProductState.value = GetProductState(data = productList)
+                    }
 
-    //get products
+                    is ResultState.Error -> {
+                        _getProductState.value = GetProductState(error = result.error)
+                    }
+
+                    is ResultState.Loading -> {
+                        _getProductState.value = GetProductState(isLoading = true)
+                    }
+                }
+            }
+        }
+    }
+
+    //get ordered products
     private val _orderDetailsState = MutableStateFlow(GetOrderDetailsState())
     val orderDetailsState = _orderDetailsState.asStateFlow()
 
@@ -399,7 +422,6 @@ class ViewModels @Inject constructor(
                         val orders = result.data
                         _orderDetailsState.value = GetOrderDetailsState(data = orders)
 
-                        // Fetch user and product details asynchronously without awaiting all
                         orders.map { it.userId }.distinct().forEach { userId ->
                             getUserDetails(userId)
                         }

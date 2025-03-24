@@ -86,6 +86,7 @@ import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.screens.ShimmerScreen
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 import kotlin.text.indexOf
@@ -125,7 +126,9 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
     val hasChanges = bannerImages != initialBannerImages
     val hasValidBanners = bannerImages.all { it.imageUri != null && it.bannerName.isNotEmpty() }
     val shouldShowUpdateButton = hasChanges && hasValidBanners && !isLoading
-
+    if(getBannerState.isLoading){
+        ShimmerScreen()
+    }else
     Column(
         modifier = Modifier
             .fillMaxSize()
