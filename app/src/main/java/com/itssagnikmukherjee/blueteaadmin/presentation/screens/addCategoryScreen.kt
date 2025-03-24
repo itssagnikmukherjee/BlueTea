@@ -62,6 +62,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -129,6 +130,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
     val categoryState by viewModel.addCategoryState.collectAsState()
     val deleteCategoryState by viewModel.deleteCategoryState.collectAsState()
     val getCategoriesState by viewModel.getCategoryState.collectAsState()
+    val updateCategoryState by viewModel.updateCategoryState.collectAsState()
     val isLoading = categoryState.isLoading
 
     val launcher = rememberLauncherForActivityResult(
@@ -144,6 +146,12 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
             Toast.makeText(context, "Category $categoryName added successfully!", Toast.LENGTH_SHORT).show()
             categoryName = ""
             categoryImageUri = null
+        }
+    }
+
+    LaunchedEffect(updateCategoryState.data) {
+        if (updateCategoryState.data.isNotEmpty()) {
+            Toast.makeText(context, updateCategoryState.data, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -207,16 +215,17 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
         if (categoryState.isLoading || getCategoriesState.isLoading) {
             ShimmerScreen()
         } else {
-            Column {
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            ){
                 EditCategoryItems(getCategoriesState.data, viewModel, context)
 
                 Text(
-                    "Add Category",
-                    fontFamily = fontFamily,
-                    modifier = Modifier.padding(16.dp),
-                    color = primaryBlack,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Add New",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier,
+                    color = primaryBlack
                 )
                 Column(
                     modifier = Modifier
@@ -233,7 +242,6 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                         contentAlignment = Alignment.Center
                     ) {
                         if (categoryImageUri != null) {
-                            // Display the selected image
                             Image(
                                 painter = rememberAsyncImagePainter(categoryImageUri),
                                 contentDescription = "Selected Image",
@@ -241,15 +249,34 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            Text("Select Image", color = Color.Gray)
+                            Icon(painter = painterResource(R.drawable.image_solid),"", modifier = Modifier.size(30.dp), tint = primaryBlack)
                         }
                     }
 
                     OutlinedTextField(
                         value = categoryName,
-                        onValueChange = { categoryName = it },
-                        placeholder = { Text("Category Name") },
-                        modifier = Modifier.fillMaxWidth()
+                        onValueChange = {
+                            categoryName = it
+                        },
+                        placeholder = { Text("Category Name", fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color.LightGray) },
+                        modifier = Modifier.width(220.dp).padding(vertical = 15.dp),
+                        singleLine = true,
+                        maxLines = 1,
+                        shape = RoundedCornerShape(16.dp),
+                        textStyle = LocalTextStyle.current.copy(
+                            textAlign = TextAlign.Center,
+                        ),
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = primaryBlack,
+                            unfocusedTextColor = primaryBlack,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = primaryBlack,
+                            unfocusedIndicatorColor = primaryBlack,
+                            cursorColor = primaryBlack,
+                            focusedPlaceholderColor = primaryBlack,
+                            unfocusedPlaceholderColor = primaryBlack,
+                        ),
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -283,11 +310,10 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
     }
 }
 
+
 @Composable
 fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, context: Context) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-    ){
+    LazyRow{
         items(categories.size) { index ->
             val category = categories[index]
             if (category != null) {
@@ -406,6 +432,28 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                                                     tint = Color.White
                                                                 )
                                                             }
+                                                            if(hasChanges)
+                                                            IconButton({
+                                                                isEditing = false
+                                                                hasChanges = false
+                                                                val updatedCategory = category.copy(categoryName = categoryName)
+                                                                viewModel.updateCategory(updatedCategory, updatedImageUri, context)
+                                                            },
+                                                                modifier = Modifier
+                                                                    .size(32.dp)
+                                                                    .graphicsLayer {
+                                                                        scaleX = backButtonScale
+                                                                        scaleY = backButtonScale
+                                                                    }
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Done,
+                                                                    contentDescription = "",
+                                                                    modifier = Modifier.size(18.dp),
+                                                                    tint = Color.White
+                                                                )
+                                                            }
+
                                                         }
 
 
@@ -414,7 +462,7 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                                             targetValue = if (isDeleteHovered) 1.1f else 1f,
                                                             label = "deleteScale"
                                                         )
-
+                                                        if(!isEditing)
                                                         IconButton(
                                                             onClick = { showDeleteDialog = true },
                                                             modifier = Modifier
@@ -541,10 +589,10 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                             .background(Color.Black.copy(alpha = 0.3f))
                                     ) {
                                         Icon(
-                                            painter = painterResource(R.drawable.edit),
+                                            painter = painterResource(R.drawable.image_solid),
                                             contentDescription = "Change Image",
                                             modifier = Modifier
-                                                .size(32.dp)
+                                                .size(20.dp)
                                                 .align(Alignment.Center),
                                             tint = Color.White
                                         )
@@ -585,7 +633,7 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                         categoryName = it
                                         hasChanges = true
                                     },
-                                    placeholder = { Text("Category", fontSize = 14.sp) },
+                                    placeholder = { Text("Category", fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color.LightGray) },
                                     modifier = Modifier.width(120.dp),
                                     singleLine = true,
                                     maxLines = 1,
@@ -598,7 +646,7 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                         unfocusedTextColor = primaryBlack,
                                         focusedContainerColor = Color.Transparent,
                                         unfocusedContainerColor = Color.Transparent,
-                                        focusedIndicatorColor = primaryBlack,
+                                        focusedIndicatorColor = Color.Gray,
                                         unfocusedIndicatorColor = primaryBlack,
                                         cursorColor = primaryBlack,
                                         focusedPlaceholderColor = primaryBlack,
@@ -627,57 +675,12 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                                         translationY = textOffset
                                         alpha = textAlpha
                                     },
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                color = primaryBlack,
                             )
-                        }
-
-                        val updateButtonScale by animateFloatAsState(
-                            targetValue = if (hasChanges) 1f else 0f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            ),
-                            label = "updateButtonScale"
-                        )
-
-                        val updateButtonAlpha by animateFloatAsState(
-                            targetValue = if (hasChanges) 1f else 0f,
-                            animationSpec = tween(500),
-                            label = "updateButtonAlpha"
-                        )
-
-                        val buttonColor = animateColorAsState(
-                            targetValue = if (hasChanges) primaryBlack else Color.Gray,
-                            label = "buttonColor"
-                        )
-
-                        Box(
-                            modifier = Modifier.height(if (hasChanges) 40.dp else 0.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    val updatedCategory = category.copy(categoryName = categoryName)
-                                    viewModel.updateCategory(updatedCategory, updatedImageUri, context)
-                                    hasChanges = false
-                                    isEditing = false
-                                },
-                                modifier = Modifier
-                                    .padding(top = 8.dp)
-                                    .graphicsLayer {
-                                        scaleX = updateButtonScale
-                                        scaleY = updateButtonScale
-                                        alpha = updateButtonAlpha
-                                    },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = buttonColor.value
-                                )
-                            ) {
-                                Text("Update Category")
-                            }
                         }
                     }
                 }
-
                 if (showDeleteDialog) {
                     AlertDialog(
                         icon = { Icons.Default.Delete },

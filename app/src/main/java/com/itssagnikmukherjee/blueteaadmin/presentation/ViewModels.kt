@@ -56,21 +56,16 @@ class ViewModels @Inject constructor(
         categoryId: String
     ): String? {
         return try {
-            // Open the input stream and read the image bytes
             val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
             val imageBytes = inputStream?.readBytes()
 
-            // Define the folder structure and file name
-            val folderPath = "categories/$categoryId"  // Folder with category ID
-            val fileName = "$categoryId.jpg"  // File name same as the category ID
+            val folderPath = "categories/$categoryId"
+            val fileName = "$categoryId.jpg"
 
-            // Upload the image to Supabase Storage under the specific folder
             supabaseClient.storage.from("categories").upload(
-                path = "$folderPath/$fileName",  // Path includes folder and file name
+                path = "$folderPath/$fileName",
                 data = imageBytes!!
             )
-
-            // Get the public URL of the uploaded image
             supabaseClient.storage.from("categories").publicUrl("$folderPath/$fileName")
         } catch (e: Exception) {
             e.printStackTrace()
@@ -160,37 +155,38 @@ class ViewModels @Inject constructor(
         }
     }
 
+    private val _updateCategory = MutableStateFlow(UpdateCategoryState())
+    val updateCategoryState = _updateCategory.asStateFlow()
+
     fun updateCategory(category: Category, newImageUri: Uri?, context: Context) {
         viewModelScope.launch {
-            _addCategory.value = AddCategoryState(isLoading = true) // Show loading state
+            _updateCategory.value = UpdateCategoryState(isLoading = true)
 
             try {
-                // Step 1: Upload the new image to Supabase Storage (if a new image is provided)
                 val imageUrl = if (newImageUri != null) {
                     uploadImageToSupabase(context, newImageUri, category.categoryName)
                 } else {
-                    category.imageUrl // Use the existing image URL if no new image is provided
+                    category.imageUrl
                 }
 
                 if (imageUrl != null) {
-                    // Step 2: Update the category in Firestore
                     val updatedCategory = category.copy(imageUrl = imageUrl)
                     FirebaseFirestore.getInstance()
                         .collection(Constants.CATEGORY)
-                        .document(category.id) // Use the existing document ID
-                        .set(updatedCategory, SetOptions.merge()) // Merge changes with existing document
+                        .document(category.id)
+                        .set(updatedCategory, SetOptions.merge())
                         .addOnSuccessListener {
-                            _addCategory.value = AddCategoryState(data = "Category updated successfully", isLoading = false)
-                            getCategories() // Refresh the list after update
+                            _updateCategory.value = UpdateCategoryState(data = "Category updated successfully", isLoading = false)
+                            getCategories()
                         }
                         .addOnFailureListener { e ->
-                            _addCategory.value = AddCategoryState(error = "Failed to update category: ${e.message}", isLoading = false)
+                            _updateCategory.value = UpdateCategoryState(error = "Failed to update category: ${e.message}", isLoading = false)
                         }
                 } else {
-                    _addCategory.value = AddCategoryState(error = "Failed to upload image", isLoading = false)
+                    _updateCategory.value = UpdateCategoryState(error = "Failed to upload image", isLoading = false)
                 }
             } catch (e: Exception) {
-                _addCategory.value = AddCategoryState(error = "Error: ${e.message}", isLoading = false)
+                _updateCategory.value = UpdateCategoryState(error = "Error: ${e.message}", isLoading = false)
             }
         }
     }
@@ -322,13 +318,10 @@ class ViewModels @Inject constructor(
     fun addProduct(product: Product, context: Context, imageUris: List<Uri>) {
         viewModelScope.launch {
             try {
-                // Step 1: Upload images to Supabase and get their URLs
                 val imageUrls = uploadProductImagesToSupabase(context, imageUris, product.productName)
 
-                // Step 2: Create the product with the image URLs
                 val updatedProduct = product.copy(productImages = imageUrls)
 
-                // Step 3: Add the product to the database
                 repo.addProduct(updatedProduct).collectLatest { result ->
                     when (result) {
                         is ResultState.Loading -> {
@@ -343,7 +336,6 @@ class ViewModels @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                // Handle image upload errors
                 _addProduct.value = AddProductState(error = e.message ?: "Failed to upload images", isLoading = false)
             }
         }
@@ -358,27 +350,24 @@ class ViewModels @Inject constructor(
 
         try {
             for ((index, uri) in imageUris.withIndex()) {
-                // Open the input stream and read the image bytes
                 val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
                 val imageBytes = inputStream?.readBytes()
 
-                // Define the folder structure and file name
                 val folderPath = "products/$productId"
-                val fileName = "image_${index + 1}.jpg" // Unique file name for each image
+                val fileName = "image_${index + 1}.jpg"
 
-                // Upload the image to Supabase Storage under the specific folder
+
                 supabaseClient.storage.from("products").upload(
-                    path = "$folderPath/$fileName",  // Path includes folder and file name
+                    path = "$folderPath/$fileName",
                     data = imageBytes!!
                 )
 
-                // Get the public URL of the uploaded image
                 val imageUrl = supabaseClient.storage.from("products").publicUrl("$folderPath/$fileName")
                 imageUrls.add(imageUrl)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            throw e // Rethrow the exception to handle it in the calling function
+            throw e
         }
 
         return imageUrls
@@ -490,6 +479,12 @@ data class AddBannerState(
 )
 
 data class AddCategoryState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: String = ""
+)
+
+data class UpdateCategoryState(
     val isLoading: Boolean = false,
     val error: String = "",
     val data: String = ""
