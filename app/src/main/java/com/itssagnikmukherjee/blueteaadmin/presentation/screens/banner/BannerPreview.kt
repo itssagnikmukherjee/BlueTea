@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -59,17 +60,15 @@ fun AnimatedBannerSection(
 
     val autoAdvance = !pagerIsDragged || settings.isLooping
     val scale = remember { Animatable(1f) }
-    val alpha = remember { Animatable(1f) } // 🔹 Added for Fade effect
+    val alpha = remember { Animatable(1f) }
     var scaleCount = 2
 
-    // 🔹 Fetch banner settings when Composable loads
     LaunchedEffect(Unit) {
         viewModels.fetchBannerSettings{
             settings = it
         }
     }
 
-    // 🔄 Observe settings changes dynamically
     LaunchedEffect(viewModels) {
         snapshotFlow { viewModels.bannerSettingsState.value }
             .collectLatest { newSettings ->
@@ -80,13 +79,12 @@ fun AnimatedBannerSection(
     if (autoAdvance) {
         LaunchedEffect(pagerState, settings) {
             while (true) {
-                delay(settings.duration.toLong()) // ⏳ Apply dynamic duration
+                delay(settings.duration.toLong())
                 val nextPage = (pagerState.currentPage + 1) % allImages.size
                 pagerState.animateScrollToPage(nextPage)
             }
         }
 
-        // 🔹 Zoom Animation
         LaunchedEffect(scale, settings) {
             while (scaleCount != 0 && settings.animationType == "Zoom") {
                 scale.animateTo(
@@ -101,7 +99,6 @@ fun AnimatedBannerSection(
             }
         }
 
-        // 🔹 Fade Animation
         LaunchedEffect(alpha, settings) {
             if (settings.animationType == "Fade") {
                 while (true) {
@@ -123,12 +120,13 @@ fun AnimatedBannerSection(
             .fillMaxWidth()
             .clip(RoundedCornerShape(30.dp))
     ) {
-        Column {
+        Column{
             HorizontalPager(
                 state = pagerState,
                 modifier = modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(20.dp)),
+                pageSpacing = 20.dp
             ) { page ->
                 val imageUrl = allImages[page]
 
@@ -146,7 +144,10 @@ fun AnimatedBannerSection(
                     contentScale = ContentScale.Crop
                 )
             }
-            PagerIndicator(allImages.size, pagerState.currentPage)
+            Spacer(Modifier.height(20.dp))
+            PagerIndicator(allImages.size, pagerState.currentPage,
+
+                )
         }
     }
 }
@@ -158,15 +159,14 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
     Box(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             repeat(pageCount) { iteration ->
                 val color = if (currentPageIndex == iteration) Color.DarkGray else Color.LightGray
                 Box(
                     modifier = modifier
-                        .padding(2.dp)
+                        .padding(4.dp)
                         .clip(CircleShape)
                         .background(color)
                         .size(16.dp)

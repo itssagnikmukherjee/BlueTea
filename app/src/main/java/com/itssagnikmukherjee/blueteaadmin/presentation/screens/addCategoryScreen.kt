@@ -131,7 +131,6 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
     val deleteCategoryState by viewModel.deleteCategoryState.collectAsState()
     val getCategoriesState by viewModel.getCategoryState.collectAsState()
     val updateCategoryState by viewModel.updateCategoryState.collectAsState()
-    val isLoading = categoryState.isLoading
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -216,40 +215,46 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
             ShimmerScreen()
         } else {
             Column(
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+                Modifier.fillMaxWidth()
             ){
                 EditCategoryItems(getCategoriesState.data, viewModel, context)
-
                 Text(
                     text = "Add New",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier,
+                    modifier = Modifier.padding(start = 20.dp),
                     color = primaryBlack
                 )
                 Column(
                     modifier = Modifier
-                        .padding(16.dp),
+                        .padding(16.dp).fillMaxWidth(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .background(Color.LightGray, CircleShape)
-                            .clickable { launcher.launch("image/*") },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (categoryImageUri != null) {
-                            Image(
-                                painter = rememberAsyncImagePainter(categoryImageUri),
-                                contentDescription = "Selected Image",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(painter = painterResource(R.drawable.image_solid),"", modifier = Modifier.size(30.dp), tint = primaryBlack)
+                    Box(Modifier.clip(CircleShape)) {
+                        Box(
+                            modifier = Modifier
+                                .size(200.dp).border(4.dp, Color.LightGray, CircleShape)
+                                .background(Color.LightGray, CircleShape)
+                                .clickable { launcher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (categoryImageUri != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(categoryImageUri),
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.image_solid),
+                                    "",
+                                    modifier = Modifier.size(30.dp),
+                                    tint = primaryBlack
+                                )
+                            }
                         }
                     }
 
@@ -258,8 +263,22 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                         onValueChange = {
                             categoryName = it
                         },
+                        trailingIcon = {
+                            if(categoryName.isNotEmpty() && categoryImageUri != null)
+                                IconButton(onClick = {
+                                    val category = Category(
+                                        categoryName = categoryName,
+                                        date = System.currentTimeMillis()
+                                    )
+                                    viewModel.addCategory(category, categoryImageUri!!, context)
+                                }) {
+                                    Icon(painter = painterResource(R.drawable.circle_check_solid), contentDescription = "Add Category" ,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                       },
                         placeholder = { Text("Category Name", fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color.LightGray) },
-                        modifier = Modifier.width(220.dp).padding(vertical = 15.dp),
+                        modifier = Modifier.width(200.dp).padding(vertical = 15.dp),
                         singleLine = true,
                         maxLines = 1,
                         shape = RoundedCornerShape(16.dp),
@@ -268,35 +287,16 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                         ),
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = primaryBlack,
-                            unfocusedTextColor = primaryBlack,
+                            unfocusedTextColor = Color.LightGray,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = primaryBlack,
-                            unfocusedIndicatorColor = primaryBlack,
+                            focusedIndicatorColor = Color.Gray,
+                            unfocusedIndicatorColor = Color.LightGray,
                             cursorColor = primaryBlack,
                             focusedPlaceholderColor = primaryBlack,
                             unfocusedPlaceholderColor = primaryBlack,
                         ),
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = {
-                            if (categoryImageUri != null) {
-                                val category = Category(
-                                    categoryName = categoryName,
-                                    date = System.currentTimeMillis()
-                                )
-                                viewModel.addCategory(category, categoryImageUri!!, context)
-                            }
-                        },
-                        enabled = categoryImageUri != null && !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Add Category")
-                    }
-
                     if (categoryState.error.isNotEmpty()) {
                         Text(
                             text = "Error: ${categoryState.error}",
@@ -310,10 +310,11 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
     }
 }
 
-
 @Composable
 fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, context: Context) {
-    LazyRow{
+    LazyRow(
+        contentPadding = PaddingValues(start = 15.dp)
+    ){
         items(categories.size) { index ->
             val category = categories[index]
             if (category != null) {
@@ -686,7 +687,7 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                         icon = { Icons.Default.Delete },
                         onDismissRequest = { showDeleteDialog = false },
                         title = { Text("Delete Category") },
-                        text = { Text("Are you sure you want to delete ${category.categoryName}") },
+                        text = { Text("Delete ${category.categoryName} ?") },
                         confirmButton = {
                             Button(
                                 onClick = {

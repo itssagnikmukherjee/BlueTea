@@ -3,7 +3,9 @@ package com.itssagnikmukherjee.blueteaadmin.presentation
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -284,12 +286,15 @@ class ViewModels @Inject constructor(
         }
     }
 
+    private val _updateSettings = MutableStateFlow(UpdateSettingsState())
+    val updateSettingsState = _updateSettings.asStateFlow()
+
     fun saveBannerSettings(settings: BannerAnimationSettings) {
         val db = FirebaseFirestore.getInstance()
         db.collection("BANNER_SETTINGS").document("settings")
             .set(settings)
             .addOnSuccessListener {
-                Log.d("Admin", "Settings updated successfully")
+                _updateSettings.value = UpdateSettingsState(data = "Settings updated successfully")
                 getBanners()
             }
             .addOnFailureListener { e -> Log.e("Admin", "Error updating settings", e) }
@@ -506,4 +511,10 @@ data class GetProductState(
     val data: List<Product> = emptyList(),
     val isLoading: Boolean = false,
     val error: String = ""
+)
+
+data class UpdateSettingsState(
+    val isLoading: Boolean = false,
+    val error: String = "",
+    val data: String = ""
 )

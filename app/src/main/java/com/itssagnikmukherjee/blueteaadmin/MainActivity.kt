@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
                     state = rememberTopAppBarState()
                 )
 
-                var currentScreen by remember { mutableStateOf("AddCategoryScreen") }
+                var currentScreen by remember { mutableStateOf("AddBannerScreen") }
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
