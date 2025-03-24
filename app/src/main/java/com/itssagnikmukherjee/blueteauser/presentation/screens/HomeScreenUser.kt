@@ -48,10 +48,13 @@ import com.itssagnikmukherjee.blueteauser.domain.models.Category
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
+import com.itssagnikmukherjee.blueteauser.presentation.theme.primaryBlack
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import com.itssagnikmukherjee.blueteauser.R
 
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
@@ -135,7 +138,9 @@ fun CategoryItem(category: Category) {
         Text(
             text = category.categoryName,
             modifier = Modifier.padding(top = 4.dp),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            fontFamily = fontFamily,
+            color = primaryBlack
         )
     }
 }
@@ -289,7 +294,9 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
         mutableStateOf(getUserDetailsState.value.data?.cartItems?.containsKey(product.productId) ?: false)
     }
 
-    Card {
+    Card(
+        modifier = Modifier.width(200.dp)
+    ){
         Box {
             Column(
                 modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)
@@ -303,8 +310,8 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                         isFavorite = isFavorite
                     )
                 }) {
-                    Icon(imageVector = if (!isFavorite) Icons.Default.FavoriteBorder else Icons.Default.Favorite,
-                        contentDescription = "")
+                    Icon(painter = painterResource(if(isFavorite) R.drawable.heart_solid else R.drawable.heart_regular),
+                        contentDescription = "", modifier = Modifier.size(20.dp))
                 }
 
                 IconButton(onClick={
@@ -316,7 +323,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                         quantity = 1
                     )
                 }) {
-                    Icon(imageVector = if(!isCarted) Icons.Default.ShoppingCart else Icons.Default.MailOutline,"")
+                    Icon(painter = painterResource(if(isCarted) R.drawable.cart_shopping_solid else R.drawable.cart_plus_solid),"", modifier = Modifier.size(20.dp))
                 }
             }
 
@@ -329,7 +336,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                     AsyncImage(
                         model = product.productImages[0],
                         contentDescription = "Product Image",
-                        modifier = Modifier.size(100.dp)
+                        modifier = Modifier.size(200.dp)
                     )
                 } else {
                     Box(
