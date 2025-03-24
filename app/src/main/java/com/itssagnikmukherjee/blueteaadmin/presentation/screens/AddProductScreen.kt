@@ -6,6 +6,9 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +36,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -42,6 +46,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,12 +61,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -72,6 +79,7 @@ import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Product
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 
 @Composable
@@ -84,6 +92,7 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
     var productImageUris by remember { mutableStateOf<List<Uri?>>(emptyList()) }
     var availableUnits by remember { mutableIntStateOf(0) }
     val productState by viewModel.addProductState.collectAsState()
+    val getProductState by viewModel.getProductState.collectAsState()
     val isLoading = productState.isLoading
     val getCategoryState by viewModel.getCategoryState.collectAsState()
     val context = LocalContext.current
@@ -106,54 +115,78 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             }
         }
     }
-
+    if(getProductState.isLoading){ShimmerScreen()} else
     Column(modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
         AllProducts()
-        Text("Add Product")
+        Spacer(Modifier.height(20.dp))
+        Box(
+            Modifier
+                .width(150.dp)
+                .height(50.dp)
+        ) {
+            Text(
+                text = "Add Products",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterStart),
+                color = primaryBlack
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        LazyRow {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ){
             items(productImageUris.size) { index ->
                 Box(
                     modifier = Modifier
-                        .size(200.dp)
-                        .background(Color.Gray, RoundedCornerShape(10.dp))
-                        .clickable { launcher.launch("image/*") },
+                        .size(200.dp).fillMaxWidth()
+                        .clickable { launcher.launch("image/*") }.background(Color.Gray, RoundedCornerShape(20.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = rememberAsyncImagePainter(productImageUris[index]),
                         contentDescription = null,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)),
                         contentScale = ContentScale.Crop
                     )
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Delete Image",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp)
-                            .clickable {
-                                productImageUris = productImageUris.toMutableList().apply{removeAt(index)}
-                            }
-                    )
+                    IconButton(onClick = {
+                        productImageUris = productImageUris.toMutableList().apply{removeAt(index)}
+                    }, modifier = Modifier.align(Alignment.TopEnd)
+                        .padding(8.dp).size(30.dp), colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = primaryBlack,
+                            contentColor = Color.White
+                        )) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Delete Image",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
             if(productImageUris.size<5){
                 item{
                     Box(
                         modifier = Modifier
-                            .size(200.dp)
-                            .background(Color.Gray, RoundedCornerShape(10.dp))
+                            .size(200.dp).fillMaxWidth()
+                            .background(Color.LightGray, RoundedCornerShape(20.dp))
                             .clickable { launcher.launch("image/*") }
                     ){
-                        Icon(imageVector = Icons.Default.Add,"")
+                        Icon(painter = painterResource(R.drawable.image_solid),"", tint = primaryBlack, modifier = Modifier.align(
+                            Alignment.Center).size(30.dp))
                     }
                 }
             }
         }
+
+        val textFieldColors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = primaryBlack,
+            unfocusedBorderColor = primaryBlack,
+            cursorColor = primaryBlack,
+            focusedLabelColor = primaryBlack,
+            unfocusedLabelColor = primaryBlack,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -161,7 +194,9 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             value = productName,
             onValueChange = { productName = it },
             label = { Text("Product Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(15.dp),
+            colors = textFieldColors,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -170,7 +205,9 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             value = productDescription,
             onValueChange = { productDescription = it },
             label = { Text("Product Description") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = textFieldColors,
+            shape = RoundedCornerShape(15.dp)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -179,7 +216,9 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             value = prePrice.toString(),
             onValueChange = { prePrice = it.toIntOrNull() ?: 0 },
             label = { Text("Price") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = textFieldColors,
+            shape = RoundedCornerShape(15.dp)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -189,7 +228,9 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
                 value = finalPrice.toString(),
                 onValueChange = { finalPrice = it.toIntOrNull() ?: 0 },
                 label = { Text("Discount Price") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = textFieldColors,
+                shape = RoundedCornerShape(15.dp)
             )
         }
 
@@ -198,13 +239,17 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             .clickable { isDropdownExpanded = true }) {
             OutlinedTextField(
                 value = productCategory,
+                colors = textFieldColors,
+                shape = RoundedCornerShape(15.dp),
                 onValueChange = {},
                 label = { Text("Product Category") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { isDropdownExpanded = true },
                 readOnly = true,
-                trailingIcon = { Icon(Icons.Default.ArrowDropDown,"", modifier = Modifier.padding(15.dp).clickable{ isDropdownExpanded = true }) }
+                trailingIcon = {
+                    Icon(Icons.Default.KeyboardArrowDown,"", modifier = Modifier.padding(20.dp).clickable{ isDropdownExpanded = true }.clip(CircleShape))
+                }
             )
 
             if (isDropdownExpanded) {
@@ -226,8 +271,18 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
             value = availableUnits.toString(),
             onValueChange = { availableUnits = it.toIntOrNull() ?: 0 },
             label = { Text("Available Units") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = textFieldColors,
+            shape = RoundedCornerShape(15.dp)
         )
+
+        val isFormValid = productName.isNotBlank() &&
+                productDescription.isNotBlank() &&
+                prePrice > 0 &&
+                finalPrice >= 0 &&
+                productCategory.isNotBlank() &&
+                availableUnits > 0 &&
+                productImageUris.isNotEmpty()
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -242,8 +297,7 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
                     productImages = emptyList(),
                     availableUnits = availableUnits
                 )
-                viewModel.addProduct(product,context, productImageUris.filterNotNull())
-                // Clear the fields after adding the product
+                viewModel.addProduct(product, context, productImageUris.filterNotNull())
                 productName = ""
                 productDescription = ""
                 prePrice = 0
@@ -251,16 +305,23 @@ fun AddProductScreen(modifier: Modifier = Modifier, viewModel: ViewModels = hilt
                 productCategory = ""
                 productImageUris = emptyList()
                 availableUnits = 0
-                Toast.makeText(context,"Product ${product.productName} added successfully",Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Product ${product.productName} added successfully", Toast.LENGTH_LONG).show()
                 Log.d("Admin", "Product added successfully")
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isFormValid) primaryBlack else Color.Gray,
+                contentColor = Color.White
+            ),
+            enabled = isFormValid
         ) {
-            if(isLoading){
-                CircularProgressIndicator()
-            }
-            else{
-            Text("Add Product")
+            Row {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Spacer(Modifier.width(10.dp))
+                Text("Add Product", fontFamily = fontFamily)
             }
         }
     }
@@ -273,22 +334,27 @@ fun CategoryDropDown(
     onCategorySelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { onDismiss() },
-        modifier = Modifier.padding(5.dp)
-    ) {
-        categories.forEach { category ->
-            DropdownMenuItem(
-                text = { Text(text = category) },
-                onClick = {
-                    onCategorySelected(category)
-                    onDismiss()
-                },
-                modifier = Modifier.width(150.dp)
-            )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { onDismiss() },
+            modifier = Modifier.padding(5.dp),
+            shadowElevation = 1.dp,
+            shape = RoundedCornerShape(20.dp),
+            offset = DpOffset(220.dp, 0.dp),
+            tonalElevation = 10.dp
+        ) {
+            categories.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(text = category, textAlign = TextAlign.Center ,color = primaryBlack, fontFamily = fontFamily, modifier = Modifier.fillMaxWidth()) },
+                    onClick = {
+                        onCategorySelected(category)
+                        onDismiss()
+                    },
+                    modifier = Modifier.width(150.dp)
+                )
+            }
         }
-    }
 }
 
 @Composable
@@ -296,35 +362,48 @@ fun AllProducts(viewModel: ViewModels = hiltViewModel()){
     val getProductState = viewModel.getProductState.collectAsState()
     val productData = getProductState.value.data
     var isProductCardExpanded by remember { mutableStateOf(false) }
-    Box(
-        Modifier
-            .width(115.dp)
-            .height(50.dp)
-    ) {
+
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ){
         Box(
             Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .fillMaxWidth()
-                .align(Alignment.TopEnd)
+                .width(115.dp)
+                .height(50.dp)
         ) {
+            Box(
+                Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .fillMaxWidth()
+                    .align(Alignment.TopEnd)
+            ) {
+                Text(
+                    "${productData.size}",
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    modifier = Modifier
+                        .background(primaryBlack)
+                        .fillMaxSize(),
+                    textAlign = TextAlign.Center
+                )
+            }
             Text(
-                "${productData.size}",
-                fontSize = 14.sp,
-                color = Color.White,
-                modifier = Modifier
-                    .background(primaryBlack)
-                    .fillMaxSize(),
-                textAlign = TextAlign.Center
+                text = "Products",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterStart),
+                color = primaryBlack
             )
         }
-        Text(
-            text = "Products",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterStart),
-            color = primaryBlack
-        )
+
+        IconButton(onClick = {
+            viewModel.getProducts()
+        }) {
+            Icon(painter = painterResource(R.drawable.arrows_rotate_solid), contentDescription = null, tint = primaryBlack, modifier = Modifier.size(20.dp))
+        }
     }
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
