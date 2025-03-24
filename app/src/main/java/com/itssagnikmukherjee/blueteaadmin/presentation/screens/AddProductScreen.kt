@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -59,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -405,6 +407,7 @@ fun AllProducts(viewModel: ViewModels = hiltViewModel()){
             Icon(painter = painterResource(R.drawable.arrows_rotate_solid), contentDescription = null, tint = primaryBlack, modifier = Modifier.size(20.dp))
         }
     }
+
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -413,17 +416,25 @@ fun AllProducts(viewModel: ViewModels = hiltViewModel()){
             Card(
                 modifier = Modifier.width(200.dp).clip(RoundedCornerShape(20.dp))
             ){
+
                 Box{
                 AsyncImage(model = productData[it].productImages[0], contentDescription = null, modifier = Modifier.size(200.dp).clip(RoundedCornerShape(20.dp)))
+                    val rotationAngle by animateFloatAsState(
+                        targetValue = if (isProductCardExpanded) 90f else 0f,
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                        label = "rotation"
+                    )
                     IconButton(onClick = {
                         isProductCardExpanded = !isProductCardExpanded
-                    }, modifier = Modifier.padding(10.dp).align(Alignment.TopEnd).size(24.dp)
+                    }, modifier = Modifier.padding(10.dp).align(Alignment.TopEnd).size(24.dp).rotate(rotationAngle)
                         , colors = IconButtonDefaults.iconButtonColors(
                         containerColor = primaryBlack,
                             contentColor = Color.White
                     ),
                         ) {
-                        Icon(painter = painterResource(R.drawable.ellipsis_solid), contentDescription = null, modifier = Modifier.size(18.dp))
+
+                        Icon(painter = painterResource(R.drawable.ellipsis_solid),
+                            contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
                 AnimatedVisibility(visible = isProductCardExpanded) {
