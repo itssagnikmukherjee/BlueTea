@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
@@ -73,6 +74,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
             viewmodel.getProducts()
         }
 
+        if(categoryState.isLoading || bannerState.isLoading || productState.isLoading) { ShimmerScreen() } else
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,7 +86,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
             Spacer(modifier = Modifier.height(16.dp))
 
             // Category List
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(start = 20.dp)) {
                 items(categoryState.data.size) { index ->
                     CategoryItem(category = categoryState.data[index]!!)
                 }
@@ -127,7 +129,7 @@ fun CategoryItem(category: Category) {
             modifier = Modifier
                 .size(90.dp)
                 .clip(RoundedCornerShape(50))
-                .background(Color.LightGray),
+                .background(Color.LightGray).border(3.dp, Color.LightGray, CircleShape),
             contentScale = ContentScale.Crop
         )
         Text(
@@ -145,11 +147,6 @@ fun AnimatedBannerSection(
     banners: List<Banner>,
     viewModels: ViewModels
 ) {
-    if (banners.isEmpty()) {
-        CircularProgressIndicator()
-        return
-    }
-
     var settings by remember { mutableStateOf(BannerAnimationSettings()) }
     val allImages = banners.flatMap { it.bannerImageUrls }
 
@@ -215,7 +212,7 @@ fun AnimatedBannerSection(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(30.dp))
     ) {
         Column {
@@ -223,7 +220,8 @@ fun AnimatedBannerSection(
                 state = pagerState,
                 modifier = modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(20.dp)),
+                pageSpacing = 20.dp
             ) { page ->
                 val imageUrl = allImages[page]
 
@@ -254,7 +252,7 @@ data class BannerAnimationSettings(
 
 @Composable
 fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = Modifier) {
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -268,7 +266,7 @@ fun PagerIndicator(pageCount: Int, currentPageIndex: Int, modifier: Modifier = M
                         .padding(2.dp)
                         .clip(CircleShape)
                         .background(color)
-                        .size(16.dp)
+                        .size(12.dp)
                 )
             }
         }

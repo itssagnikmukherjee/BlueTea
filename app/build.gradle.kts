@@ -100,6 +100,10 @@ dependencies {
     //swipe refresh
     implementation("com.google.accompanist:accompanist-swiperefresh:0.27.0")
 
+    //google fonts
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
