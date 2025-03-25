@@ -31,12 +31,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -86,7 +92,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
             // Banner Carousel
             AnimatedBannerSection(banners = bannerState.data, viewModels = viewmodel)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Category List
             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(start = 20.dp)) {
@@ -96,7 +102,8 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
+            Text("Hot Deals", fontFamily = fontFamily, color = primaryBlack, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 20.dp, bottom = 10.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             // Products List
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -293,76 +300,172 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
     var isCarted by remember(getUserDetailsState.value.data) {
         mutableStateOf(getUserDetailsState.value.data?.cartItems?.containsKey(product.productId) ?: false)
     }
-
     Card(
-        modifier = Modifier.width(200.dp)
-    ){
+        modifier = Modifier
+            .width(200.dp).height(320.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(20.dp)
+            )
+    ) {
         Box {
             Column(
-                modifier = Modifier.align(Alignment.TopEnd).zIndex(999f)
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .zIndex(999f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                IconButton(onClick = {
-                    isFavorite = !isFavorite
-                    viewModel.updateFavoriteList(
-                        userId = userId,
-                        productId = product.productId,
-                        isFavorite = isFavorite
+                IconButton(
+                    onClick = {
+                        isFavorite = !isFavorite
+                        viewModel.updateFavoriteList(
+                            userId = userId,
+                            productId = product.productId,
+                            isFavorite = isFavorite
+                        )
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.8f),
+                        contentColor = Color.Black
                     )
-                }) {
-                    Icon(painter = painterResource(if(isFavorite) R.drawable.heart_solid else R.drawable.heart_regular),
-                        contentDescription = "", modifier = Modifier.size(20.dp))
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (isFavorite) R.drawable.heart_solid
+                            else R.drawable.heart_regular
+                        ),
+                        contentDescription = "Favorite",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
 
-                IconButton(onClick={
-                    isCarted = !isCarted
-                    viewModel.updateCartList(
-                        userId = userId,
-                        productId = product.productId,
-                        isCarted = isCarted,
-                        quantity = 1
+                Spacer(modifier = Modifier.height(8.dp))
+
+                IconButton(
+                    onClick = {
+                        isCarted = !isCarted
+                        viewModel.updateCartList(
+                            userId = userId,
+                            productId = product.productId,
+                            isCarted = isCarted,
+                            quantity = 1
+                        )
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.White.copy(alpha = 0.8f),
+                        contentColor = Color.Black
                     )
-                }) {
-                    Icon(painter = painterResource(if(isCarted) R.drawable.cart_shopping_solid else R.drawable.cart_plus_solid),"", modifier = Modifier.size(20.dp))
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (isCarted) R.drawable.cart_shopping_solid
+                            else R.drawable.cart_plus_solid
+                        ),
+                        contentDescription = "Add to Cart",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(40.dp))
+
+                val prePrice = product.productPrePrice.toFloat()
+                val finalPrice = product.productFinalPrice.toFloat()
+                val discountPercentage = ((prePrice - finalPrice) / prePrice * 100).toInt()
+                Box(Modifier.clip(CircleShape).background(Color.Black).size(40.dp),
+                contentAlignment = Alignment.Center
+                ){
+                    Text(
+                        text = "$discountPercentage%",
+                        fontFamily = fontFamily,
+                        color = Color.White,
+                        fontSize = 12.sp,
+                    )
                 }
             }
 
             Column(
-                modifier = Modifier.clickable {
-                    onclick()
-                }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onclick() },
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (product.productImages.isNotEmpty()) {
                     AsyncImage(
                         model = product.productImages[0],
                         contentDescription = "Product Image",
-                        modifier = Modifier.size(200.dp)
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)).size(200.dp)
                     )
                 } else {
                     Box(
                         modifier = Modifier
-                            .size(100.dp)
-                            .background(Color.LightGray),
+                            .size(150.dp)
+                            .background(Color.LightGray, shape = RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "No Image")
+                        Text(
+                            text = "No Image",
+                            color = Color.Gray
+                        )
                     }
                 }
-                Text(text = product.productName)
-                Text(text = product.productDescription)
-                Text(text = "Original Price: $${product.productPrePrice}")
-                Text(text = "Discounted Price: $${product.productFinalPrice}")
-                Button(onClick = {
-                    navController.navigate(
-                        Routes.BuyNowScreen(
-                        products = listOf(product.productId),
-                        totalPrice = product.productFinalPrice.toDouble(),
-                        userId = userId,
-                        quantity = Json.encodeToString(mapOf(product.productId to 1))
-                        )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = product.productName,
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 18.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
-                }){
-                    Text("Buy Now")
+
+                Spacer(modifier = Modifier.height(1.dp))
+
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+
+
+                    Text(
+                        text = "₹${product.productPrePrice}",
+                        fontFamily = fontFamily,
+                        color = Color.Gray,
+                        textDecoration = TextDecoration.LineThrough,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "₹${product.productFinalPrice}",
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 23.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(Modifier.height(10.dp))
+                Button(
+                    onClick = {
+                        navController.navigate(
+                            Routes.BuyNowScreen(
+                                products = listOf(product.productId),
+                                totalPrice = product.productFinalPrice.toDouble(),
+                                userId = userId,
+                                quantity = Json.encodeToString(mapOf(product.productId to 1))
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp).align(Alignment.End),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+                ) {
+                    Text("Buy Now", fontFamily= fontFamily)
                 }
             }
         }

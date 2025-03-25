@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.theme.primaryBlack
 
 @Composable
 fun NavbarComposable(navController: NavController, userId: String) {
@@ -58,7 +59,7 @@ fun NavbarComposable(navController: NavController, userId: String) {
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .background(Color.White)
+                    .background(Color.Black)
                     .clip(RoundedCornerShape(20.dp))
                     .padding(15.dp,10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -68,7 +69,7 @@ fun NavbarComposable(navController: NavController, userId: String) {
                     val isSelected = selectedNavItem == item
 
                     val iconColor by animateColorAsState(
-                        targetValue = if (isSelected) Color.Blue else Color.Black,
+                        targetValue = if (isSelected) Color.White else primaryBlack,
                         animationSpec = tween(durationMillis = 300)
                     )
 
