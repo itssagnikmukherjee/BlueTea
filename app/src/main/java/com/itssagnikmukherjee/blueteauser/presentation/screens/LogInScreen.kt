@@ -150,7 +150,7 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
                                         ).show()
                                     }
                                 }
-                            showForgotPasswordDialog = false // Close the dialog
+                            showForgotPasswordDialog = false
                         } else {
                             Toast.makeText(context, "Please enter your email", Toast.LENGTH_SHORT).show()
                         }
@@ -162,7 +162,6 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
             dismissButton = {
                 TextButton(
                     onClick = {
-                        // Dismiss the dialog
                         showForgotPasswordDialog = false
                     }
                 ) {
