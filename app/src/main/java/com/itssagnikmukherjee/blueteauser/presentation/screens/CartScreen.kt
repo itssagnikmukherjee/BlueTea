@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -30,6 +32,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -50,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -68,6 +72,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.components.Custom
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButtonFilled
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomIconButton
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.HeadingTextWithBadge
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 import kotlinx.serialization.json.Json
@@ -157,11 +162,10 @@ fun CartScreen(
                     }
                 }
 
+                Spacer(Modifier.height(30.dp))
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(horizontal = 16.dp)
                 ) {
                     items(cartItems.size, key = { cartItems[it].productId }) { index ->
                         val product = cartItems[index]
@@ -214,132 +218,101 @@ fun CartItemCard(
     var quantity by rememberSaveable { mutableIntStateOf(initialQuantity) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp).clickable{
-                navController.navigate(Routes.ProductDetailsScreen(product.productId, userId))
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp).fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        )
+    ){
+        Box (
+            modifier = Modifier.fillMaxSize()
+        ){
+            IconButton(
+                onClick = onDeleteItem,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color(0xFFD9D9D9)
+                ),
+                modifier = Modifier.align(Alignment.TopEnd).size(26.dp)
+            ) {
+                Icon(painter = painterResource(R.drawable.cross), contentDescription = "", tint = primaryBlack, modifier = Modifier.size(10.dp))
             }
-    ) {
-        Row(
-            modifier = Modifier.padding(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = product.productImages[0],
-                contentDescription = product.productName,
-                modifier = Modifier
-                    .size(150.dp)
-                    .clip(MaterialTheme.shapes.medium),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = product.productName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontFamily = fontFamily,
-                    color = primaryBlack,
-                    fontSize = 16.sp
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                AsyncImage(
+                    model = product.productImages[0], contentDescription = "",
+                    modifier = Modifier.size(120.dp).clip(RoundedCornerShape(20.dp)).clickable{
+                        navController.navigate(Routes.ProductDetailsScreen(product.productId, userId))
+                    }
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "₹${product.productFinalPrice}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = primaryBlack,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "₹${product.productPrePrice}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        textDecoration = TextDecoration.LineThrough
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    IconButton(
-                        onClick = {
-                            if (quantity > 1) {
-                                quantity--
-                                onQuantityUpdate(quantity)
+                Column (
+                    modifier = Modifier.padding(10.dp).fillMaxHeight(),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ){
+                    Column {
+                        Text(text = product.productName , fontFamily= fontFamily, color = primaryBlack, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                        Text(text = product.productCategory , fontFamily= fontFamily, color = primaryBlack, fontSize = 12.sp, fontWeight = FontWeight.Light)
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ){
+                            Text("₹", fontFamily= fontFamily, color = primaryBlack, fontSize = 12.sp, modifier = Modifier.padding(top = 5.dp))
+                            Text(text = "${product.productFinalPrice}" , fontFamily= fontFamily, color = primaryBlack, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = "₹${product.productPrePrice}" , fontSize = 12.sp, fontFamily= fontFamily, color = primaryBlack, textDecoration = TextDecoration.LineThrough)
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ){
+                            IconButton(
+                                onClick = {
+                                    onQuantityUpdate(quantity - 1)
+                                    quantity--
+                                },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = Color(0xFFD9D9D9)
+                                ),
+                                modifier = Modifier.size(26.dp)
+                            ) {
+                                Text("-", fontFamily= fontFamily)
                             }
-                        },
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                shape = CircleShape
-                            )
-                            .size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Decrease Quantity",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                            Text(text = quantity.toString(), fontFamily= fontFamily)
+                            IconButton(
+                                onClick = {
+                                    onQuantityUpdate(quantity + 1)
+                                    quantity++
+                                },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = Color(0xFFD9D9D9)
+                                ),
+                                modifier = Modifier.size(26.dp)
+                            ) {
+                                Text("+", fontFamily= fontFamily, fontSize = 16.sp)
+                            }
+                        }
 
-                    Text(
-                        text = quantity.toString(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    IconButton(
-                        onClick = {
-                            quantity++
-                            onQuantityUpdate(quantity)
-                        },
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                shape = CircleShape
-                            )
-                            .size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Increase Quantity",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = { onBuyNow(quantity) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Buy Now")
-                    }
-
-                    IconButton(
-                        onClick = onDeleteItem,
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.errorContainer,
-                                shape = CircleShape
-                            )
-                            .size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete Item",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                        Spacer(Modifier.width(5.dp))
+                        CustomButtonFilled(onclick = {onBuyNow(quantity)}, text = "Buy Now")
                     }
                 }
             }
+        }
+
+        Spacer(Modifier.height(30.dp))
+        Row(Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center){
+            androidx.compose.material3.Divider(
+                thickness = 1.dp,
+                color = CustomColors.mediumGray,
+                modifier = Modifier.fillMaxWidth(0.7f).align(Alignment.CenterVertically)
+            )
         }
     }
 }
