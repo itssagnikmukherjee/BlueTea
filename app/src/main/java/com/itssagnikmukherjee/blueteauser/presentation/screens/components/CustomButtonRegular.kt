@@ -16,7 +16,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 
 @Composable
 fun CustomButton1(onclick : () -> Unit, text: String) {
-    Button(onClick = {onclick}, colors = ButtonDefaults.buttonColors(
+    Button(onClick = onclick, colors = ButtonDefaults.buttonColors(
         containerColor = _root_ide_package_.androidx.compose.ui.graphics.Color.Transparent,
         contentColor = CustomColors.primaryBlack
     ), modifier = Modifier.border(2.dp, CustomColors.primaryBlack, RoundedCornerShape(30.dp)).height(35.dp).width(118.dp)) {
@@ -26,7 +26,7 @@ fun CustomButton1(onclick : () -> Unit, text: String) {
 
 @Composable
 fun CustomButtonFilled(onclick : () -> Unit, text: String) {
-    Button(onClick = {onclick}, colors = ButtonDefaults.buttonColors(
+    Button(onClick = onclick, colors = ButtonDefaults.buttonColors(
         containerColor = CustomColors.primaryBlack,
         contentColor = _root_ide_package_.androidx.compose.ui.graphics.Color.White
     ), modifier = Modifier.border(2.dp, CustomColors.primaryBlack, RoundedCornerShape(30.dp)).height(35.dp).width(120.dp)) {

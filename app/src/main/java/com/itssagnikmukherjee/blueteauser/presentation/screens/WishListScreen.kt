@@ -101,6 +101,7 @@ fun WishListScreen(navController: NavController, viewModel: ViewModels = hiltVie
                 Text("No Wishlist Items", fontFamily = fontFamily)
                 }
             }else
+
             Spacer(Modifier.height(30.dp))
             LazyColumn {
                 items(wishlistProducts.size) { index ->
@@ -176,6 +177,15 @@ fun WishListItem(
                     Row {
                         val cartItems = getUserDetailsState.value.data?.cartItems ?: emptyMap()
                         CustomButton1(onclick = {
+                            viewModel.updateCartList(
+                                userId = userId,
+                                productId = product.productId,
+                                quantity = 1,
+                                isCarted = true
+                            )
+                        }, text = if (product.productId in cartItems.keys) "In Cart" else "Add to Cart")
+                        Spacer(Modifier.width(5.dp))
+                        CustomButtonFilled(onclick = {
                             navController.navigate(
                                 Routes.BuyNowScreen(
                                     products = listOf(product.productId),
@@ -183,15 +193,6 @@ fun WishListItem(
                                     userId = userId,
                                     quantity = Json.encodeToString(mapOf(product.productId to 1))
                                 )
-                            )
-                        }, text = if (product.productId in cartItems.keys) "In Cart" else "Add to Cart")
-                        Spacer(Modifier.width(5.dp))
-                        CustomButtonFilled(onclick = {
-                            viewModel.updateCartList(
-                                userId = userId,
-                                productId = product.productId,
-                                quantity = 1,
-                                isCarted = true
                             )
                         }, text = "Buy Now")
                     }

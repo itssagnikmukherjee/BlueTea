@@ -60,9 +60,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
+import com.itssagnikmukherjee.blueteauser.R
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButton1
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButtonFilled
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomIconButton
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.HeadingTextWithBadge
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 import kotlinx.serialization.json.Json
@@ -94,79 +99,102 @@ fun CartScreen(
         product.productFinalPrice.toDouble() * quantity
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("My Cart", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        },
-        bottomBar = {
-            BottomCartSummary(
-                totalItems = cartItems.size,
-                totalPrice = totalPrice,
-                onCheckout = {
-                    val cartItemsMap = cartItems.associate { it.productId to (productID[it.productId] ?: 1) }
-                    val serializedQuantities = Json.encodeToString(cartItemsMap)
-
-                    navController.navigate(
-                        Routes.BuyNowScreen(
-                            products = cartItems.map { it.productId },
-                            totalPrice = totalPrice,
-                            userId = userId,
-                            quantity = serializedQuantities
-                        )
-                    )
-                },
-                onViewOrders = {
-                    navController.navigate(Routes.OrdersScreen(userId = userId))
-                }
-            )
-        }
-    ) { paddingValues ->
+    Scaffold{ paddingValues ->
         if (cartItems.isEmpty()) {
             EmptyCartContent(Modifier.padding(paddingValues))
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp)
-            ) {
-                items(cartItems.size, key = { cartItems[it].productId }) { index ->
-                    val product = cartItems[index]
-                    CartItemCard(
-                        product = product,
-                        initialQuantity = productID[product.productId] ?: 1,
-                        onQuantityUpdate = { newQuantity ->
-                            viewModel.updateCartQuantity(userId, product.productId, newQuantity)
-                        },
-                        onDeleteItem = {
-                            viewModel.updateCartList(
-                                userId = userId,
-                                productId = product.productId,
-                                quantity = 0,
-                                isCarted = false
-                            )
-                        },
-                        onBuyNow = { quantity ->
-                            val quantityMap = Json.encodeToString(mapOf(product.productId to quantity))
-                            navController.navigate(
-                                Routes.BuyNowScreen(
-                                    products = listOf(product.productId),
-                                    totalPrice = product.productFinalPrice.toDouble() * quantity,
-                                    userId = userId,
-                                    quantity = quantityMap
-                                )
-                            )
-                        },
-                        navController = navController,
-                        userId = userId
+            Column(modifier = Modifier.padding(paddingValues),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ){
+                Row(
+                    modifier = Modifier.fillMaxWidth(.9f).padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CustomIconButton(
+                        onClick = { navController.popBackStack() },
+                        icon = R.drawable.back,
+                        contentDescription = "back"
                     )
+                    HeadingTextWithBadge(
+                        text = "Cart",
+                        badgeText = cartItems.size.toString(),
+                        width = 66
+                    )
+                    CustomIconButton(
+                        onClick = { viewModel.getUserDetails(userId) },
+                        icon = R.drawable.reload,
+                        contentDescription = "back"
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(.9f).padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ){
+                    Column{
+                        Text("Cart Total", fontSize = 20.sp, fontFamily = fontFamily, color = primaryBlack, fontWeight = FontWeight.Medium)
+                        Text("₹$totalPrice", fontSize = 26.sp, fontFamily = fontFamily, color = primaryBlack, fontWeight = FontWeight.SemiBold)
+                    }
+                    Row {
+                        CustomButton1(onclick = {
+                            navController.navigate(Routes.OrdersScreen(userId))
+                        }, text = "Orders")
+                        Spacer(Modifier.width(10.dp))
+                    CustomButtonFilled(onclick = {
+                        val cartItemsMap = cartItems.associate { it.productId to (productID[it.productId] ?: 1) }
+                        val serializedQuantities = Json.encodeToString(cartItemsMap)
+                        navController.navigate(
+                            Routes.BuyNowScreen(
+                                products = cartItems.map { it.productId },
+                                totalPrice = totalPrice,
+                                userId = userId,
+                                quantity = serializedQuantities
+                            )
+                        )
+                    }, text = "Checkout")
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(cartItems.size, key = { cartItems[it].productId }) { index ->
+                        val product = cartItems[index]
+                        CartItemCard(
+                            product = product,
+                            initialQuantity = productID[product.productId] ?: 1,
+                            onQuantityUpdate = { newQuantity ->
+                                viewModel.updateCartQuantity(userId, product.productId, newQuantity)
+                            },
+                            onDeleteItem = {
+                                viewModel.updateCartList(
+                                    userId = userId,
+                                    productId = product.productId,
+                                    quantity = 0,
+                                    isCarted = false
+                                )
+                            },
+                            onBuyNow = { quantity ->
+                                val quantityMap =
+                                    Json.encodeToString(mapOf(product.productId to quantity))
+                                navController.navigate(
+                                    Routes.BuyNowScreen(
+                                        products = listOf(product.productId),
+                                        totalPrice = product.productFinalPrice.toDouble() * quantity,
+                                        userId = userId,
+                                        quantity = quantityMap
+                                    )
+                                )
+                            },
+                            navController = navController,
+                            userId = userId
+                        )
+                    }
                 }
             }
         }
@@ -317,51 +345,6 @@ fun CartItemCard(
 }
 
 @Composable
-fun BottomCartSummary(
-    totalItems: Int,
-    totalPrice: Double,
-    onCheckout: () -> Unit,
-    onViewOrders: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    text = "Total ($totalItems items)",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "₹$totalPrice",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onViewOrders) {
-                    Text("Orders")
-                }
-
-                Button(onClick = onCheckout) {
-                    Text("Checkout")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun EmptyCartContent(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
@@ -393,7 +376,7 @@ fun EmptyCartContent(modifier: Modifier = Modifier) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { /* Navigate to product listing */ }) {
+            Button(onClick = {  }) {
                 Text("Start Shopping")
             }
         }
