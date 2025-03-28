@@ -17,10 +17,13 @@ val provider = GoogleFont.Provider(
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
-val fontName = GoogleFont("Poppins")
-val fontFamily = FontFamily(
-    Font(googleFont = fontName, fontProvider = provider)
-)
+//Google Fonts
+//val fontName = GoogleFont("Poppins")
+//val fontFamily = FontFamily(
+//    Font(googleFont = fontName, fontProvider = provider)
+//)
+
+
 
 val Typography = Typography(
     bodyLarge = TextStyle(

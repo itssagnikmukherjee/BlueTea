@@ -1,6 +1,7 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,9 +44,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
+import com.itssagnikmukherjee.blueteauser.R
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomIconButton
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.HeadingTextWithBadge
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 import kotlinx.serialization.json.Json
@@ -66,8 +70,6 @@ fun WishListScreen(navController: NavController, viewModel: ViewModels = hiltVie
             viewModel.getProducts()
         }
 
-        Log.d("WishListScreen", "Firestore Wishlist: $productID")
-        Log.d("WishListScreen", "Filtered Wishlist Products: $wishlistProducts")
         if(getUserDetailsState.value.isLoading || getProductsState.value.isLoading){ShimmerScreen()} else
         Column(
             modifier = Modifier.padding(innerPadding).fillMaxSize(),
@@ -82,6 +84,16 @@ fun WishListScreen(navController: NavController, viewModel: ViewModels = hiltVie
                 Text("No Wishlist Items", fontFamily = fontFamily)
                 }
             }else
+                Row(
+                    modifier = Modifier.fillMaxWidth(.9f).padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    CustomIconButton(onClick = {navController.popBackStack()}, icon = R.drawable.back, contentDescription = "back")
+                    HeadingTextWithBadge(text = "Favorites", badgeText = "2", width = 110)
+                    CustomIconButton(onClick = {viewModel.getUserDetails(userId)}, icon = R.drawable.reload, contentDescription = "back")
+                }
+            Spacer(Modifier.height(30.dp))
             LazyColumn {
                 items(wishlistProducts.size) { index ->
                     WishListItem(

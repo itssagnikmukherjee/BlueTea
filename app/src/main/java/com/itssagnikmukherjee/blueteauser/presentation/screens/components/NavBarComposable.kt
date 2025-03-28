@@ -1,4 +1,4 @@
-package com.itssagnikmukherjee.blueteauser.presentation.screens
+package com.itssagnikmukherjee.blueteauser.presentation.screens.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -31,20 +31,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.itssagnikmukherjee.blueteauser.R
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
+import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 
 @Composable
 fun NavbarComposable(navController: NavController, userId: String) {
 
     val navItemList = listOf(
-        NavItem(icon = Icons.Default.Home, text = "Home"),
-        NavItem(icon = Icons.Default.Favorite, text = "Favorite"),
-        NavItem(icon = Icons.Default.ShoppingCart, text = "Cart"),
-        NavItem(icon = Icons.Default.Person, text = "Profile")
+        NavItem(icon = R.drawable.home, text = "Home"),
+        NavItem(icon = R.drawable.heart_solid, text = "Favorite"),
+        NavItem(icon = R.drawable.cart_filled, text = "Cart"),
+        NavItem(icon = R.drawable.profile, text = "Profile")
     )
     var selectedNavItem by remember { mutableIntStateOf(0) }
 
@@ -58,8 +62,8 @@ fun NavbarComposable(navController: NavController, userId: String) {
         Box(modifier = Modifier.clip(RoundedCornerShape(60.dp))) {
             LazyRow(
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .background(Color.Black)
+                    .fillMaxWidth(0.9f)
+                    .background(CustomColors.blackest)
                     .clip(RoundedCornerShape(20.dp))
                     .padding(15.dp,10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -69,7 +73,7 @@ fun NavbarComposable(navController: NavController, userId: String) {
                     val isSelected = selectedNavItem == item
 
                     val iconColor by animateColorAsState(
-                        targetValue = if (isSelected) Color.White else primaryBlack,
+                        targetValue = if (isSelected) Color.White else CustomColors.darkGray,
                         animationSpec = tween(durationMillis = 300)
                     )
 
@@ -101,10 +105,10 @@ fun NavbarComposable(navController: NavController, userId: String) {
                             })
                             {
                                 Icon(
-                                    imageVector = navItemList[item].icon,
+                                    painter = painterResource(navItemList[item].icon),
                                     contentDescription = navItemList[item].text,
                                     modifier = Modifier
-                                        .size((30).dp),
+                                        .size((24).dp),
                                     tint = iconColor
                                 )
                             }
@@ -113,7 +117,8 @@ fun NavbarComposable(navController: NavController, userId: String) {
                                 Text(
                                     text = navItemList[item].text,
                                     color = iconColor,
-                                    fontWeight = FontWeight.Bold
+                                    fontFamily = fontFamily,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -127,7 +132,7 @@ fun NavbarComposable(navController: NavController, userId: String) {
 
 
 data class NavItem(
-    val icon: ImageVector,
+    val icon: Int,
     val text: String
 )
 

@@ -1,7 +1,10 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import android.R.attr.x
 import android.annotation.SuppressLint
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -13,6 +16,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -60,8 +64,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import com.itssagnikmukherjee.blueteauser.R
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomActionButton
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
+import com.itssagnikmukherjee.blueteauser.presentation.theme.headingTextStyle
 
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {
 
@@ -70,7 +79,39 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
     Log.d("HomeScreenUser", "User ID: $userId")
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(.95f)
+                            .clip(RoundedCornerShape(40.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextField(
+                            value = "",
+                            onValueChange = {},
+                            placeholder = { Text("Search Products", color = Color.Gray, fontFamily = fontFamily, fontSize = 16.sp,textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(CustomColors.lightGray, shape = RoundedCornerShape(50)),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                cursorColor = Color.Gray,
+                            )
+                        )
+                        Icon(painter = painterResource(R.drawable.search),
+                            contentDescription = "Search",
+                            tint = CustomColors.mediumGray, modifier = Modifier.size(24.dp).align(Alignment.CenterEnd)
+                                .offset(x = (-30).dp).clickable{}
+                        )
+                    }
+                }
+            )
+        }
     ){ innerPadding->
 
         val categoryState by viewmodel.getCategoryState.collectAsState()
@@ -89,10 +130,10 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            Spacer(Modifier.height(20.dp))
             // Banner Carousel
             AnimatedBannerSection(banners = bannerState.data, viewModels = viewmodel)
 
-            Spacer(modifier = Modifier.height(8.dp))
 
             // Category List
             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(start = 20.dp)) {
@@ -101,9 +142,9 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Hot Deals", fontFamily = fontFamily, color = primaryBlack, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 20.dp, bottom = 10.dp))
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(18.dp))
+            Text("Hot Deals", style = headingTextStyle, modifier = Modifier.padding(start = 20.dp))
+            Spacer(modifier = Modifier.height(18.dp))
             // Products List
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -138,15 +179,16 @@ fun CategoryItem(category: Category) {
             contentDescription = "Category Image",
             modifier = Modifier
                 .size(90.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Color.LightGray).border(3.dp, Color.LightGray, CircleShape),
+                .clip(CircleShape)
+                .background(CustomColors.lightGray).border(3.dp, CustomColors.mediumGray, CircleShape),
             contentScale = ContentScale.Crop
         )
         Text(
             text = category.categoryName,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 5.dp),
             textAlign = TextAlign.Center,
             fontFamily = fontFamily,
+            fontSize = 16.sp,
             color = primaryBlack
         )
     }
@@ -186,7 +228,7 @@ fun AnimatedBannerSection(
     if (autoAdvance) {
         LaunchedEffect(pagerState, settings) {
             while (true) {
-                delay(settings.duration.toLong()) // ⏳ Apply dynamic duration
+                delay(settings.duration.toLong())
                 val nextPage = (pagerState.currentPage + 1) % allImages.size
                 pagerState.animateScrollToPage(nextPage)
             }
@@ -225,7 +267,7 @@ fun AnimatedBannerSection(
     Box(
         modifier = Modifier
             .fillMaxWidth().padding(horizontal = 20.dp)
-            .clip(RoundedCornerShape(30.dp))
+            .clip(RoundedCornerShape(20.dp))
     ) {
         Column {
             HorizontalPager(
@@ -242,7 +284,7 @@ fun AnimatedBannerSection(
                     contentDescription = "Banner Image",
                     modifier = Modifier
                         .height(200.dp)
-                        .clip(RoundedCornerShape(30.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .graphicsLayer(
                             scaleX = scale.value,
                             scaleY = scale.value,
@@ -302,12 +344,11 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
     }
     Card(
         modifier = Modifier
-            .width(200.dp).height(320.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(20.dp)
-            )
+            .width(160.dp).height(320.dp)
+            .clip(RoundedCornerShape(20.dp)),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        )
     ) {
         Box {
             Column(
@@ -317,156 +358,137 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                     .zIndex(999f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                IconButton(
-                    onClick = {
-                        isFavorite = !isFavorite
-                        viewModel.updateFavoriteList(
-                            userId = userId,
-                            productId = product.productId,
-                            isFavorite = isFavorite
-                        )
-                    },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = Color.White.copy(alpha = 0.8f),
-                        contentColor = Color.Black
+                CustomActionButton(onClick = {
+                    isFavorite = !isFavorite
+                    viewModel.updateFavoriteList(
+                        userId = userId,
+                        productId = product.productId,
+                        isFavorite = isFavorite
                     )
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (isFavorite) R.drawable.heart_solid
-                            else R.drawable.heart_regular
-                        ),
-                        contentDescription = "Favorite",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                }, icon = if (isFavorite) R.drawable.heart_solid else R.drawable.heart_regular, contentDescription = "Favorite")
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                IconButton(
-                    onClick = {
-                        isCarted = !isCarted
+                CustomActionButton(onClick = {
+                    isCarted = !isCarted
                         viewModel.updateCartList(
                             userId = userId,
                             productId = product.productId,
                             isCarted = isCarted,
                             quantity = 1
                         )
-                    },
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = Color.White.copy(alpha = 0.8f),
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (isCarted) R.drawable.cart_shopping_solid
-                            else R.drawable.cart_plus_solid
-                        ),
-                        contentDescription = "Add to Cart",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(40.dp))
-
-                val prePrice = product.productPrePrice.toFloat()
-                val finalPrice = product.productFinalPrice.toFloat()
-                val discountPercentage = ((prePrice - finalPrice) / prePrice * 100).toInt()
-                Box(Modifier.clip(CircleShape).background(Color.Black).size(40.dp),
-                contentAlignment = Alignment.Center
-                ){
-                    Text(
-                        text = "$discountPercentage%",
-                        fontFamily = fontFamily,
-                        color = Color.White,
-                        fontSize = 12.sp,
-                    )
-                }
+                }, icon = if (isCarted) R.drawable.cart_filled else R.drawable.cart_outlined, contentDescription = "Cart")
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onclick() },
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.Start
             ) {
-                if (product.productImages.isNotEmpty()) {
-                    AsyncImage(
-                        model = product.productImages[0],
-                        contentDescription = "Product Image",
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)).size(200.dp)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .background(Color.LightGray, shape = RoundedCornerShape(12.dp)),
+                Box{
+                    if (product.productImages.isNotEmpty()) {
+                        AsyncImage(
+                            model = product.productImages[0],
+                            contentDescription = "Product Image",
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp)).size(160.dp)
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(150.dp)
+                                .background(Color.LightGray, shape = RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No Image",
+                                color = Color.Gray
+                            )
+                        }
+                    }
+
+                    val prePrice = product.productPrePrice.toFloat()
+                    val finalPrice = product.productFinalPrice.toFloat()
+                    val discountPercentage = ((prePrice - finalPrice) / prePrice * 100).toInt()
+
+                    Box(Modifier.padding(10.dp).clip(CircleShape).background(CustomColors.primaryBlack).size(30.dp).zIndex(999f).align(Alignment.BottomStart),
                         contentAlignment = Alignment.Center
-                    ) {
+                    ){
                         Text(
-                            text = "No Image",
-                            color = Color.Gray
+                            text = "$discountPercentage%",
+                            fontFamily = fontFamily,
+                            color = Color.White,
+                            fontSize = 12.sp,
                         )
                     }
+
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
-
+                Column(Modifier.padding(start = 10.dp)){
                     Text(
                         text = product.productName,
                         fontFamily = fontFamily,
                         color = primaryBlack,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
+                    )
+
+                    Text(
+                        text = product.productCategory,
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        fontWeight = FontWeight.Light,
                         overflow = TextOverflow.Ellipsis
                     )
 
-                Spacer(modifier = Modifier.height(1.dp))
-
                 Row(
                     verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
-
                     Text(
-                        text = "₹${product.productPrePrice}",
-                        fontFamily = fontFamily,
-                        color = Color.Gray,
-                        textDecoration = TextDecoration.LineThrough,
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = "₹${product.productFinalPrice}",
-                        fontFamily = fontFamily,
-                        color = primaryBlack,
-                        fontSize = 23.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(Modifier.height(10.dp))
-                Button(
-                    onClick = {
-                        navController.navigate(
-                            Routes.BuyNowScreen(
-                                products = listOf(product.productId),
-                                totalPrice = product.productFinalPrice.toDouble(),
-                                userId = userId,
-                                quantity = Json.encodeToString(mapOf(product.productId to 1))
-                            )
+                    text = "₹",
+                    fontFamily = fontFamily,
+                    color = CustomColors.primaryBlack,
+                    textDecoration = TextDecoration.LineThrough,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ){
+                        Text(
+                            text = "${product.productFinalPrice}",
+                            fontFamily = fontFamily,
+                            color = primaryBlack,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp).align(Alignment.End),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
-                ) {
-                    Text("Buy Now", fontFamily= fontFamily)
+                        Text(
+                            text = "₹${product.productPrePrice}",
+                            fontFamily = fontFamily,
+                            color = primaryBlack,
+                            textDecoration = TextDecoration.LineThrough,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.padding(start = 16.dp, top = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ){
+                        //random value from 4-5 with point values
+                        val randomVal = (40..50).random() / 10.0
+                        Icon(painter = painterResource(R.drawable.star_rating), contentDescription = "Rating", modifier = Modifier.size(16.dp), tint = Color(0xFFFFAB62))
+                        Text(randomVal.toString(), fontFamily = fontFamily, color = primaryBlack, fontSize = 12.sp)
+                    }
                 }
+            }
             }
         }
     }
