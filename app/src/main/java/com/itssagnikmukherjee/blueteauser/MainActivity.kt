@@ -19,7 +19,6 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
 import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.MainScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.SignUpScreen
-import com.itssagnikmukherjee.blueteauser.presentation.theme.BlueTeaAdminTheme
 import com.stripe.android.PaymentConfiguration
 import com.stripe.android.paymentsheet.PaymentSheet
 import com.stripe.android.paymentsheet.PaymentSheetResult
@@ -44,7 +43,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        paymentSheet = PaymentSheet(this, ::onPaymentSheetResult) // Initialize here
+        paymentSheet = PaymentSheet(this, ::onPaymentSheetResult)
 
         setContent {
             val navController = rememberNavController()
@@ -52,7 +51,7 @@ class MainActivity : ComponentActivity() {
 
             Log.d("MainActivity", "User ID: $userId")
 
-            BlueTeaAdminTheme {
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainScreen(
                         navController = navController,
@@ -61,7 +60,6 @@ class MainActivity : ComponentActivity() {
                         paymentSheet = paymentSheet
                     )
                 }
-            }
         }
     }
 }

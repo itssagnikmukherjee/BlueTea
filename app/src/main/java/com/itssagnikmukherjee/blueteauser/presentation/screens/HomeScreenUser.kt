@@ -55,12 +55,12 @@ import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
-import com.itssagnikmukherjee.blueteauser.presentation.theme.primaryBlack
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import com.itssagnikmukherjee.blueteauser.R
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 
 @Composable
 fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltViewModel(), navController: NavController) {

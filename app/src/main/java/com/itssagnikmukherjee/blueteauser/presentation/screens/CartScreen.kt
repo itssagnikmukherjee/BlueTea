@@ -63,8 +63,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
-import com.itssagnikmukherjee.blueteauser.presentation.theme.primaryBlack
 import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalMaterial3Api::class)

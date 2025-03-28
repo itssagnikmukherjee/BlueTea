@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
-import com.itssagnikmukherjee.blueteauser.presentation.theme.primaryBlack
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 
 @Composable
 fun NavbarComposable(navController: NavController, userId: String) {
