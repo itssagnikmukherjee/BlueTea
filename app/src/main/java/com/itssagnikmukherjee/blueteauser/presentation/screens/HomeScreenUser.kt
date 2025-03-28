@@ -432,7 +432,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                         fontFamily = fontFamily,
                         color = primaryBlack,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         maxLines = 2,
                     )
 

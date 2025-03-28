@@ -23,8 +23,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,8 +52,11 @@ import com.itssagnikmukherjee.blueteauser.R
 import com.itssagnikmukherjee.blueteauser.domain.models.Product
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButton1
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButtonFilled
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomIconButton
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.HeadingTextWithBadge
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 import kotlinx.serialization.json.Json
@@ -75,6 +82,16 @@ fun WishListScreen(navController: NavController, viewModel: ViewModels = hiltVie
             modifier = Modifier.padding(innerPadding).fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
+            Row(
+                modifier = Modifier.fillMaxWidth(.9f).padding(top = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                CustomIconButton(onClick = {navController.popBackStack()}, icon = R.drawable.back, contentDescription = "back")
+                HeadingTextWithBadge(text = "Favorites", badgeText = wishlistProducts.size.toString(), width = 110)
+                CustomIconButton(onClick = {viewModel.getUserDetails(userId)}, icon = R.drawable.reload, contentDescription = "back")
+            }
+
             if(wishlistProducts.size == 0){
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -84,15 +101,6 @@ fun WishListScreen(navController: NavController, viewModel: ViewModels = hiltVie
                 Text("No Wishlist Items", fontFamily = fontFamily)
                 }
             }else
-                Row(
-                    modifier = Modifier.fillMaxWidth(.9f).padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    CustomIconButton(onClick = {navController.popBackStack()}, icon = R.drawable.back, contentDescription = "back")
-                    HeadingTextWithBadge(text = "Favorites", badgeText = "2", width = 110)
-                    CustomIconButton(onClick = {viewModel.getUserDetails(userId)}, icon = R.drawable.reload, contentDescription = "back")
-                }
             Spacer(Modifier.height(30.dp))
             LazyColumn {
                 items(wishlistProducts.size) { index ->
@@ -115,8 +123,12 @@ fun WishListItem(
     navController: NavController
 ) {
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
+
     Card(
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp).fillMaxWidth().clip(RoundedCornerShape(20.dp)).height(180.dp),
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp).fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        )
     ){
         Box (
             modifier = Modifier.fillMaxSize()
@@ -129,30 +141,41 @@ fun WishListItem(
                         isFavorite = false
                     )
                 },
-                modifier = Modifier.align(Alignment.TopEnd)
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color(0xFFD9D9D9)
+                ),
+                modifier = Modifier.align(Alignment.TopEnd).size(26.dp)
             ) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "")
+                Icon(painter = painterResource(R.drawable.cross), contentDescription = "", tint = primaryBlack, modifier = Modifier.size(10.dp))
             }
-            Row {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
                 AsyncImage(
                     model = product.productImages[0], contentDescription = "",
-                    modifier = Modifier.size(180.dp)
+                    modifier = Modifier.size(120.dp).clip(RoundedCornerShape(20.dp))
                 )
                 Column (
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp).fillMaxHeight(),
+                    modifier = Modifier.padding(10.dp).fillMaxHeight(),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.SpaceBetween
                 ){
                     Column {
-                    Text(text = product.productName , fontFamily= fontFamily, color = primaryBlack, fontSize = 18.sp)
+                    Text(text = product.productName , fontFamily= fontFamily, color = primaryBlack, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                        Text(text = product.productCategory , fontFamily= fontFamily, color = primaryBlack, fontSize = 12.sp, fontWeight = FontWeight.Light)
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ){
+                            Text("₹", fontFamily= fontFamily, color = primaryBlack, fontSize = 12.sp, modifier = Modifier.padding(top = 5.dp))
+                        Text(text = "${product.productFinalPrice}" , fontFamily= fontFamily, color = primaryBlack, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "₹${product.productPrePrice}" , fontSize = 12.sp, fontFamily= fontFamily, color = primaryBlack, textDecoration = TextDecoration.LineThrough)
+                    }
+                    }
                     Row {
-                        Text(text = "₹${product.productPrePrice}" , fontFamily= fontFamily, color = primaryBlack, textDecoration = TextDecoration.LineThrough)
-                        Spacer(Modifier.width(10.dp))
-                        Text(text = "₹${product.productFinalPrice}" , fontFamily= fontFamily, color = primaryBlack, fontSize = 23.sp)
-                    }
-                    }
-                    Column {
-                        Button(onClick = {
+                        val cartItems = getUserDetailsState.value.data?.cartItems ?: emptyMap()
+                        CustomButton1(onclick = {
                             navController.navigate(
                                 Routes.BuyNowScreen(
                                     products = listOf(product.productId),
@@ -161,39 +184,29 @@ fun WishListItem(
                                     quantity = Json.encodeToString(mapOf(product.productId to 1))
                                 )
                             )
-                        },
-                            modifier = Modifier.height(40.dp).fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = primaryBlack
-                            )
-                            ) {
-                            Text("Buy Now", fontFamily = fontFamily)
-                        }
-                        Spacer(Modifier.height(5.dp))
-                        Button(onClick = {
+                        }, text = if (product.productId in cartItems.keys) "In Cart" else "Add to Cart")
+                        Spacer(Modifier.width(5.dp))
+                        CustomButtonFilled(onclick = {
                             viewModel.updateCartList(
                                 userId = userId,
                                 productId = product.productId,
                                 quantity = 1,
                                 isCarted = true
                             )
-                        },
-                            modifier = Modifier.height(40.dp).fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Black
-                            )
-                            ) {
-                            val cartItems = getUserDetailsState.value.data?.cartItems ?: emptyMap()
-                            if (product.productId in cartItems.keys) {
-                                Text("In Cart", fontFamily = fontFamily)
-                            } else
-                                Text("Add to Cart", fontFamily = fontFamily)
-                        }
+                        }, text = "Buy Now")
                     }
                 }
             }
+        }
+
+        Spacer(Modifier.height(30.dp))
+        Row(Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center){
+            Divider(
+                thickness = 1.dp,
+                color = CustomColors.mediumGray,
+                modifier = Modifier.fillMaxWidth(0.7f).align(Alignment.CenterVertically)
+            )
         }
     }
 }
