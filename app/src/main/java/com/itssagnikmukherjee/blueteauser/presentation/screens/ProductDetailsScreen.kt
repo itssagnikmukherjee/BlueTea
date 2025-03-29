@@ -57,6 +57,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -65,14 +68,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.itssagnikmukherjee.blueteauser.R
+import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomIconButton
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -81,7 +88,8 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
     val getProductDetailsState = viewModel.getProductDetailsState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
-
+    val productID = getUserDetailsState.value.data?.cartItems ?: emptyMap()
+    var quantity = productID[productId] ?: 1
     LaunchedEffect(Unit) {
         if (productId.isNotEmpty() && userId.isNotEmpty()) {
             viewModel.getProductDetails(productId)
@@ -97,7 +105,6 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
 
     Log.d("ProductDetailsScreen", "Firestore Wishlist: ${getUserDetailsState.value.data?.wishlistItems}")
     Log.d("ProductDetailsScreen", "isFavorite: $isFavorite")
-
 
     when {
         getProductDetailsState.value.isLoading -> {
@@ -116,7 +123,6 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                 Column(
                     Modifier.fillMaxSize().padding(innerPadding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top
                 ) {
 
                     Box(
@@ -124,7 +130,8 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                             .fillMaxHeight().fillMaxWidth(.9f)
                     ) {
                         Row(
-                            modifier = Modifier.zIndex(999f).fillMaxWidth().padding(horizontal = 10.dp, vertical = 10.dp),
+                            modifier = Modifier.zIndex(999f).fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -148,7 +155,8 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                         }
 
                         Column(
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.SpaceBetween
                         ) {
 
                             HorizontalPager(
@@ -185,6 +193,7 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                                 }
                                             }
                                     )
+
 
                                     Box(Modifier.padding(10.dp).clip(CircleShape).background(CustomColors.primaryBlack).size(48.dp).zIndex(999f).align(Alignment.BottomStart),
                                         contentAlignment = Alignment.Center
@@ -242,49 +251,170 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                 }
                             }
 
-                            Spacer(Modifier.height(20.dp))
+                            Spacer(Modifier.height(60.dp))
 
-                            Text(text = getProductDetailsState.value.data!!.productName)
-                            Text(text = getProductDetailsState.value.data!!.productDescription)
-                            Text(text = "₹${getProductDetailsState.value.data!!.productPrePrice}")
-                            Text(text = "₹${getProductDetailsState.value.data!!.productFinalPrice}")
-                            Text(text = "Available Units: ${getProductDetailsState.value.data!!.availableUnits}")
-                            Text(
-                                text = if (getProductDetailsState.value.data!!.isAvailable) "Out of Stock" else "In Stock",
-                                color = if (getProductDetailsState.value.data!!.isAvailable) Color.Red else Color.Green
-                            )
-                        }
+                            val productDesc = getProductDetailsState.value.data!!.productDescription
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Column {
 
-                        var cartClicked by remember { mutableStateOf(false) }
-                        Column(
-                            modifier = Modifier.align(Alignment.BottomCenter),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            var cartItemCount by remember { mutableIntStateOf(0) }
-                            Button(onClick = {
-                                cartClicked = true
-                                cartItemCount++
-                            }) {
-                                if (cartClicked && cartItemCount > 0) {
-                                    Row {
-                                        IconButton({ cartItemCount++ }) {
-                                            Icon(imageVector = Icons.Default.Add, "")
-                                        }
-                                        Text("$cartItemCount")
-                                        IconButton({ cartItemCount-- }) {
-                                            Icon(imageVector = Icons.Default.ArrowDropDown, "")
-                                        }
-                                        IconButton({}) {
-                                            Icon(imageVector = Icons.Default.Check, "")
+                                        Text(
+                                            text = getProductDetailsState.value.data!!.productName,
+                                            fontSize = 26.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Spacer(Modifier.height(6.dp))
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.star_rating),
+                                                "",
+                                                tint = Color(0xFFFFAB62),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Text(
+                                                text = "4.5",
+                                                fontFamily = fontFamily,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Light,
+                                                color = CustomColors.primaryBlack
+                                            )
+                                            Text(
+                                                "(2132 reviews)",
+                                                fontFamily = fontFamily,
+                                                fontSize = 16.sp,
+                                                color = CustomColors.primaryBlack.copy(0.9f)
+                                            )
                                         }
                                     }
-                                } else {
-                                    Text("Add to Cart")
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.updateCartQuantity(
+                                                    userId = userId,
+                                                    productId = productId,
+                                                    quantity = quantity - 1
+                                                )
+                                                quantity--
+                                            },
+                                            colors = IconButtonDefaults.iconButtonColors(
+                                                containerColor = Color(0xFFD9D9D9)
+                                            ),
+                                            modifier = Modifier.size(26.dp)
+                                        ) {
+                                            Text("-", fontFamily = fontFamily)
+                                        }
+                                        Text(
+                                            text = quantity.toString(),
+                                            fontFamily = fontFamily,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 20.sp,
+                                            color = CustomColors.primaryBlack
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.updateCartQuantity(
+                                                    userId = userId,
+                                                    productId = productId,
+                                                    quantity = quantity + 1
+                                                )
+                                                quantity++
+                                            },
+                                            colors = IconButtonDefaults.iconButtonColors(
+                                                containerColor = Color(0xFFD9D9D9)
+                                            ),
+                                            modifier = Modifier.size(26.dp)
+                                        ) {
+                                            Text("+", fontFamily = fontFamily, fontSize = 16.sp)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(10.dp))
+
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(0.75f),
+                                ) {
+                                    Text(
+                                        text = if (productDesc.length > 50) productDesc.substring(
+                                            0,
+                                            82
+                                        ) else productDesc,
+                                        fontFamily = fontFamily,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Light
+                                    )
+                                    if (productDesc.length > 50)
+                                        Text(
+                                            "Read More ...",
+                                            fontFamily = fontFamily,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 12.sp,
+                                            color = CustomColors.primaryBlack,
+                                            modifier = Modifier.align(Alignment.BottomEnd)
+                                        )
                                 }
                             }
-                            Button(onClick = {}) {
-                                Text("Buy Now")
+                            Spacer(Modifier.height(20.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "₹${getProductDetailsState.value.data!!.productFinalPrice}",
+                                    fontFamily = fontFamily,
+                                    color = CustomColors.primaryBlack,
+                                    fontSize = 26.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "₹${getProductDetailsState.value.data!!.productPrePrice}",
+                                    fontFamily = fontFamily,
+                                    color = CustomColors.primaryBlack,
+                                    fontWeight = FontWeight.Light,
+                                    textDecoration = TextDecoration.LineThrough
+                                )
+
                             }
+
+                            Spacer(Modifier.height(20.dp))
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+                                IconButton(onClick = {
+                                    navController.navigate(Routes.CartScreen(userId))
+                                }, modifier = Modifier.border(2.dp, CustomColors.primaryBlack, CircleShape).padding(10.dp)) {
+                                    Icon(painter = painterResource(R.drawable.cart_filled),"", modifier = Modifier.size(24.dp))
+                                }
+
+                                Button(onClick = {
+                                    val quantityMap =
+                                        Json.encodeToString(mapOf(productId to quantity))
+                                    navController.navigate(Routes.BuyNowScreen(
+                                        products = listOf(productId.toString()),
+                                        userId = userId,
+                                        totalPrice = getProductDetailsState.value.data!!.productFinalPrice.toDouble() * quantity,
+                                        quantity = quantityMap
+                                    ))
+
+                                }, colors = ButtonDefaults.buttonColors(
+                                    containerColor = CustomColors.primaryBlack,
+                                    contentColor = Color.White
+                                )){
+                                    Text("Buy Now", fontFamily = fontFamily, fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color.White, modifier = Modifier.padding(horizontal = 80.dp, vertical = 14.dp))
+                                }
+                            }
+
+                            Spacer(Modifier.height(10.dp))
                         }
                     }
                 }
