@@ -26,11 +26,11 @@ fun CustomActionButton(onClick: () -> Unit, icon: Int, contentDescription: Strin
 }
 
 @Composable
-fun CustomIconButton(onClick: () -> Unit, icon: Int, contentDescription: String, modifier: Modifier = Modifier) {
+fun CustomIconButton(onClick: () -> Unit, icon: Int, contentDescription: String, modifier: Modifier = Modifier, color: Color = CustomColors.darkGray) {
     IconButton(
         onClick = onClick,
         colors = IconButtonDefaults.iconButtonColors(
-            containerColor = CustomColors.darkGray,
+            containerColor = color,
             contentColor = Color.White
         ),
         modifier = Modifier.size(48.dp)

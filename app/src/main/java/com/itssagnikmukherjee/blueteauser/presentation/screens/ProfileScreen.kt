@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -255,7 +256,7 @@ fun ProfileScreen(viewModel: ViewModels = hiltViewModel(),
                     readOnly = !isEditable,
                     shape = RoundedCornerShape(15.dp),
                     textStyle = TextStyle.Default.copy(fontFamily = fontFamily),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 // Phone field
