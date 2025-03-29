@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 
 @Composable
-fun CustomActionButton(onClick: () -> Unit, icon: Int, contentDescription: String) {
+fun CustomActionButton(onClick: () -> Unit, icon: Int, contentDescription: String, modifier: Modifier) {
     IconButton(
         onClick = onClick,
         colors = IconButtonDefaults.iconButtonColors(
@@ -26,7 +26,7 @@ fun CustomActionButton(onClick: () -> Unit, icon: Int, contentDescription: Strin
 }
 
 @Composable
-fun CustomIconButton(onClick: () -> Unit, icon: Int, contentDescription: String) {
+fun CustomIconButton(onClick: () -> Unit, icon: Int, contentDescription: String, modifier: Modifier = Modifier) {
     IconButton(
         onClick = onClick,
         colors = IconButtonDefaults.iconButtonColors(

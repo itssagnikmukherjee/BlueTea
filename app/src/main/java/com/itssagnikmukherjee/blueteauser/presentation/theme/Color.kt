@@ -3,6 +3,8 @@ package com.itssagnikmukherjee.blueteauser.presentation.theme
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -25,3 +27,4 @@ val headingTextStyle = TextStyle(
     color = CustomColors.primaryBlack,
     fontFamily = fontFamily
 )
+

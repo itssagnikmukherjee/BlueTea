@@ -365,7 +365,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                         productId = product.productId,
                         isFavorite = isFavorite
                     )
-                }, icon = if (isFavorite) R.drawable.heart_solid else R.drawable.heart_regular, contentDescription = "Favorite")
+                }, icon = if (isFavorite) R.drawable.heart_solid else R.drawable.heart_regular, contentDescription = "Favorite", modifier = Modifier)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -377,7 +377,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                             isCarted = isCarted,
                             quantity = 1
                         )
-                }, icon = if (isCarted) R.drawable.cart_filled else R.drawable.cart_outlined, contentDescription = "Cart")
+                }, icon = if (isCarted) R.drawable.cart_filled else R.drawable.cart_outlined, contentDescription = "Cart", modifier = Modifier)
             }
 
             Column(
