@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +51,8 @@ fun OrdersScreen(
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
     val getProductsState = viewModel.getProductState.collectAsState()
 
-    val orders = getUserDetailsState.value.data?.orderedItems as? Map<String, Map<String, Any>> ?: emptyMap()
+    val orders =
+        getUserDetailsState.value.data?.orderedItems as? Map<String, Map<String, Any>> ?: emptyMap()
     val products = getProductsState.value.data ?: emptyList()
 
     val productMap = remember(products) { products.associateBy { it.productId } }
@@ -59,18 +61,28 @@ fun OrdersScreen(
         viewModel.getUserDetails(userId)
         viewModel.getProducts()
     }
+    Scaffold {innerPadding->
+        Column(modifier = modifier.fillMaxSize().padding(innerPadding).fillMaxWidth(0.9f)) {
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = "Your Orders", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-
-        if (orders.isNotEmpty()) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(orders.entries.toList().size) { order ->
-                    OrderItemCard(orderId = orders.entries.toList()[order].key, orderDetails = orders.entries.toList()[order].value, productMap = productMap, userId= userId, navController = navController)
+            if (orders.isNotEmpty()) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(orders.entries.toList().size) { order ->
+                        OrderItemCard(
+                            orderId = orders.entries.toList()[order].key,
+                            orderDetails = orders.entries.toList()[order].value,
+                            productMap = productMap,
+                            userId = userId,
+                            navController = navController
+                        )
+                    }
                 }
+            } else {
+                Text(
+                    text = "No orders placed yet.",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
             }
-        } else {
-            Text(text = "No orders placed yet.", fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp))
         }
     }
 }
