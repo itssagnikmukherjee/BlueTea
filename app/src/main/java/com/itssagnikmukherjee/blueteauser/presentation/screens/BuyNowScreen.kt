@@ -150,7 +150,13 @@ fun BuyNowScreen(
         allProducts.filter { it.productId in cartItems }
     }
 
-    var quantityMap by remember { mutableStateOf(Json.decodeFromString<Map<String, Int>>(quantity)) }
+    var quantityMap by remember(cartItems, quantity){
+        mutableStateOf(if(quantity.isNotEmpty()){
+        Json.decodeFromString<Map<String, Int>>(quantity)
+        }else{
+            cartItems.associateWith { 1 }
+        })
+    }
 
     LaunchedEffect(Unit) {
         viewModel.getProducts()
@@ -200,6 +206,7 @@ fun BuyNowScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
 
                 val totalPrice = products.sumOf { product ->
                     val quantity = quantityMap[product.productId] ?: 1

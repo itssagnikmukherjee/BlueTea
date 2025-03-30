@@ -155,35 +155,35 @@ fun OrdersScreen(
                 FilterChip(
                     selected = selectedFilter == "All",
                     onClick = { selectedFilter = "All" },
-                    label = { Text("All", fontFamily = fontFamily) },
+                    label = { Text("All", fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                     colors = chipColor
                 )
 
                 FilterChip(
                     selected = selectedFilter == "Pending",
                     onClick = { selectedFilter = "Pending" },
-                    label = { Text("Pending", fontFamily = fontFamily) },
+                    label = { Text("Pending", fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                     colors = chipColor
                 )
 
                 FilterChip(
                     selected = selectedFilter == "In Transit",
                     onClick = { selectedFilter = "In Transit" },
-                    label = { Text("In Transit", fontFamily = fontFamily) },
+                    label = { Text("In Transit", fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                     colors = chipColor
                 )
 
                 FilterChip(
                     selected = selectedFilter == "Delivered",
                     onClick = { selectedFilter = "Delivered" },
-                    label = { Text("Delivered", fontFamily = fontFamily) },
+                    label = { Text("Delivered", fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                     colors = chipColor
                 )
             }
 
             if (filteredOrders.isNotEmpty()) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filteredOrders.entries.toList().size) { order ->
+                    items(filteredOrders.entries.toList().reversed().size) { order ->
                         OrderItemCard(
                             orderId = filteredOrders.entries.toList()[order].key,
                             orderDetails = filteredOrders.entries.toList()[order].value,
@@ -319,32 +319,48 @@ fun OrderItemCard(
                     Text(text = "- Unknown Product ($productId) x $quantity")
                 }
             }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            Text("₹ ${orderDetails["totalPrice"]}", fontFamily = fontFamily, color = primaryBlack, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 10.dp))
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center
+        Column {
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "${if (orderDetails["status"] == "Pending") "Ordered" else orderDetails["status"]}",
-                    fontFamily = fontFamily,
-                    color = primaryBlack,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(5.dp))
-                Text(
-                    text = when (orderDetails["status"]) {
-                        "Delivered" -> formatTimestamp(orderDetails["deliveredTime"] as Long)
-                        "In Transit" -> formatTimestamp(orderDetails["transitTime"] as Long)
-                        else -> formatTimestamp(orderDetails["timestamp"] as Long)
-                    }, fontFamily = fontFamily, color = primaryBlack, fontSize = 16.sp
-                )
+                val totalPrice = orderDetails["totalPrice"] as Double
+                Column(modifier = Modifier.padding(start = 5.dp)){
+                    Text(text = if(totalPrice % 1==0.0)
+                        "₹${totalPrice.toInt()} + ₹40" else "₹${totalPrice} + ₹40",
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+                    val totalPrice = orderDetails["totalPrice"] as Double
+                    Text(text = if (totalPrice % 1 == 0.0) "₹${totalPrice.toInt()}" else "₹$totalPrice", fontFamily = fontFamily, color = primaryBlack, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+
+                }
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "${if (orderDetails["status"] == "Pending") "Ordered" else orderDetails["status"]}",
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    Text(
+                        text = when (orderDetails["status"]) {
+                            "Delivered" -> formatTimestamp(orderDetails["deliveredTime"] as Long)
+                            "In Transit" -> formatTimestamp(orderDetails["transitTime"] as Long)
+                            else -> formatTimestamp(orderDetails["timestamp"] as Long)
+                        }, fontFamily = fontFamily, color = primaryBlack, fontSize = 16.sp
+                    )
+                }
             }
         }
         Spacer(Modifier.height(20.dp))
