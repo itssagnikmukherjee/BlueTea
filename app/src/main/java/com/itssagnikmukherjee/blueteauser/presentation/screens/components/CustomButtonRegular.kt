@@ -15,21 +15,21 @@ import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 
 @Composable
-fun CustomButton1(onclick : () -> Unit, text: String) {
+fun CustomButton1(onclick : () -> Unit, text: String, width: Int = 120) {
     Button(onClick = onclick, colors = ButtonDefaults.buttonColors(
         containerColor = _root_ide_package_.androidx.compose.ui.graphics.Color.Transparent,
         contentColor = CustomColors.primaryBlack
-    ), modifier = Modifier.border(2.dp, CustomColors.primaryBlack, RoundedCornerShape(30.dp)).height(35.dp).width(118.dp)) {
+    ), modifier = Modifier.border(2.dp, CustomColors.primaryBlack, RoundedCornerShape(30.dp)).height(35.dp).width(width.dp)) {
         Text(text = text, color = CustomColors.primaryBlack, fontFamily = fontFamily, fontSize = 12.sp)
     }
 }
 
 @Composable
-fun CustomButtonFilled(onclick : () -> Unit, text: String) {
+fun CustomButtonFilled(onclick : () -> Unit, text: String, width: Int = 120) {
     Button(onClick = onclick, colors = ButtonDefaults.buttonColors(
         containerColor = CustomColors.primaryBlack,
         contentColor = _root_ide_package_.androidx.compose.ui.graphics.Color.White
-    ), modifier = Modifier.border(2.dp, CustomColors.primaryBlack, RoundedCornerShape(30.dp)).height(35.dp).width(120.dp)) {
+    ), modifier = Modifier.border(2.dp, CustomColors.primaryBlack, RoundedCornerShape(30.dp)).height(35.dp).width(width.dp)) {
         Text(text = text, color = _root_ide_package_.androidx.compose.ui.graphics.Color.White, fontFamily = fontFamily, fontSize = 12.sp)
     }
 }

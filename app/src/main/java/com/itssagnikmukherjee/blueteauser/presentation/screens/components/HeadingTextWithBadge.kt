@@ -28,7 +28,7 @@ fun HeadingTextWithBadge(text: String, badgeText: String, width: Int) {
         fontFamily = fontFamily
     )
         Box(modifier = Modifier.align(
-            Alignment.TopEnd).clip(CircleShape).background(CustomColors.darkGray).size(15.dp), contentAlignment = Alignment.Center){
+            Alignment.TopEnd).clip(CircleShape).background(CustomColors.darkGray).size(18.dp), contentAlignment = Alignment.Center){
     Text(text = badgeText, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
         }
     }

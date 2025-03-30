@@ -60,16 +60,16 @@ fun TrackOrderScreen(
     val transitTime = orderDetails["transitTime"] as? Long ?: 0L
     val deliveredTime = orderDetails["deliveredTime"] as? Long ?: 0L
 
-    // State for pull-to-refresh
+
     val isRefreshing = viewModel.isRefreshing.collectAsState()
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing.value)
 
-    // Fetch user details on initial load
+
     LaunchedEffect(userId) {
         viewModel.getUserDetails(userId)
     }
 
-    // Pull-to-refresh functionality
+
     SwipeRefresh(
         state = swipeRefreshState,
         onRefresh = { viewModel.refreshOrderDetails(userId) }
