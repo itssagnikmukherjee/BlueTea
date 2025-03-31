@@ -4,8 +4,21 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.EmailAuthProvider
@@ -27,6 +40,8 @@ import com.itssagnikmukherjee.blueteauser.domain.usecases.getUserDetailsUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.loginUserWithEmailAndPassUsecase
 import com.itssagnikmukherjee.blueteauser.domain.usecases.registerUserWithEmailUsecase
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BannerAnimationSettings
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
+import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
@@ -161,6 +176,7 @@ class ViewModels @Inject constructor(
                         val productList: List<Product> = result.data as List<Product>
                         _getProductState.value = GetProductState(data = productList)
                         filterProducts()
+                        applyFilters()
                     }
 
                     is ResultState.Error -> {
@@ -480,6 +496,45 @@ class ViewModels @Inject constructor(
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
         filterProducts(query)
+    }
+
+    private val _selectedFilter = MutableStateFlow(FilterType.PRICE)
+    val selectedFilter = _selectedFilter.asStateFlow()
+
+    enum class FilterType {
+        PRICE, RATING, DISCOUNT, OFFERS
+    }
+
+    fun updateFilterType(filterType: FilterType) {
+        _selectedFilter.value = filterType
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        val query = searchQuery.value
+        val products = if (query.isEmpty()) {
+            getProductState.value.data
+        } else {
+            getProductState.value.data.filter { product ->
+                product.productName.lowercase().contains(query.lowercase().trim()) ||
+                        product.productDescription.lowercase().contains(query.lowercase().trim())
+            }
+        }
+
+        _filteredProducts.value = when (selectedFilter.value) {
+            FilterType.PRICE -> products.sortedBy { it.productFinalPrice }
+            FilterType.RATING -> products.sortedByDescending { it.randomRating }
+            FilterType.DISCOUNT -> products.sortedBy {
+                (it.productFinalPrice.toFloat() - it.productPrePrice.toFloat()) / it.productPrePrice.toFloat() * 100
+            }
+
+            FilterType.OFFERS -> products.sortedBy {
+                (it.productFinalPrice.toFloat() - it.productPrePrice.toFloat()) / it.productPrePrice.toFloat() * 100
+            }
+
+            else -> products
+
+        }
     }
 
     private fun filterProducts(query: String = searchQuery.value) {

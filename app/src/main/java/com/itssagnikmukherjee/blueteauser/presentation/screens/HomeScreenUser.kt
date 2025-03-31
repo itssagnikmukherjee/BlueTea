@@ -73,6 +73,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import com.itssagnikmukherjee.blueteauser.R
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomActionButton
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButton1
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomButtonFilled
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
 import com.itssagnikmukherjee.blueteauser.presentation.theme.headingTextStyle
@@ -195,30 +197,32 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                                 selectedTrailingIconColor = Color.White,
                             )
 
+                            val selectedFilter by viewmodel.selectedFilter.collectAsState()
+
                             FilterChip(
-                                selected = true,
-                                onClick = { /* Handle filter selection */ },
+                                selected = selectedFilter == ViewModels.FilterType.PRICE,
+                                onClick = { viewmodel.updateFilterType(ViewModels.FilterType.PRICE) },
                                 label = { Text("Price" , fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                                 modifier = Modifier.height(36.dp),
                                 colors = chipColor
                             )
                             FilterChip(
-                                selected = false,
-                                onClick = { /* Handle filter selection */ },
+                                selected = selectedFilter == ViewModels.FilterType.RATING,
+                                onClick = { viewmodel.updateFilterType(ViewModels.FilterType.RATING) },
                                 label = { Text("Rating" , fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                                 modifier = Modifier.height(36.dp),
                                 colors = chipColor
                             )
                             FilterChip(
-                                selected = false,
-                                onClick = { /* Handle filter selection */ },
+                                selected = selectedFilter == ViewModels.FilterType.DISCOUNT,
+                                onClick = { viewmodel.updateFilterType(ViewModels.FilterType.DISCOUNT) },
                                 label = { Text("Discount" , fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                                 modifier = Modifier.height(36.dp),
                                 colors = chipColor
                             )
                             FilterChip(
-                                selected = false,
-                                onClick = { /* Handle filter selection */ },
+                                selected = selectedFilter == ViewModels.FilterType.OFFERS,
+                                onClick = { viewmodel.updateFilterType(ViewModels.FilterType.OFFERS) },
                                 label = { Text("Offers" , fontFamily = fontFamily, fontWeight = FontWeight.Normal) },
                                 modifier = Modifier.height(36.dp),
                                 colors = chipColor
@@ -618,9 +622,10 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                         modifier = Modifier.padding(start = 16.dp, top = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ){
-                        val randomVal = (40..50).random() / 10.0
+                        val rating = product.randomRating.toFloat()
+                        val finalRating = rating/10
                         Icon(painter = painterResource(R.drawable.star_rating), contentDescription = "Rating", modifier = Modifier.size(16.dp), tint = Color(0xFFFFAB62))
-                        Text(randomVal.toString(), fontFamily = fontFamily, color = primaryBlack, fontSize = 12.sp)
+                        Text(finalRating.toString(), fontFamily = fontFamily, color = primaryBlack, fontSize = 12.sp)
                     }
                 }
             }
@@ -629,32 +634,35 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SearchResultItem(
     product: Product,
     userId: String,
-    navController: NavController
+    navController: NavController,
+    viewModel : ViewModels = hiltViewModel(),
+    productId: String = product.productId,
+    quantity: Int = 1
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(140.dp)
             .clickable {
                 navController.navigate(Routes.ProductDetailsScreen(product.productId, userId))
             },
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        )
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
+                .fillMaxSize().padding(vertical = 10.dp)
         ) {
-            // Product Image
             Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(20.dp))
             ) {
                 AsyncImage(
                     model = product.productImages[0],
@@ -662,29 +670,21 @@ fun SearchResultItem(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
-
-                // Discount Badge
-                if (product.productFinalPrice < product.productPrePrice) {
-                    val discountPercentage = ((product.productPrePrice - product.productFinalPrice) / product.productPrePrice * 100).toInt()
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .background(Color(0xFFE57373), RoundedCornerShape(bottomStart = 8.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "$discountPercentage% off",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                val prePrice = product.productPrePrice.toFloat()
+                val finalPrice = product.productFinalPrice.toFloat()
+                val discountPercentage = ((prePrice - finalPrice) / prePrice * 100).toInt()
+                Box(Modifier.padding(10.dp).clip(CircleShape).background(CustomColors.primaryBlack).size(30.dp).zIndex(999f).align(Alignment.BottomStart),
+                    contentAlignment = Alignment.Center){
+                    Text(
+                        text = "$discountPercentage%",
+                        fontFamily = fontFamily,
+                        color = Color.White,
+                        fontSize = 12.sp)
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(15.dp))
 
-            // Product Details
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -694,91 +694,76 @@ fun SearchResultItem(
                 Column {
                     Text(
                         text = product.productName,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         fontSize = 16.sp,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontFamily = fontFamily
                     )
 
                     Text(
                         text = product.productCategory,
-                        color = Color.Gray,
-                        fontSize = 14.sp
+                        color = CustomColors.darkGray,
+                        fontSize = 16 .sp,
+                        fontFamily = fontFamily
                     )
 
-                    // Rating
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.star_rating),
-                            contentDescription = "Rating",
-                            tint = Color(0xFFFFC107),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        val randomRating = (40..50).random() / 10.0
-                        val randomUserCount = (1000..5000).random()
-                        Text(
-                            text = "$randomRating (${randomUserCount})",
-                            fontSize = 12.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(30.dp)){
+                        Row {
+                            Text(
+                                text = "₹${product.productFinalPrice}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 26.sp,
+                                fontFamily = fontFamily
+                            )
+                            Text(
+                                text = "₹${product.productPrePrice}",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                textDecoration = TextDecoration.LineThrough,
+                                fontFamily = fontFamily
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.star_rating),
+                                contentDescription = "Rating",
+                                tint = Color(0xFFFFC107),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            val rating = product.randomRating.toFloat()
+                            val finalRating = rating/10
+                            Text(
+                                text = "$finalRating (${product.randomUserRated})",
+                                fontSize = 16.sp,
+                                color = CustomColors.darkGray,
+                                modifier = Modifier.padding(start = 4.dp),
+                                fontFamily = fontFamily
+                            )
+                        }
                     }
                 }
 
-                // Price and buttons
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column {
-                        Text(
-                            text = "₹${product.productFinalPrice}",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                        if (product.productFinalPrice < product.productPrePrice) {
-                            Text(
-                                text = "₹${product.productPrePrice}",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                textDecoration = TextDecoration.LineThrough
-                            )
-                        }
-                    }
-
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Button(
-                            onClick = { /* Add to cart functionality */ },
-                            modifier = Modifier.height(36.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = Color.Black
-                            ),
-                            border = BorderStroke(1.dp, Color.LightGray)
-                        ) {
-                            Text("Add to Cart", fontSize = 12.sp)
-                        }
-
-                        Button(
-                            onClick = {
-                                navController.navigate(Routes.ProductDetailsScreen(product.productId, userId))
-                            },
-                            modifier = Modifier.height(36.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Black,
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text("Buy Now", fontSize = 12.sp)
-                        }
+                        val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
+                        val isCarted = getUserDetailsState.value.data?.cartItems?.containsKey(product.productId) ?: false
+                        CustomButton1(onclick = {
+                            viewModel.updateCartList(userId = userId, productId = product.productId, isCarted = true, quantity = 1)
+                        }, text = if(isCarted) "In Cart" else "Add to Cart")
+                        val quantityMap =
+                            Json.encodeToString(mapOf(productId to quantity))
+                        CustomButtonFilled(onclick = {
+                            navController.navigate(Routes.BuyNowScreen(listOf(product.productId.toString()), product.productFinalPrice.toDouble(), userId, quantityMap))
+                        }, "Buy Now")
                     }
                 }
             }

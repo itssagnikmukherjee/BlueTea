@@ -407,7 +407,7 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                     ))
 
                                 }, colors = ButtonDefaults.buttonColors(
-                                    containerColor = CustomColors.primaryBlack,
+                                    containerColor = CustomColors.blackest,
                                     contentColor = Color.White
                                 )){
                                     Text("Buy Now", fontFamily = fontFamily, fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color.White, modifier = Modifier.padding(horizontal = 80.dp, vertical = 14.dp))
