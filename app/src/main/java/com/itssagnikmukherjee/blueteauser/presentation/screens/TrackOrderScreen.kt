@@ -1,6 +1,11 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,11 +25,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Colors
+import androidx.compose.material.IconButton
 import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material.icons.filled.AppShortcut
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
@@ -38,14 +45,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -101,6 +113,9 @@ fun TrackOrderScreen(
         viewModel.getProducts()
     }
 
+    if(getUserDetailsState.value.isLoading){
+        ShimmerScreen()
+    }else{
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -134,7 +149,7 @@ fun TrackOrderScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "# $orderId",
@@ -235,7 +250,7 @@ fun TrackOrderScreen(
             }
 
             //total price
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(10.dp))
             val totalPrice = orderDetails["totalPrice"] as? Double ?: 0.0
             Column {
                 Row(
@@ -273,7 +288,7 @@ fun TrackOrderScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             Row(
                 modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -282,63 +297,94 @@ fun TrackOrderScreen(
                 Text("Order Details", fontFamily = fontFamily, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                 Text(status, fontFamily = fontFamily, fontSize = 16.sp, fontWeight = FontWeight.Light)
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             StepIndicator(status, placedTime, transitTime, deliveredTime)
 
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             val userDetails = getUserDetailsState.value.data
             userDetails?.let {
-                Card(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
-                    )
+                Column(
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    var isShippingDetailsExpanded by remember { mutableStateOf(true) }
+                    val rotation by animateFloatAsState(
+                        targetValue = if (isShippingDetailsExpanded) 180f else 0f,
+                        animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Delivery Address",
+                            "Shipping Details",
                             fontFamily = fontFamily,
-                            color = primaryBlack,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
+                        IconButton(onClick = {
+                            isShippingDetailsExpanded = !isShippingDetailsExpanded
+                        }, modifier = Modifier.rotate(rotation)) {
+                            Icon(
+                                painter = painterResource(R.drawable.up),
+                                contentDescription = "",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    val randomPin = (700000..750000).random()
+                    Spacer(Modifier.height(6.dp))
+                    AnimatedVisibility(visible = isShippingDetailsExpanded) {
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "${it.firstName} ${it.lastName}",
+                                    fontFamily = fontFamily,
+                                    color = primaryBlack,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal
+                                )
+                                Text(
+                                    text = "${it.address}",
+                                    fontFamily = fontFamily,
+                                    color = primaryBlack,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "$randomPin",
+                                    fontFamily = fontFamily,
+                                    color = primaryBlack,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                            ) {
+                                Text(
+                                    text = "${it.email}",
+                                    fontFamily = fontFamily,
+                                    color = primaryBlack,
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    text = "${it.phoneNo}",
+                                    fontFamily = fontFamily,
+                                    color = primaryBlack,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
+                        }
 
-                        Text(
-                            text = "${it.firstName} ${it.lastName}",
-                            fontFamily = fontFamily,
-                            color = primaryBlack,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-
-                        Text(
-                            text = "${it.phoneNo}",
-                            fontFamily = fontFamily,
-                            color = primaryBlack,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-
-                        Text(
-                            text = "${it.address}",
-                            fontFamily = fontFamily,
-                            color = primaryBlack,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal
-                        )
                     }
                 }
+            }
             }
         }
     }
@@ -363,7 +409,7 @@ fun StepIndicator(status: String, placedTime: Long, transitTime: Long, delivered
     val customStepStyle = StepStyle(
         colors = StepDefaults(
             todoContainerColor = CustomColors.darkGray,
-            todoContentColor = Color.DarkGray,
+            todoContentColor = CustomColors.mediumGray,
             currentContainerColor = CustomColors.primaryBlack,
             currentContentColor = Color.White,
             currentLineColor = CustomColors.darkGray,

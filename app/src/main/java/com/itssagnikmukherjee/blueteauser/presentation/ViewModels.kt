@@ -373,6 +373,7 @@ class ViewModels @Inject constructor(
                     currentCartItems - productId
                 }
                 transaction.update(documentRef, "cartItems", updatedCartItems)
+
             }.addOnSuccessListener {
                 Log.d("UpdateCartList", "Cart list updated successfully!")
                 getUserDetails(userId)

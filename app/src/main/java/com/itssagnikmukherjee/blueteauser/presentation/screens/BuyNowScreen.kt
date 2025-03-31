@@ -12,6 +12,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -220,14 +223,18 @@ fun BuyNowScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val rotation by  animateFloatAsState(
+                         targetValue = if (isShippingExpanded) 180f else 0f,
+                            animationSpec = tween(300)
+                        )
                         Text("Shipping Details", style = headingTextStyle, fontSize = 20.sp)
                         IconButton(onClick = {
                             isShippingExpanded = !isShippingExpanded
                         }) {
                             Icon(
-                                painter = painterResource(id = if (isShippingExpanded) R.drawable.down else R.drawable.up),
+                                painter = painterResource(id = R.drawable.up),
                                 contentDescription = "",
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.rotate(rotation).size(20.dp)
                             )
                         }
                     }

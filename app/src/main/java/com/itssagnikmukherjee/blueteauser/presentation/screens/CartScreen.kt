@@ -1,10 +1,17 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,8 +22,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -87,6 +96,8 @@ fun CartScreen(
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
     val getProductsState = viewModel.getProductState.collectAsState()
 
+    val isLoading = getUserDetailsState.value.isLoading || getProductsState.value.isLoading
+
     val productID = getUserDetailsState.value.data?.cartItems ?: emptyMap()
     val cartProducts = getProductsState.value.data ?: emptyList()
 
@@ -104,50 +115,107 @@ fun CartScreen(
         product.productFinalPrice.toDouble() * quantity
     }
 
-    Scaffold{ paddingValues ->
-        if (cartItems.isEmpty()) {
-            EmptyCartContent(Modifier.padding(paddingValues))
-        } else {
-            Column(modifier = Modifier.padding(paddingValues),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ){
-                Row(
-                    modifier = Modifier.fillMaxWidth(.9f).padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CustomIconButton(
-                        onClick = { navController.popBackStack() },
-                        icon = R.drawable.back,
-                        contentDescription = "back"
-                    )
-                    HeadingTextWithBadge(
-                        text = "Cart",
-                        badgeText = cartItems.size.toString(),
-                        width = 66
-                    )
-                    CustomIconButton(
-                        onClick = { viewModel.getUserDetails(userId) },
-                        icon = R.drawable.reload,
-                        contentDescription = "back"
+    Scaffold { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            HeaderSection(
+                navController = navController,
+                cartSize = cartItems.size,
+                onRefresh = { viewModel.getUserDetails(userId) }
+            )
+            if (getUserDetailsState.value.isLoading || getProductsState.value.isLoading){
+                    ShimmerScreen()
+            }else {
+                if (cartItems.isEmpty()) {
+                    EmptyCartContent()
+                } else {
+                    CartContent(
+                        cartItems = cartItems,
+                        productID = productID,
+                        totalPrice = totalPrice,
+                        userId = userId,
+                        navController = navController,
+                        viewModel = viewModel,
+                        paddingValues = paddingValues
                     )
                 }
+            }
+        }
+    }
+}
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(.9f).padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ){
-                    Column{
-                        Text("Cart Total", fontSize = 20.sp, fontFamily = fontFamily, color = primaryBlack, fontWeight = FontWeight.Medium)
-                        Text("₹$totalPrice", fontSize = 26.sp, fontFamily = fontFamily, color = primaryBlack, fontWeight = FontWeight.SemiBold)
-                    }
-                    Row {
-                        CustomButton1(onclick = {
-                            navController.navigate(Routes.OrdersScreen(userId))
-                        }, text = "Orders")
-                        Spacer(Modifier.width(10.dp))
-                    CustomButtonFilled(onclick = {
+
+@Composable
+fun HeaderSection(
+    navController: NavController,
+    cartSize: Int,
+    onRefresh: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(0.9f).padding(top = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CustomIconButton(
+            onClick = { navController.popBackStack() },
+            icon = R.drawable.back,
+            contentDescription = "back"
+        )
+        HeadingTextWithBadge(
+            text = "Cart",
+            badgeText = cartSize.toString(),
+            width = 66
+        )
+        CustomIconButton(
+            onClick = { onRefresh() },
+            icon = R.drawable.reload,
+            contentDescription = "refresh"
+        )
+    }
+}
+
+
+@Composable
+fun CartContent(
+    navController: NavController,
+    cartItems: List<Product>,
+    productID: Map<String, Int>,
+    totalPrice: Double,
+    userId: String,
+    paddingValues: PaddingValues,
+    viewModel: ViewModels
+) {
+    Column(
+        modifier = Modifier.padding(top = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(.9f),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Column {
+                Text(
+                    "Cart Total", fontSize = 20.sp, fontFamily = fontFamily,
+                    color = primaryBlack, fontWeight = FontWeight.Medium
+                )
+                Text(
+                    "₹$totalPrice", fontSize = 26.sp, fontFamily = fontFamily,
+                    color = primaryBlack, fontWeight = FontWeight.SemiBold
+                )
+            }
+            Row {
+                CustomButton1(
+                    onclick = { navController.navigate(Routes.OrdersScreen(userId)) },
+                    text = "Orders"
+                )
+                Spacer(Modifier.width(10.dp))
+                CustomButtonFilled(
+                    onclick = {
                         val cartItemsMap = cartItems.associate { it.productId to (productID[it.productId] ?: 1) }
                         val serializedQuantities = Json.encodeToString(cartItemsMap)
                         navController.navigate(
@@ -158,52 +226,51 @@ fun CartScreen(
                                 quantity = serializedQuantities
                             )
                         )
-                    }, text = "Checkout")
-                    }
-                }
+                    },
+                    text = "Checkout"
+                )
+            }
+        }
 
-                Spacer(Modifier.height(30.dp))
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    items(cartItems.size, key = { cartItems[it].productId }) { index ->
-                        val product = cartItems[index]
-                        CartItemCard(
-                            product = product,
-                            initialQuantity = productID[product.productId] ?: 1,
-                            onQuantityUpdate = { newQuantity ->
-                                viewModel.updateCartQuantity(userId, product.productId, newQuantity)
-                            },
-                            onDeleteItem = {
-                                viewModel.updateCartList(
-                                    userId = userId,
-                                    productId = product.productId,
-                                    quantity = 0,
-                                    isCarted = false
-                                )
-                            },
-                            onBuyNow = { quantity ->
-                                val quantityMap =
-                                    Json.encodeToString(mapOf(product.productId to quantity))
-                                navController.navigate(
-                                    Routes.BuyNowScreen(
-                                        products = listOf(product.productId),
-                                        totalPrice = product.productFinalPrice.toDouble() * quantity,
-                                        userId = userId,
-                                        quantity = quantityMap
-                                    )
-                                )
-                            },
-                            navController = navController,
-                            userId = userId
+        Spacer(Modifier.height(10.dp))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(cartItems.size, key = { cartItems[it].productId }) { index ->
+                val product = cartItems[index]
+                CartItemCard(
+                    product = product,
+                    initialQuantity = productID[product.productId] ?: 1,
+                    onQuantityUpdate = { newQuantity ->
+                        viewModel.updateCartQuantity(userId, product.productId, newQuantity)
+                    },
+                    onDeleteItem = {
+                        viewModel.updateCartList(
+                            userId = userId,
+                            productId = product.productId,
+                            quantity = 0,
+                            isCarted = false
                         )
-                    }
-                }
+                    },
+                    onBuyNow = { quantity ->
+                        val quantityMap = Json.encodeToString(mapOf(product.productId to quantity))
+                        navController.navigate(
+                            Routes.BuyNowScreen(
+                                products = listOf(product.productId),
+                                totalPrice = product.productFinalPrice.toDouble() * quantity,
+                                userId = userId,
+                                quantity = quantityMap
+                            )
+                        )
+                    },
+                    navController = navController,
+                    userId = userId
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun CartItemCard(
@@ -273,8 +340,8 @@ fun CartItemCard(
                         ){
                             IconButton(
                                 onClick = {
-                                    onQuantityUpdate(quantity - 1)
                                     quantity--
+                                    onQuantityUpdate(quantity)
                                 },
                                 colors = IconButtonDefaults.iconButtonColors(
                                     containerColor = Color(0xFFD9D9D9)
@@ -286,8 +353,8 @@ fun CartItemCard(
                             Text(text = quantity.toString(), fontFamily= fontFamily)
                             IconButton(
                                 onClick = {
-                                    onQuantityUpdate(quantity + 1)
                                     quantity++
+                                    onQuantityUpdate(quantity)
                                 },
                                 colors = IconButtonDefaults.iconButtonColors(
                                     containerColor = Color(0xFFD9D9D9)
