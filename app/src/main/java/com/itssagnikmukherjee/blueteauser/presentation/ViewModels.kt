@@ -158,9 +158,9 @@ class ViewModels @Inject constructor(
             getAllProducts.GetProductsFromFirebaseUsecase().collectLatest { result ->
                 when (result) {
                     is ResultState.Success -> {
-                        // Directly assign the List<Product> to the state
                         val productList: List<Product> = result.data as List<Product>
                         _getProductState.value = GetProductState(data = productList)
+                        filterProducts()
                     }
 
                     is ResultState.Error -> {
@@ -467,6 +467,31 @@ class ViewModels @Inject constructor(
             .addOnFailureListener { e ->
                 Log.e("ViewModel", "Error canceling order", e)
             }
+    }
+
+
+    //search products
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    private val _filteredProducts = MutableStateFlow<List<Product>>(emptyList())
+    val filteredProducts = _filteredProducts.asStateFlow()
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        filterProducts(query)
+    }
+
+    private fun filterProducts(query: String = searchQuery.value) {
+        val trimmedQuery = query.lowercase().trim()
+        if(trimmedQuery.isEmpty()){
+            _filteredProducts.value = getProductState.value.data
+        } else {
+            _filteredProducts.value = getProductState.value.data.filter { product ->
+                product.productName.lowercase().contains(trimmedQuery) ||
+                        product.productDescription.lowercase().contains(trimmedQuery)
+            }
+        }
     }
 }
 
