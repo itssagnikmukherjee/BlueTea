@@ -1,34 +1,59 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Colors
+import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTimeFilled
+import androidx.compose.material.icons.filled.AppShortcut
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.binayshaw7777.kotstep.model.LineDefault
 import com.binayshaw7777.kotstep.model.LineType
 import com.binayshaw7777.kotstep.model.StepDefaults
@@ -38,7 +63,14 @@ import com.binayshaw7777.kotstep.model.tabVerticalWithLabel
 import com.binayshaw7777.kotstep.ui.vertical.VerticalStepper
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.itssagnikmukherjee.blueteauser.R
 import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.CustomIconButton
+import com.itssagnikmukherjee.blueteauser.presentation.screens.components.HeadingTextWithBadge
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
+import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors.primaryBlack
+import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -51,64 +83,262 @@ fun TrackOrderScreen(
     viewModel: ViewModels = hiltViewModel()
 ) {
     val getUserDetailsState = viewModel.getUserDetailsState.collectAsState()
-    val orders = getUserDetailsState.value.data?.orderedItems as? Map<String, Map<String, Any>> ?: emptyMap()
+    val getProductsState = viewModel.getProductState.collectAsState()
+
+    val orders =
+        getUserDetailsState.value.data?.orderedItems as? Map<String, Map<String, Any>> ?: emptyMap()
+    val products = getProductsState.value.data ?: emptyList()
+    val productMap = remember(products) { products.associateBy { it.productId } }
 
     val orderDetails = orders[orderId] ?: emptyMap()
-
     val status = orderDetails["status"] as? String ?: "Pending"
     val placedTime = orderDetails["timestamp"] as? Long ?: 0L
     val transitTime = orderDetails["transitTime"] as? Long ?: 0L
     val deliveredTime = orderDetails["deliveredTime"] as? Long ?: 0L
 
-
-    val isRefreshing = viewModel.isRefreshing.collectAsState()
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing.value)
-
-
     LaunchedEffect(userId) {
         viewModel.getUserDetails(userId)
+        viewModel.getProducts()
     }
 
-
-    SwipeRefresh(
-        state = swipeRefreshState,
-        onRefresh = { viewModel.refreshOrderDetails(userId) }
-    ) {
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(paddingValues)
+                .fillMaxWidth(0.9f).verticalScroll(rememberScrollState()),
         ) {
-            Text(text = "Track Order", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Display order details
-            Text(text = "Order ID: $orderId", style = MaterialTheme.typography.bodyLarge)
-            Text(text = "Status: $status", style = MaterialTheme.typography.bodyMedium)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Display stepper with timestamps
-            StepIndicator(status, placedTime, transitTime, deliveredTime)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Display user details
-            val userDetails = getUserDetailsState.value.data
-            userDetails?.let {
-                Text(text = "User Details", style = MaterialTheme.typography.bodyLarge)
-                Text(text = "Name: ${it.firstName} ${it.lastName}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Email: ${it.email}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Phone: ${it.phoneNo}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "Address: ${it.address}", style = MaterialTheme.typography.bodyMedium)
+            val items = orderDetails["items"] as? Map<String, Long> ?: emptyMap()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp, horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CustomIconButton(
+                    onClick = { navController.popBackStack() },
+                    icon = R.drawable.back,
+                    contentDescription = "back"
+                )
+                HeadingTextWithBadge(
+                    text = "Track Order",
+                    badgeText = "",
+                    width = 120,
+                    isBadgeVisible = false
+                )
+                CustomIconButton(
+                    onClick = { viewModel.getUserDetails(userId) },
+                    icon = R.drawable.reload,
+                    contentDescription = "reload"
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Back button
-            Button(onClick = { navController.popBackStack() }) {
-                Text("Back to Orders")
+            Text(
+                text = "# $orderId",
+                fontWeight = FontWeight.Normal,
+                fontSize = 20.sp,
+                fontFamily = fontFamily,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+
+            if (orderDetails.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Transparent
+                    )
+                ) {
+                    items.forEach { (productId, quantity) ->
+                        val product = productMap[productId]
+                        if (product != null) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.padding(top = 20.dp).fillMaxWidth(),
+                                    verticalAlignment = Alignment.Top,
+                                ) {
+                                    AsyncImage(
+                                        model = product.productImages[0],
+                                        contentDescription = "",
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .clip(RoundedCornerShape(20.dp))
+                                    )
+
+                                    Spacer(Modifier.width(4.dp))
+
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(10.dp),
+                                        horizontalAlignment = Alignment.Start,
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = product.productName,
+                                                fontFamily = fontFamily,
+                                                color = primaryBlack,
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.Top,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(
+                                                        "₹",
+                                                        fontFamily = fontFamily,
+                                                        color = primaryBlack,
+                                                        fontSize = 12.sp,
+                                                        modifier = Modifier.padding(top = 5.dp)
+                                                    )
+                                                    Text(
+                                                        text = "${product.productFinalPrice}",
+                                                        fontFamily = fontFamily,
+                                                        color = primaryBlack,
+                                                        fontSize = 20.sp,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                }
+                                                Text(
+                                                    text = "X $quantity",
+                                                    fontFamily = fontFamily,
+                                                    color = primaryBlack,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.Light
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Text(text = "- Unknown Product ($productId) x $quantity")
+                        }
+                    }
+                }
+            } else {
+                Text(
+                    text = "Order details not found",
+                    fontFamily = fontFamily,
+                    color = primaryBlack,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+            }
+
+            //total price
+            Spacer(Modifier.height(20.dp))
+            val totalPrice = orderDetails["totalPrice"] as? Double ?: 0.0
+            Column {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Text(
+                        text = "${if(orderDetails["status"]=="Pending") "Order placed" else orderDetails["status"]}",
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 16.sp)
+                    val totalPriceWithDelivery = totalPrice + 40 as Int
+                    val time = when(orderDetails["status"]){
+                        "Pending" -> formatTimestamp(placedTime)
+                        "In Transit" -> formatTimestamp(transitTime)
+                        "Delivered" -> formatTimestamp(deliveredTime)
+                        else -> 0L
+                    }
+                    Text(text = time.toString(), fontFamily = fontFamily, color = primaryBlack, fontSize = 16.sp, fontWeight = FontWeight.Normal)
+                }
+
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Text(
+                        text = "${formatPrice(totalPrice)} + ₹40",
+                        fontFamily = fontFamily,
+                        color = primaryBlack,
+                        fontSize = 20.sp)
+                    val totalPriceWithDelivery = totalPrice + 40 as Int
+                    Text("${formatPrice(totalPriceWithDelivery)}", fontFamily = fontFamily, color = primaryBlack, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text("Order Details", fontFamily = fontFamily, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                Text(status, fontFamily = fontFamily, fontSize = 16.sp, fontWeight = FontWeight.Light)
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+
+            StepIndicator(status, placedTime, transitTime, deliveredTime)
+
+            Spacer(modifier = Modifier.height(50.dp))
+
+            val userDetails = getUserDetailsState.value.data
+            userDetails?.let {
+                Card(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Delivery Address",
+                            fontFamily = fontFamily,
+                            color = primaryBlack,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "${it.firstName} ${it.lastName}",
+                            fontFamily = fontFamily,
+                            color = primaryBlack,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+
+                        Text(
+                            text = "${it.phoneNo}",
+                            fontFamily = fontFamily,
+                            color = primaryBlack,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+
+                        Text(
+                            text = "${it.address}",
+                            fontFamily = fontFamily,
+                            color = primaryBlack,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
             }
         }
     }
@@ -116,65 +346,81 @@ fun TrackOrderScreen(
 
 @Composable
 fun StepIndicator(status: String, placedTime: Long, transitTime: Long, deliveredTime: Long) {
-    // Explicitly define the type of `steps` as List<Pair<String, Long>>
+    Spacer(Modifier.height(20.dp))
     val steps: List<Pair<String, Long>> = listOf(
         "Order Placed" to placedTime,
         "In Transit" to (transitTime.takeIf { status == "In Transit" || status == "Delivered" } ?: 0L),
         "Delivered" to (deliveredTime.takeIf { status == "Delivered" } ?: 0L)
     )
 
-    // Calculate the current step based on the status
-    val currentStep = when (status) {
-        "Delivered" -> 2 // Delivered is the final step
-        "In Transit" -> 1 // In Transit is the second step
-        else -> 0 // Default to the first step (Order Placed)
+    val currentStep = when(status){
+        "Pending" -> 0
+        "In Transit" -> 1
+        "Delivered" -> 2
+        else -> 0
     }
 
     val customStepStyle = StepStyle(
-        stepSize = 52.dp,
-        stepShape = CircleShape,
-        textSize = 16.sp,
-        iconSize = 24.dp,
-        stepPadding = 4.dp,
-        lineStyle = LineDefault(
-            lineSize = 70.dp,
-            todoLineProgressType = LineType.DOTTED,
-            currentLineProgressType = LineType.DOTTED,
-            currentLineTrackType = LineType.DOTTED,
-            progressStrokeCap = StrokeCap.Round
-        ),
-        showCheckMarkOnDone = true,
-        showStrokeOnCurrent = false,
         colors = StepDefaults(
-            todoContainerColor = Color.DarkGray,
+            todoContainerColor = CustomColors.darkGray,
             todoContentColor = Color.DarkGray,
-            todoLineColor = Color.Gray,
-            currentContainerColor = Color.Green,
+            currentContainerColor = CustomColors.primaryBlack,
             currentContentColor = Color.White,
-            currentLineColor = Color.Gray,
-            doneContainerColor = Color.Green,
+            currentLineColor = CustomColors.darkGray,
+            doneContainerColor = CustomColors.primaryBlack,
             doneContentColor = Color.White,
-            doneLineColor = Color.Green,
-            checkMarkColor = Color.Black
-        )
+            doneLineColor = primaryBlack,
+            checkMarkColor = Color.White,
+        ),
+    lineStyle = LineDefault(
+        lineThickness = 5.dp,
+        lineSize = 30.dp,
+        linePaddingStart = 0.dp,
+        linePaddingEnd = 0.dp,
+        linePaddingTop = 0.dp,
+        linePaddingBottom = 0.dp,
+        trackStrokeCap = StrokeCap.Round,
+        progressStrokeCap = StrokeCap.Round,
+        todoLineTrackType = LineType.DOTTED,
+        todoLineProgressType = LineType.DOTTED,
+        currentLineTrackType = LineType.DOTTED,
+        currentLineProgressType = LineType.DOTTED,
+        doneLineTrackType = LineType.SOLID,
+        doneLineProgressType = LineType.SOLID,
+    ),
+    stepSize = 60.dp,
+    stepShape = CircleShape,
+    stepStroke = 3f,
+    textSize = 16.sp,
+    iconSize = 24.dp,
+    stepPadding = 0.dp,
+    showCheckMarkOnDone = false,
+    showStrokeOnCurrent = true,
+    ignoreCurrentState = true
     )
 
-    Column(modifier = Modifier.padding(vertical = 16.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         VerticalStepper(
             style = iconVerticalWithLabel(
                 stepStyle = customStepStyle,
-                currentStep = currentStep, // Pass the correct currentStep
+                currentStep = currentStep,
                 icons = listOf(
-                    Icons.Default.CheckCircle,
-                    Icons.Default.CheckCircle,
-                    Icons.Default.CheckCircle
+                    Icons.Default.AppShortcut,
+                    Icons.Default.AccessTimeFilled,
+                    Icons.Default.LocalShipping
                 ),
                 trailingLabels = steps.map { (title, time) ->
                     {
-                        Column {
-                            Text(title)
+                        Column(
+                            modifier = Modifier.fillMaxHeight().padding(vertical = 10.dp),
+                            verticalArrangement = Arrangement.Center
+                        ){
+                            Text(text = title, fontFamily = fontFamily, fontSize = 16.sp, color = if(time > 0L) primaryBlack else CustomColors.mediumGray)
                             if (time > 0L) {
-                                Text(formatTimestamp(time), fontSize = 12.sp, color = Color.Gray)
+                                Text(formatTimestamp(time), fontSize = 12.sp, color = CustomColors.darkGray, fontFamily = fontFamily)
                             }
                         }
                     }
@@ -187,4 +433,12 @@ fun StepIndicator(status: String, placedTime: Long, transitTime: Long, delivered
 fun formatTimestamp(timestamp: Long): String {
     val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     return sdf.format(Date(timestamp))
+}
+
+fun formatPrice(price: Double): String {
+    return if (price % 1 == 0.0) {
+        "₹${price.toInt()}"
+    } else {
+        "₹$price"
+    }
 }

@@ -20,16 +20,18 @@ import com.itssagnikmukherjee.blueteauser.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteauser.presentation.theme.fontFamily
 
 @Composable
-fun HeadingTextWithBadge(text: String, badgeText: String, width: Int) {
+fun HeadingTextWithBadge(text: String, badgeText: String, width: Int, isBadgeVisible: Boolean = true) {
     Box(
         modifier = Modifier.width(width.dp)
     ){
     Text(text = text, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = CustomColors.primaryBlack,
         fontFamily = fontFamily
     )
-        Box(modifier = Modifier.align(
-            Alignment.TopEnd).clip(CircleShape).background(CustomColors.darkGray).size(18.dp), contentAlignment = Alignment.Center){
-    Text(text = badgeText, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+        if (isBadgeVisible){
+            Box(modifier = Modifier.align(
+                Alignment.TopEnd).clip(CircleShape).background(CustomColors.darkGray).size(18.dp), contentAlignment = Alignment.Center){
+                Text(text = badgeText, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+            }
         }
     }
 }
