@@ -281,7 +281,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                                     )
                                 }
                                        },
-                        placeholder = { Text("Category Name", fontSize = 15.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = CustomColors.mediumGray) },
+                        placeholder = { Text("Category Name", fontSize = 15.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = CustomColors.darkGray) },
                         modifier = Modifier.width(200.dp).padding(vertical = 15.dp),
                         singleLine = true,
                         maxLines = 1,
@@ -291,11 +291,11 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                         ),
                         colors = TextFieldDefaults.colors(
                             focusedTextColor = primaryBlack,
-                            unfocusedTextColor = Color.LightGray,
+                            unfocusedTextColor = CustomColors.mediumGray,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Gray,
-                            unfocusedIndicatorColor = Color.LightGray,
+                            focusedIndicatorColor = CustomColors.primaryBlack,
+                            unfocusedIndicatorColor = CustomColors.mediumGray,
                             cursorColor = primaryBlack,
                             focusedPlaceholderColor = primaryBlack,
                             unfocusedPlaceholderColor = primaryBlack,
