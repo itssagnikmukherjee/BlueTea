@@ -107,7 +107,6 @@ import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
-import com.itssagnikmukherjee.blueteaadmin.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 import io.github.jan.supabase.SupabaseClient
@@ -184,7 +183,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                 ) {
                     Text(
                         "${getCategoriesState.data.size}",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         color = Color.White,
                         modifier = Modifier.background(primaryBlack).fillMaxSize(),
                         textAlign = TextAlign.Center
@@ -253,7 +252,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                                     painter = painterResource(R.drawable.image_solid),
                                     "",
                                     modifier = Modifier.size(30.dp),
-                                    tint = CustomColors.mediumGray
+                                    tint = primaryBlack
                                 )
                             }
                         }
@@ -278,7 +277,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                                     )
                                 }
                                        },
-                        placeholder = { Text("Category Name", fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = CustomColors.mediumGray) },
+                        placeholder = { Text("Category Name", fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color.LightGray) },
                         modifier = Modifier.width(200.dp).padding(vertical = 15.dp),
                         singleLine = true,
                         maxLines = 1,
