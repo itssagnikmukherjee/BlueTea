@@ -1,5 +1,7 @@
 package com.itssagnikmukherjee.blueteauser.presentation.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
@@ -11,6 +13,7 @@ import androidx.navigation.toRoute
 import com.google.firebase.auth.FirebaseAuth
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BuyNowScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.CartScreen
+import com.itssagnikmukherjee.blueteauser.presentation.screens.CategoryScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.HomeScreenUser
 import com.itssagnikmukherjee.blueteauser.presentation.screens.LoginScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.OrdersScreen
@@ -21,6 +24,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.screens.TrackOrderScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.WishListScreen
 import com.stripe.android.paymentsheet.PaymentSheet
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, navController: NavHostController, paymentSheet: PaymentSheet) {
     val startDestination = if (firebaseAuth.currentUser == null) Routes.LoginScreen else Routes.HomeScreen
@@ -70,6 +74,11 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
         composable<Routes.TrackOrderScreen> {
             val data = it.toRoute<Routes.TrackOrderScreen>()
             TrackOrderScreen(navController = navController, orderId = data.orderId, userId = data.userId)
+        }
+
+        composable<Routes.CategoryScreen>{
+            val data = it.toRoute<Routes.CategoryScreen>()
+            CategoryScreen(category = data.category)
         }
     }
 }

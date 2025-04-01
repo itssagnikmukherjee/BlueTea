@@ -413,7 +413,6 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                     Text("Buy Now", fontFamily = fontFamily, fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color.White, modifier = Modifier.padding(horizontal = 80.dp, vertical = 14.dp))
                                 }
                             }
-
                             Spacer(Modifier.height(10.dp))
                         }
                     }

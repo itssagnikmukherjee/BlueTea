@@ -262,7 +262,6 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                     }
                 }
             } else {
-                // NORMAL HOME SCREEN VIEW (when no search is active)
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -275,7 +274,7 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
                     // Category List
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(start = 20.dp)) {
                         items(categoryState.data.size) { index ->
-                            CategoryItem(category = categoryState.data[index]!!)
+                            CategoryItem(category = categoryState.data[index]!!, navController = navController)
                         }
                     }
 
@@ -312,8 +311,12 @@ fun HomeScreenUser(modifier: Modifier = Modifier, viewmodel: ViewModels = hiltVi
 }
 
 @Composable
-fun CategoryItem(category: Category) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun CategoryItem(category: Category, navController: NavController) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable{
+            Log.d("CategoryItem", "Category clicked: ${category.categoryName}")
+            navController.navigate(Routes.CategoryScreen(category.categoryName))
+        }){
         AsyncImage(
             model = category.imageUrl,
             contentDescription = "Category Image",
