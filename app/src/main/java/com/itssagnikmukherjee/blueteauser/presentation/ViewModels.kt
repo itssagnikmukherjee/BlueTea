@@ -267,6 +267,7 @@ class ViewModels @Inject constructor(
 
                         is ResultState.Success -> {
                             _loginUserState.value = LoginUserState(data = result.data)
+                            getUserDetails(result.data)
                         }
 
                         is ResultState.Error -> {
