@@ -78,7 +78,7 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
 
         composable<Routes.CategoryScreen>{
             val data = it.toRoute<Routes.CategoryScreen>()
-            CategoryScreen(category = data.category)
+            CategoryScreen(category = data.category, navController = navController, userId = data.userId)
         }
     }
 }

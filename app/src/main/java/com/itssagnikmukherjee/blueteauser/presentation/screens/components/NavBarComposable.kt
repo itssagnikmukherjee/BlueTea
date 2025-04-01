@@ -130,7 +130,6 @@ fun NavbarComposable(navController: NavController, userId: String) {
 }
 
 
-
 data class NavItem(
     val icon: Int,
     val text: String

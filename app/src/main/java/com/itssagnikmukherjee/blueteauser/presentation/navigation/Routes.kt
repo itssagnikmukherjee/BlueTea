@@ -60,7 +60,8 @@ sealed class Routes {
 
     @Serializable
     data class CategoryScreen(
-        val category: String
+        val category: String,
+        val userId: String
     )
 
 }

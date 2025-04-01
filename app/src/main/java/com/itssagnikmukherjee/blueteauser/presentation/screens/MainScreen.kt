@@ -1,5 +1,7 @@
 package com.itssagnikmukherjee.blueteauser.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,6 +19,7 @@ import com.itssagnikmukherjee.blueteauser.presentation.navigation.Routes
 import com.itssagnikmukherjee.blueteauser.presentation.screens.components.NavbarComposable
 import com.stripe.android.paymentsheet.PaymentSheet
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, userId: String, paymentSheet: PaymentSheet) {
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
@@ -33,7 +36,8 @@ fun MainScreen(navController: NavHostController, firebaseAuth: FirebaseAuth, use
         "ProductDetailsScreen",
         "BuyNowScreen",
         "OrdersScreen",
-        "TrackOrderScreen"
+        "TrackOrderScreen",
+        "CategoryScreen"
     )
 
     val showBottomNav = currentScreen !in hideBottomNavRoutes &&
