@@ -107,6 +107,8 @@ import coil3.compose.rememberAsyncImagePainter
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Category
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.CustomButton1
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.CustomButtonFilled
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
@@ -254,7 +256,7 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                                     painter = painterResource(R.drawable.image_solid),
                                     "",
                                     modifier = Modifier.size(30.dp),
-                                    tint = primaryBlack
+                                    tint = CustomColors.mediumGray
                                 )
                             }
                         }
@@ -275,11 +277,11 @@ fun AddCategoryScreen(viewModel: ViewModels = hiltViewModel()) {
                                     viewModel.addCategory(category, categoryImageUri!!, context)
                                 }) {
                                     Icon(painter = painterResource(R.drawable.circle_check_solid), contentDescription = "Add Category" ,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(20.dp), tint = CustomColors.primaryBlack
                                     )
                                 }
                                        },
-                        placeholder = { Text("Category Name", fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = CustomColors.mediumGray) },
+                        placeholder = { Text("Category Name", fontSize = 15.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = CustomColors.mediumGray) },
                         modifier = Modifier.width(200.dp).padding(vertical = 15.dp),
                         singleLine = true,
                         maxLines = 1,
@@ -688,22 +690,13 @@ fun EditCategoryItems(categories: List<Category?>, viewModel: ViewModels, contex
                     AlertDialog(
                         icon = { Icons.Default.Delete },
                         onDismissRequest = { showDeleteDialog = false },
-                        title = { Text("Delete Category") },
-                        text = { Text("Delete ${category.categoryName} ?") },
+                        title = { Text("Delete Category", fontWeight = FontWeight.SemiBold, color = primaryBlack, fontSize = 20.sp, fontFamily = fontFamily) },
+                        text = { Text("Delete ${category.categoryName} ?", color = primaryBlack, fontSize = 16.sp, fontFamily = fontFamily) },
                         confirmButton = {
-                            Button(
-                                onClick = {
-                                    viewModel.deleteCategory(category.categoryName)
-                                    showDeleteDialog = false
-                                }
-                            ) {
-                                Text("Delete ${category.categoryName}")
-                            }
+                            CustomButton1(onclick = {viewModel.deleteCategory(category.categoryName)}, text = "Delete ${category.categoryName}", width = 130)
                         },
                         dismissButton = {
-                            Button(onClick = { showDeleteDialog = false }) {
-                                Text("Cancel")
-                            }
+                            CustomButtonFilled(onclick = { showDeleteDialog = false }, text = "Cancel", width = 100)
                         }
                     )
                 }

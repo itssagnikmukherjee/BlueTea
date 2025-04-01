@@ -60,6 +60,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -150,7 +151,7 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
             ){
                 Text(
                     "${allImages.size}",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = Color.White,
                     modifier = Modifier
                         .background(primaryBlack)
@@ -163,7 +164,8 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterStart),
-                color = primaryBlack
+                color = primaryBlack,
+                fontFamily = fontFamily
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -171,7 +173,7 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
         Spacer(modifier = Modifier.height(20.dp))
         Box(
             Modifier
-                .width(160.dp)
+                .width(170.dp)
                 .height(40.dp)
         ){
             Text(
@@ -219,12 +221,13 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = primaryBlack)
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.White)
                     } else {
-                        Text("Update Banners")
+                        Text("Update Banners", fontFamily = fontFamily)
                     }
                 }
             }
@@ -546,7 +549,12 @@ fun BannerImageBox(
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset(y = -10.dp)
-                        .clip(RoundedCornerShape(0.dp, 10.dp, 20.dp, 20.dp))
+                        .clip(RoundedCornerShape(0.dp, 0.dp, 20.dp, 20.dp)),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = primaryBlack,
+                        unfocusedTextColor = Color.LightGray,
+                        focusedIndicatorColor = Color.Gray,
+                    )
                 )
             }
         }
