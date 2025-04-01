@@ -12,5 +12,13 @@ val Pink40 = Color(0xFF7D5260)
 
 //custom colors
 
-val primaryBlack = Color(0xFF444343)
+val primaryBlack = Color(0xFF292526)
 val lightBackgroundColor = Color(0xFFE2E2E9)
+
+object CustomColors{
+    val blackest = Color(0xFF121111)
+    val primaryBlack = Color(0xFF292526)
+    val darkGray = Color(0xFF787676)
+    val mediumGray = Color(0xFFA3A1A2)
+    val lightGray = Color(0xFFF2F2F2)
+}
