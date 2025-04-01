@@ -87,6 +87,7 @@ import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.domain.models.Banner
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
 import com.itssagnikmukherjee.blueteaadmin.presentation.screens.ShimmerScreen
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
 import kotlin.text.indexOf
@@ -171,7 +172,7 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
         Spacer(modifier = Modifier.height(20.dp))
         Box(
             Modifier
-                .width(160.dp)
+                .width(170.dp)
                 .height(40.dp)
         ){
             Text(
@@ -219,7 +220,10 @@ fun AddBannerScreen(viewModel: ViewModels = hiltViewModel()) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CustomColors.primaryBlack
+                    )
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.White)

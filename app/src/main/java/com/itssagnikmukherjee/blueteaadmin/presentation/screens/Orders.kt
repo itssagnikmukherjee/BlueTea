@@ -41,12 +41,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTimeFilled
+import androidx.compose.material.icons.filled.AppShortcut
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -80,6 +83,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -91,6 +95,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.binayshaw7777.kotstep.model.LineDefault
+import com.binayshaw7777.kotstep.model.LineType
 import com.binayshaw7777.kotstep.model.StepDefaults
 import com.binayshaw7777.kotstep.model.StepStyle
 import com.binayshaw7777.kotstep.model.iconHorizontal
@@ -98,6 +103,7 @@ import com.binayshaw7777.kotstep.model.numberedHorizontal
 import com.binayshaw7777.kotstep.ui.horizontal.HorizontalStepper
 import com.itssagnikmukherjee.blueteaadmin.R
 import com.itssagnikmukherjee.blueteaadmin.presentation.ViewModels
+import com.itssagnikmukherjee.blueteaadmin.presentation.theme.CustomColors
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.fontFamily
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.lightBackgroundColor
 import com.itssagnikmukherjee.blueteaadmin.presentation.theme.primaryBlack
@@ -217,6 +223,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(vertical = 8.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = CustomColors.lightGray
+                                        )
                                     ) {
                                         Row(
                                             modifier = Modifier
@@ -237,7 +246,6 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                // Animate status icon entrance
                                                 AnimatedVisibility(
                                                     visible = true,
                                                     enter = slideInHorizontally(
@@ -262,7 +270,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                         Spacer(modifier = Modifier.width(6.dp))
                                                         Text(
                                                             text = order.status,
-                                                            fontSize = 14.sp,
+                                                            fontSize = 12.sp,
                                                             color = Color.White
                                                         )
                                                     }
@@ -323,7 +331,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                     )
                                                                     Row(
                                                                         modifier = Modifier.fillMaxWidth(),
-                                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                                                                         verticalAlignment = Alignment.CenterVertically
                                                                     ) {
                                                                         Text(
@@ -331,12 +339,12 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                             fontFamily = fontFamily,
                                                                             fontSize = 20.sp,
                                                                             color = primaryBlack,
-                                                                            fontWeight = FontWeight.Medium
+                                                                            fontWeight = FontWeight.Normal
                                                                         )
                                                                         Text(
-                                                                            text = "x   $quantity",
+                                                                            text = "x $quantity",
                                                                             fontSize = 20.sp,
-                                                                            fontWeight = FontWeight.Black,
+                                                                            fontWeight = FontWeight.Normal,
                                                                             color = primaryBlack
                                                                         )
                                                                     }
@@ -359,7 +367,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                     text = "₹${productData.productFinalPrice * quantity}",
                                                                     fontWeight = FontWeight.Bold,
                                                                     color = primaryBlack,
-                                                                    fontSize = 28.sp
+                                                                    fontSize = 26.sp
                                                                 )
                                                             }
                                                         }
@@ -372,7 +380,6 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 }
                                             }
 
-                                            // Order Total (if multiple products)
                                             if (order.items.size > 1) {
                                                 Divider(
                                                     Modifier
@@ -412,7 +419,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 ) {
                                                     Box(
                                                         modifier = Modifier
-                                                            .background(lightBackgroundColor)
+                                                            .background(CustomColors.lightGray)
                                                             .zIndex(1f)
                                                             .padding(end = 10.dp)
                                                     ) {
@@ -439,10 +446,11 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                             Row(
                                                                 verticalAlignment = Alignment.CenterVertically
                                                             ) {
+                                                               val userName = userDetails.firstName.replaceFirstChar{it.uppercase()} + " " + userDetails.lastName.replaceFirstChar{it.uppercase()}
                                                                 Text(
-                                                                    text = "${userDetails.firstName} ${userDetails.lastName}",
+                                                                    text = userName,
                                                                     fontWeight = FontWeight.Medium,
-                                                                    fontSize = 18.sp,
+                                                                    fontSize = 16.sp,
                                                                     color = primaryBlack,
                                                                     modifier = Modifier.weight(1f)
                                                                 )
@@ -455,7 +463,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                 Spacer(modifier = Modifier.width(4.dp))
                                                                 Text(
                                                                     text = userDetails.phoneNo,
-                                                                    fontSize = 14.sp,
+                                                                    fontSize = 16.sp,
                                                                     color = primaryBlack
                                                                 )
                                                             }
@@ -474,7 +482,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                 Spacer(modifier = Modifier.width(4.dp))
                                                                 Text(
                                                                     text = userDetails.email,
-                                                                    fontSize = 14.sp,
+                                                                    fontSize = 12.sp,
                                                                     color = Color.Gray
                                                                 )
                                                             }
@@ -502,33 +510,49 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                 ) {
                                                     // Stepper
                                                     val currentStep = when (order.status) {
-                                                        "Pending" -> 1
-                                                        "In Transit" -> 2
-                                                        "Delivered" -> 3
-                                                        else -> 1
+                                                        "Pending" -> 0
+                                                        "In Transit" -> 1
+                                                        "Delivered" -> 2
+                                                        else -> 0
                                                     }
 
                                                     val customStepStyle = StepStyle(
-                                                        stepSize = 50.dp,
+                                                        colors = StepDefaults(
+                                                            todoContainerColor = CustomColors.darkGray,
+                                                            todoContentColor = CustomColors.mediumGray,
+                                                            currentContainerColor = CustomColors.primaryBlack,
+                                                            currentContentColor = Color.White,
+                                                            currentLineColor = CustomColors.darkGray,
+                                                            doneContainerColor = CustomColors.primaryBlack,
+                                                            doneContentColor = Color.White,
+                                                            doneLineColor = primaryBlack,
+                                                            checkMarkColor = Color.White,
+                                                        ),
+                                                        lineStyle = LineDefault(
+                                                            lineThickness = 5.dp,
+                                                            lineSize = 60.dp,
+                                                            linePaddingStart = 0.dp,
+                                                            linePaddingEnd = 0.dp,
+                                                            linePaddingTop = 0.dp,
+                                                            linePaddingBottom = 0.dp,
+                                                            trackStrokeCap = StrokeCap.Round,
+                                                            progressStrokeCap = StrokeCap.Round,
+                                                            todoLineTrackType = LineType.DOTTED,
+                                                            todoLineProgressType = LineType.DOTTED,
+                                                            currentLineTrackType = LineType.DOTTED,
+                                                            currentLineProgressType = LineType.DOTTED,
+                                                            doneLineTrackType = LineType.SOLID,
+                                                            doneLineProgressType = LineType.SOLID,
+                                                        ),
+                                                        stepSize = 60.dp,
                                                         stepShape = CircleShape,
+                                                        stepStroke = 3f,
                                                         textSize = 16.sp,
                                                         iconSize = 24.dp,
-                                                        lineStyle = LineDefault(lineSize = 70.dp),
-                                                        stepPadding = 2.dp,
-                                                        showCheckMarkOnDone = true,
-                                                        showStrokeOnCurrent = false,
-                                                        colors = StepDefaults(
-                                                            todoContainerColor = Color.DarkGray,
-                                                            todoContentColor = Color.DarkGray,
-                                                            todoLineColor = Color.Gray,
-                                                            currentContainerColor = Color.Green,
-                                                            currentContentColor = Color.White,
-                                                            currentLineColor = Color.Green,
-                                                            doneContainerColor = Color.Green,
-                                                            doneContentColor = Color.White,
-                                                            doneLineColor = Color.Green,
-                                                            checkMarkColor = Color.Black
-                                                        )
+                                                        stepPadding = 0.dp,
+                                                        showCheckMarkOnDone = false,
+                                                        showStrokeOnCurrent = true,
+                                                        ignoreCurrentState = true
                                                     )
 
                                                     HorizontalStepper(
@@ -536,18 +560,17 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                             stepStyle = customStepStyle,
                                                             currentStep = currentStep,
                                                             icons = listOf(
-                                                                Icons.Default.CheckCircle,
-                                                                Icons.Default.CheckCircle,
-                                                                Icons.Default.CheckCircle
+                                                                Icons.Default.AppShortcut,
+                                                                Icons.Default.AccessTimeFilled,
+                                                                Icons.Default.LocalShipping
                                                             )
                                                         )
                                                     )
 
-                                                    // Date and Times
                                                     Row(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
-                                                            .padding(top = 10.dp),
+                                                            .padding(top = 6.dp),
                                                         horizontalArrangement = Arrangement.Start
                                                     ) {
                                                         Column(
@@ -557,9 +580,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                             Text(
                                                                 text = "Ordered",
                                                                 fontFamily = fontFamily,
-                                                                fontSize = 15.sp,
+                                                                fontSize = 16.sp,
                                                                 color = primaryBlack,
-                                                                fontWeight = FontWeight.SemiBold
+                                                                fontWeight = FontWeight.Medium
 
                                                             )
                                                             Text(
@@ -578,7 +601,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                             )
                                                         }
 
-                                                        if (currentStep >= 2) {
+                                                        if (currentStep >= 1) {
                                                             Column(
                                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                                 modifier = Modifier.padding(
@@ -588,9 +611,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                 Text(
                                                                     text = "In Transit",
                                                                     fontFamily = fontFamily,
-                                                                    fontSize = 15.sp,
+                                                                    fontSize = 16.sp,
                                                                     color = primaryBlack,
-                                                                    fontWeight = FontWeight.SemiBold
+                                                                    fontWeight = FontWeight.Medium
 
                                                                 )
                                                                 Text(
@@ -610,19 +633,19 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                             }
                                                         }
 
-                                                        if (currentStep >= 3) {
+                                                        if (currentStep >= 2) {
                                                             Column(
                                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                                 modifier = Modifier.padding(
-                                                                    horizontal = 20.dp
+                                                                    horizontal = 16.dp
                                                                 )
                                                             ) {
                                                                 Text(
                                                                     text = "Delivered",
                                                                     fontFamily = fontFamily,
-                                                                    fontSize = 14.sp,
+                                                                    fontSize = 16.sp,
                                                                     color = primaryBlack,
-                                                                    fontWeight = FontWeight.SemiBold,
+                                                                    fontWeight = FontWeight.Medium,
                                                                 )
                                                                 Text(
                                                                     text = deliveredDate,
@@ -703,7 +726,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                     title = {
                                                         Text(
                                                             "Change Status",
-                                                            fontFamily = fontFamily
+                                                            fontFamily = fontFamily,
+                                                            fontSize = 20.sp,
+                                                            fontWeight = FontWeight.SemiBold
                                                         )
                                                     },
                                                     text = {
@@ -752,7 +777,7 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                                                 .fillMaxWidth()
                                                                                 .padding(20.dp),
                                                                             fontFamily = fontFamily,
-                                                                            fontSize = 18.sp
+                                                                            fontSize = 16.sp
                                                                         )
                                                                     }
                                                                 }
@@ -760,13 +785,18 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                         }
                                                     },
                                                     confirmButton = {
-                                                        OutlinedButton(onClick = {
+                                                        Button(onClick = {
                                                             showStatusDialog = false
-                                                        }, modifier = Modifier.fillMaxWidth()) {
+                                                        }, modifier = Modifier.fillMaxWidth(),
+                                                            colors = ButtonDefaults.buttonColors(
+                                                                containerColor = CustomColors.primaryBlack,
+                                                            )
+                                                        ) {
                                                             Text(
                                                                 "Close",
                                                                 fontFamily = fontFamily,
-                                                                color = primaryBlack
+                                                                color = Color.White,
+                                                                fontWeight = FontWeight.Normal
                                                             )
                                                         }
                                                     }
@@ -834,7 +864,7 @@ fun OrderFilterChips(
             ) {
                 Text(
                     "$totalOrders",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = Color.White,
                     modifier = Modifier
                         .background(primaryBlack)
@@ -845,7 +875,7 @@ fun OrderFilterChips(
             Text(
                 text = "Orders",
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.align(Alignment.CenterStart),
                 color = primaryBlack
             )
@@ -952,7 +982,7 @@ fun OrderFilterChips(
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier.fillMaxWidth(),
                                                 fontFamily = fontFamily,
-                                                fontWeight = FontWeight.Bold,
+                                                fontWeight = FontWeight.Normal,
                                                 lineHeight = 18.sp
                                             )
                                         }
@@ -965,7 +995,7 @@ fun OrderFilterChips(
                                 text = status,
                                 color = if (isSelected) Color.White else Color.DarkGray,
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = FontWeight.Normal
                             )
                         }
                     }

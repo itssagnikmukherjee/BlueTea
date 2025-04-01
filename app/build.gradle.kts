@@ -84,8 +84,8 @@ dependencies {
     //kotstep
     implementation("com.github.binayshaw7777:KotStep:2.3.0")
 
-    //google fonts
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
+    //material icons extended
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
