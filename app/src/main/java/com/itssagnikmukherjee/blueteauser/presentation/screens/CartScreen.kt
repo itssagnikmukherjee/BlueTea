@@ -396,29 +396,7 @@ fun EmptyCartContent(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                Icons.Default.ShoppingCart,
-                contentDescription = "Empty Cart",
-                modifier = Modifier.size(100.dp),
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Your cart is empty",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Looks like you haven't added any items to your cart yet.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {  }) {
-                Text("Start Shopping")
-            }
+            Text("Cart is empty", fontFamily = fontFamily, fontSize = 14.sp)
         }
     }
 }

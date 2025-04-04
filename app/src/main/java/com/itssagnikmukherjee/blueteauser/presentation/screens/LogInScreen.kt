@@ -131,7 +131,8 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
                         label = { Text("Password", fontFamily = fontFamily) },
                         shape = RoundedCornerShape(15.dp),
                         textStyle = TextStyle.Default.copy(fontFamily = fontFamily),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation()
                     )
 
 
@@ -171,7 +172,15 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
                     // Login Button
                     Button(
                         onClick = {
-                            viewModel.loginWithEmailPass(email, password)
+                            if(email.isNotEmpty() && password.isNotEmpty()) {
+                                if(!email.contains("@") && !email.contains(".com") && password.length < 6){
+                                    Toast.makeText(context, "Incorrect Format", Toast.LENGTH_SHORT).show()
+                                }
+                                viewModel.loginWithEmailPass(email, password)
+                            }
+                            else {
+                                Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CustomColors.primaryBlack
