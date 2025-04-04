@@ -367,17 +367,18 @@ fun TrackOrderScreen(
                                 horizontalAlignment = Alignment.End,
                             ) {
                                 Text(
-                                    text = "${it.email}",
-                                    fontFamily = fontFamily,
-                                    color = primaryBlack,
-                                    fontSize = 16.sp
-                                )
-                                Text(
                                     text = "${it.phoneNo}",
                                     fontFamily = fontFamily,
                                     color = primaryBlack,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Normal
+                                )
+
+                                Text(
+                                    text = "${it.email}",
+                                    fontFamily = fontFamily,
+                                    color = primaryBlack,
+                                    fontSize = 12.sp
                                 )
                             }
                         }

@@ -571,7 +571,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                 Spacer(modifier = Modifier.height(6.dp))
                 Column(Modifier.padding(start = 10.dp)){
                     Text(
-                        text = product.productName,
+                        text = if(product.productName.length > 15) product.productName.substring(0, 15) + "..." else product.productName,
                         fontFamily = fontFamily,
                         color = primaryBlack,
                         fontSize = 16.sp,
@@ -622,8 +622,7 @@ fun ProductItem(product: Product, onclick: () -> Unit, viewModel: ViewModels = h
                         )
                     }
                     Row(
-                        modifier = Modifier.padding(start = 16.dp, top = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(start = 8.dp, top = 12.dp),
                     ){
                         val rating = product.randomRating.toFloat()
                         val finalRating = rating/10

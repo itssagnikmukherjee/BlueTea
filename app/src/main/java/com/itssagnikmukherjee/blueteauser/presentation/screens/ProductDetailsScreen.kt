@@ -346,21 +346,12 @@ fun ProductDetailsScreen(viewModel: ViewModels = hiltViewModel(), navController:
                                     Text(
                                         text = if (productDesc.length > 50) productDesc.substring(
                                             0,
-                                            82
-                                        ) else productDesc,
+                                            80
+                                        ) + "..." else productDesc,
                                         fontFamily = fontFamily,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Light
                                     )
-                                    if (productDesc.length > 50)
-                                        Text(
-                                            "Read More ...",
-                                            fontFamily = fontFamily,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 12.sp,
-                                            color = CustomColors.primaryBlack,
-                                            modifier = Modifier.align(Alignment.BottomEnd)
-                                        )
                                 }
                             }
                             Spacer(Modifier.height(20.dp))
