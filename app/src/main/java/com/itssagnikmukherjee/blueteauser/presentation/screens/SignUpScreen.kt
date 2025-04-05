@@ -193,7 +193,8 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                         onValueChange = { userEmail = it },
                         label = { Text("Email", fontFamily = fontFamily) },
                         shape = RoundedCornerShape(15.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -272,7 +273,6 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                                 Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
-
                             val userData = UserData(
                                 firstName = userFirstName,
                                 lastName = userLastName,
@@ -281,7 +281,36 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                                 password = userPassword,
                                 address = userAddress
                             )
-                            viewModel.registerUserWithEmail(context = context, userData = userData, imageUri = userImage)
+                            if(userFirstName.isNotEmpty() || userLastName.isNotEmpty() || userEmail.isNotEmpty() || userAddress.isNotEmpty() || userPhoneNo.isNotEmpty()) {
+                                if ((userEmail.contains("@") && userEmail.contains(".com"))) {
+                                    if (userPassword.length < 6) {
+                                        Toast.makeText(
+                                            context,
+                                            "Password must be at least 6 characters",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        viewModel.registerUserWithEmail(
+                                            context = context,
+                                            userData = userData,
+                                            imageUri = userImage
+                                        )
+                                        Toast.makeText(
+                                            context,
+                                            "Account Created",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Incorrect Email Format",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }else{
+                                Toast.makeText(context, "Please fill all the fields", Toast.LENGTH_SHORT).show()
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CustomColors.primaryBlack

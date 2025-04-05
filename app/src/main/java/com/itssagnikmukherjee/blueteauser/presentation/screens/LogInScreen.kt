@@ -119,7 +119,8 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
                         label = { Text("Email", fontFamily = fontFamily) },
                         shape = RoundedCornerShape(15.dp),
                         textStyle = TextStyle.Default.copy(fontFamily = fontFamily),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
