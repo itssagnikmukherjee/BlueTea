@@ -6,11 +6,13 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.google.firebase.auth.FirebaseAuth
+import com.itssagnikmukherjee.blueteauser.presentation.ViewModels
 import com.itssagnikmukherjee.blueteauser.presentation.screens.BuyNowScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.CartScreen
 import com.itssagnikmukherjee.blueteauser.presentation.screens.CategoryScreen
@@ -26,8 +28,16 @@ import com.stripe.android.paymentsheet.PaymentSheet
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, navController: NavHostController, paymentSheet: PaymentSheet) {
+fun AppNavigation(
+    modifier: Modifier = Modifier,
+    firebaseAuth: FirebaseAuth,
+    navController: NavHostController,
+    paymentSheet: PaymentSheet,
+    viewModel: ViewModels = hiltViewModel()
+) {
     val startDestination = if (firebaseAuth.currentUser == null) Routes.LoginScreen else Routes.HomeScreen
+    val currentUser = firebaseAuth.currentUser
+    val currentUserId = currentUser?.uid ?: ""
 
     NavHost(
         navController = navController,
@@ -41,44 +51,46 @@ fun AppNavigation(modifier: Modifier = Modifier, firebaseAuth: FirebaseAuth, nav
         composable<Routes.SignUpScreen> { SignUpScreen(navController = navController) }
         composable<Routes.HomeScreen> { HomeScreenUser(navController = navController) }
 
-        composable<Routes.WishListScreen>{
-            val data = it.toRoute<Routes.WishListScreen>()
-            WishListScreen(navController = navController, userId = data.userId)
+        composable<Routes.WishListScreen> {
+            WishListScreen(navController = navController, userId = currentUserId)
         }
 
-        composable<Routes.CartScreen>{
-            val data = it.toRoute<Routes.CartScreen>()
-            CartScreen(navController = navController, userId = data.userId)
+        composable<Routes.CartScreen> {
+            CartScreen(navController = navController, userId = currentUserId)
         }
 
         composable<Routes.ProfileScreen> {
-            val data = it.toRoute<Routes.ProfileScreen>()
-            ProfileScreen(navController = navController, userId = data.userId)
+            ProfileScreen(navController = navController, userId = currentUserId)
         }
 
         composable<Routes.ProductDetailsScreen> {
             val data = it.toRoute<Routes.ProductDetailsScreen>()
-            ProductDetailsScreen(navController = navController, productId = data.productId, userId = data.userId)
+            ProductDetailsScreen(navController = navController, productId = data.productId, userId = currentUserId)
         }
 
-        composable<Routes.BuyNowScreen>{
+        composable<Routes.BuyNowScreen> {
             val data = it.toRoute<Routes.BuyNowScreen>()
-            BuyNowScreen(navController = navController, cartItems = data.products, userId = data.userId, quantity = data.quantity.toString(), paymentSheet = paymentSheet)
+            BuyNowScreen(
+                navController = navController,
+                cartItems = data.products,
+                userId = currentUserId,
+                quantity = data.quantity.toString(),
+                paymentSheet = paymentSheet
+            )
         }
 
-        composable<Routes.OrdersScreen>{
-            val data = it.toRoute<Routes.OrdersScreen>()
-            OrdersScreen(navController = navController, userId = data.userId)
+        composable<Routes.OrdersScreen> {
+            OrdersScreen(navController = navController, userId = currentUserId)
         }
 
         composable<Routes.TrackOrderScreen> {
             val data = it.toRoute<Routes.TrackOrderScreen>()
-            TrackOrderScreen(navController = navController, orderId = data.orderId, userId = data.userId)
+            TrackOrderScreen(navController = navController, orderId = data.orderId, userId = currentUserId)
         }
 
-        composable<Routes.CategoryScreen>{
+        composable<Routes.CategoryScreen> {
             val data = it.toRoute<Routes.CategoryScreen>()
-            CategoryScreen(category = data.category, navController = navController, userId = data.userId)
+            CategoryScreen(category = data.category, navController = navController, userId = currentUserId)
         }
     }
 }
