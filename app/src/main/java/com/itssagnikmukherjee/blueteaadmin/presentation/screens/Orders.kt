@@ -45,9 +45,13 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.HourglassFull
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -560,9 +564,9 @@ fun OrdersScreen(viewModel: ViewModels = hiltViewModel()) {
                                                             stepStyle = customStepStyle,
                                                             currentStep = currentStep,
                                                             icons = listOf(
-                                                                Icons.Default.CheckCircle,
-                                                                Icons.Default.CheckCircle,
-                                                                Icons.Default.CheckCircle
+                                                                Icons.Filled.Smartphone,
+                                                                Icons.Filled.HourglassFull,
+                                                                Icons.Filled.LocalShipping
                                                             )
                                                         )
                                                     )
