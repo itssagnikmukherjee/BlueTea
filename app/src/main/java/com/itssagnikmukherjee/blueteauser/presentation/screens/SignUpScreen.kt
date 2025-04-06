@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -49,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -224,6 +228,7 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // Password field
+                    var passwordVisibility by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = userPassword,
                         colors = outlinedTextFieldStyle,
@@ -231,7 +236,29 @@ fun SignUpScreen(viewModel: ViewModels = hiltViewModel(), navController: NavCont
                         label = { Text("Password", fontFamily = fontFamily) },
                         shape = RoundedCornerShape(15.dp),
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation()
+                        trailingIcon = {
+                            if(userPassword.isNotEmpty()){
+                                Icon(
+                                    imageVector = if (passwordVisibility) {
+                                        Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
+                                    },
+                                    contentDescription = "Toggle Password Visibility",
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ){
+                                        passwordVisibility = !passwordVisibility
+                                    }
+                                )
+                            }
+                        },
+                        visualTransformation = if (passwordVisibility) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))

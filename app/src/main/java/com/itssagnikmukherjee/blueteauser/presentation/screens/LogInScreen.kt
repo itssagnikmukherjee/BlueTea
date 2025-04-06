@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +20,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.TabRowDefaults.Divider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RemoveRedEye
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -47,6 +53,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -125,15 +132,37 @@ fun LoginScreen(viewModel: ViewModels = hiltViewModel(), navController: NavContr
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    var passwordVisibility by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = password,
                         colors = outlinedTextFieldStyle,
                         onValueChange = { password = it },
+                        singleLine = true,
+                        trailingIcon = {
+                            Icon(
+                                imageVector = if (passwordVisibility) {
+                                    Icons.Default.Visibility
+                                } else {
+                                    Icons.Default.VisibilityOff
+                                },
+                                contentDescription = "Toggle Password Visibility",
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ){
+                                    passwordVisibility = !passwordVisibility
+                                }
+                            )
+                        },
                         label = { Text("Password", fontFamily = fontFamily) },
                         shape = RoundedCornerShape(15.dp),
                         textStyle = TextStyle.Default.copy(fontFamily = fontFamily),
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation()
+                        visualTransformation = if (passwordVisibility) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        }
                     )
 
 
