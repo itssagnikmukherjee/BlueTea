@@ -64,22 +64,22 @@ BazaarIO/
     └── src/
         └── main/
             └── java/com/yourname/bazaario/                   
-                ├── data/                    # Data layer
-                │   ├── di/                  # Hilt modules
+                ├── data/            # Data layer
+                │   ├── di/          # Hilt modules
                 │   └── repositoryImpl/
-                ├── domain/                  # Use cases and models
+                ├── domain/          # Use cases and models
                 │   ├── model/
                 │   └── usecase/
-                ├── presentation/            # UI layer
-                │   ├── navigation/          # Navigation graphs
-                │   ├── screen/              # Composables by screen
+                ├── presentation/    # UI layer
+                │   ├── navigation/  # Navigation graphs
+                │   ├── screen/      # Composables by screen
                 │   │   ├── home/
                 │   │   ├── product/
                 │   │   ├── cart/
                 │   │   ├── auth/
                 │   │   └── admin/
-                │   └── components/          # Shared composables
-                └── util/                    # Utils, constants
+                │   └── components/  # Shared composables
+                └── util/            # Utils, constants
 </pre>
 
 </td>
