@@ -5,9 +5,9 @@
 - [🚀 Features](#-features)  
 - [🧱 Tech Stack & Architecture](#-tech-stack--architecture)  
 - [📸 Screenshots](#-screenshots)  
-- [📦 Installation & Setup](#-installation--setup) 
-- [📄 Credits](#-license)  
-- [📬 Contact](#-contact)
+- [⚙️ Installation & Setup](#-installation--setup)
+- [🙏 Credits & Attribution](#-credits--attribution)  
+- [📜 License](#-license)
 
 <br><br>
 
@@ -109,3 +109,93 @@ BazaarIO/
 | Multiple Checkout | Checkout | Categories | Alert Box |
 |-------------------|----------|------------|------------|
 | <img src="https://github.com/user-attachments/assets/4d1135b0-3a5e-42c4-bc6a-de426f5965be" width="200"/> | <img src="https://github.com/user-attachments/assets/567f7a1e-da0c-4604-b3bc-975b11668252" width="200"/> | <img src="https://github.com/user-attachments/assets/a5015d1d-3a3b-4382-b4ce-ceb249e4e0ed" width="200"/> | <img src="https://github.com/user-attachments/assets/d7fb6ce4-991d-461c-b715-42d179f8561f" width="200"/> |
+
+
+## ⚙ Installation & Setup
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/itssagnikmukherjee/BazaarIO.git
+```
+### 2. Open in Android Studio
+- Launch **Android Studio**
+- Select "Open" and navigate to the cloned project folder
+
+Next, the Gradle sync will initially fail because `local.properties` is missing required environment variables.
+Create a file named local.properties (in the root of the project) if not created and add the following keys:
+
+### 3. Add required keys
+If you want to use the default credentials:
+```properties
+SUPABASE_URL = "https://iebhahjyatpcvwhwbicr.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllYmhhaGp5YXRwY3Z3aHdiaWNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgxMzk5NzIsImV4cCI6MjA1MzcxNTk3Mn0.zJW7W_V45kM3_zgU-DMloK1R8qMff2CJkiGPkibdc08"
+STRIPE_PUBLISHABLE_KEY = "pk_test_51NXRvXSCfayi15o2NHh0FleG6BMtf8JPygraK90yzZ2fiNTBSxYcB7TMNbMqDf47AsDEOsLCDlaZ54TbyVHGzLeH00LfjCvlbh"
+STRIPE_SECRET_KEY = "sk_test_51NXRvXSCfayi15o2O0TXCW1QNHCFrM3uYx0Ba4rMAAozXWy2jhYYkMHNMk57SUwTjG2ReMoBzkYqUiVaiD2Oi9JQ00ZuDODkrh"
+```
+<details>
+<summary>🔧 Want to Use Your Own Setup?</summary>
+
+<br/>
+
+✅ **Step 1: Firebase Setup**  
+- Create a Firebase project  
+- Add an Android app and download `google-services.json`  
+- In Android Studio: go to **Tools > Firebase > Cloud Firestore** to link Firestore  
+
+✅ **Step 2: Supabase Setup**  
+- Sign up at [supabase.com](https://supabase.com)  
+- Create a new project  
+- Create **4 storage buckets**: `categories`, `products`, `banners`, `user-profile-pic`  
+- Set each bucket to **public** and give full read/write permissions (for testing)  
+
+✅ **Step 3: Firebase Authentication**  
+- Enable **Email/Password** authentication from Firebase Console  
+
+✅ **Step 4: Stripe Setup**  
+- Create an account at [stripe.com](https://stripe.com)  
+- Generate your **Publishable Key** and **Secret Key**  
+- Add them in `local.properties` as shown above  
+
+</details>
+
+
+## 🙏 Credits & Attribution
+
+This project utilizes resources and inspiration from the following platforms:
+
+| Platform | Description | Link |
+|----------|-------------|------|
+| **BlueTea** | Product images and catalog references | [https://bluetea.co.in](https://bluetea.co.in) |
+| **MD Computers** | Tech product specifications and pricing data | [https://mdcomputers.in](https://mdcomputers.in) |
+
+Special thanks to:
+- The amazing open source community for various libraries used
+- JetBrains for their excellent Kotlin language
+- Google's Android team for Jetpack Compose
+
+---
+
+## 📜 License
+
+```text
+MIT License
+
+Copyright (c) [2025] [Sagnik Mukherjee]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
