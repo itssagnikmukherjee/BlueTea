@@ -168,7 +168,6 @@ This project utilizes resources and inspiration from the following platforms:
 | Platform | Description | Link |
 |----------|-------------|------|
 | **BlueTea** | Product images and catalog references | [https://bluetea.co.in](https://bluetea.co.in) |
-| **MD Computers** | Tech product specifications and pricing data | [https://mdcomputers.in](https://mdcomputers.in) |
 
 Special thanks to:
 - The amazing open source community for various libraries used
