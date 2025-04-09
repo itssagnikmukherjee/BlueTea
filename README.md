@@ -127,13 +127,13 @@ Create a file named local.properties (in the root of the project) if not created
 ### 3. Add required keys
 If you want to use the default credentials:
 ```properties
-SUPABASE_URL = "https://iebhahjyatpcvwhwbicr.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllYmhhaGp5YXRwY3Z3aHdiaWNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgxMzk5NzIsImV4cCI6MjA1MzcxNTk3Mn0.zJW7W_V45kM3_zgU-DMloK1R8qMff2CJkiGPkibdc08"
-STRIPE_PUBLISHABLE_KEY = "pk_test_51NXRvXSCfayi15o2NHh0FleG6BMtf8JPygraK90yzZ2fiNTBSxYcB7TMNbMqDf47AsDEOsLCDlaZ54TbyVHGzLeH00LfjCvlbh"
-STRIPE_SECRET_KEY = "sk_test_51NXRvXSCfayi15o2O0TXCW1QNHCFrM3uYx0Ba4rMAAozXWy2jhYYkMHNMk57SUwTjG2ReMoBzkYqUiVaiD2Oi9JQ00ZuDODkrh"
+SUPABASE_URL = "https://XXXXXXXXXXXXX.supabase.co"
+SUPABASE_KEY = "XXXXXXXXXXXXXXXXXXXXXXX"
+STRIPE_PUBLISHABLE_KEY = "pk_test_XXXXXXXXXXXXXXXXXXXX"
+STRIPE_SECRET_KEY = "sk_test_XXXXXXXXXXXXXXXXXX"
 ```
 <details>
-<summary>🔧 Want to Use Your Own Setup?</summary>
+<summary>🤔 How to get credential keys ?</summary>
 
 <br/>
 
@@ -158,6 +158,7 @@ STRIPE_SECRET_KEY = "sk_test_51NXRvXSCfayi15o2O0TXCW1QNHCFrM3uYx0Ba4rMAAozXWy2jh
 
 </details>
 
+---
 
 ## 🙏 Credits & Attribution
 
