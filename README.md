@@ -9,8 +9,9 @@
 - [🙏 Credits & Attribution](#-credits--attribution)  
 - [📜 License](#-license)
 
-<br><br>
+<br>
 
+<a href="https://www.youtube.com/watch?v=h4lpOiMNICA"><img src="https://github.com/user-attachments/assets/d4f15edc-a8ab-4608-abb6-87814b521f5c"></a>
 > **Want to build your own online store and scale your business?**  
 > **BazaarIO** is the all-in-one **e-commerce builder app** that empowers individuals to create their own custom shopping platforms — complete with product management, order tracking, customer authentication, delivery integration, and more.
 
